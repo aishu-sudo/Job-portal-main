@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Freelancer Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background: #f4f7fc;
+        }
+        
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #0c2333, #081c30);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+        
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 22px;
+            font-weight: 500;
+        }
+        
+        .sidebar button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 16px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .sidebar button:hover,
+        .sidebar button.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar .logout {
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        #mainContent {
+            flex: 1;
+            padding: 30px;
+        }
+        
+        .content-frame {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+        
+        .welcome-message {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .welcome-message h1 {
+            color: #0c2333;
+            margin-bottom: 15px;
+        }
+        
+        .welcome-message p {
+            color: #555;
+            line-height: 1.6;
+        }
+        /* Header with notification */
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .notification-container {
+            position: relative;
+        }
+        
+        .notification-bell {
+            font-size: 20px;
+            color: #0c2333;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ff5722;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 40px;
+            width: 350px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .notification-dropdown.show {
+            display: block;
+        }
+        
+        .notification-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .notification-header h3 {
+            margin: 0;
+            color: #0c2333;
+        }
+        
+        .mark-all-read {
+            background: none;
+            border: none;
+            color: #1976d2;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .notification-item:hover {
+            background: #f9f9f9;
+        }
+        
+        .notification-item.unread {
+            background: #f0f7ff;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #0c2333;
+        }
+        
+        .notification-message {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .notification-time {
+            color: #999;
+            font-size: 12px;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <h2><i class="fas fa-user-tie"></i> Freelancer</h2>
+        <button onclick="loadSection('dashboard')" id="dashboardBtn" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
+        <button onclick="loadSection('jobBrowsing')" id="jobBrowsingBtn"><i class="fas fa-briefcase"></i> Browse Jobs</button>
+
+        <button onclick="loadSection('messages')" id="messagesBtn"><i class="fas fa-comments"></i> Messages</button>
+        <button onclick="loadSection('filterBySkill')" id="filterBySkillBtn"><i class="fas fa-cogs"></i> JobsCategory</button>
+
+        <button onclick="loadSection('profile')" id="profileBtn"><i class="fas fa-user"></i> My Profile</button>
+        <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+
+    <div id="mainContent">
+        <div class="dashboard-header">
+            <h1>Freelancer Dashboard</h1>
+            <div class="notification-container">
+                <div class="notification-bell" onclick="toggleNotifications()">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </div>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-header">
+                        <h3>Notifications</h3>
+                        <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
+                    </div>
+                    <div class="notification-item unread">
+                        <div class="notification-title">New Job Match</div>
+                        <div class="notification-message">A new job matching your skills "Web Development" has been posted.</div>
+                        <div class="notification-time">10 minutes ago</div>
+                    </div>
+                    <div class="notification-item unread">
+                        <div class="notification-title">Application Viewed</div>
+                        <div class="notification-message">Your application for "E-commerce Website" has been viewed by the client.</div>
+                        <div class="notification-time">2 hours ago</div>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-title">Payment Received</div>
+                        <div class="notification-message">Payment of $250 for project "Logo Design" has been deposited to your account.</div>
+                        <div class="notification-time">1 day ago</div>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-title">New Message</div>
+                        <div class="notification-message">You have a new message from Client A regarding your proposal.</div>
+                        <div class="notification-time">2 days ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="welcome-message" id="dashboardContent">
+            <h1>Welcome to your Freelancer Dashboard</h1>
+            <p>Here you can browse available jobs, apply for positions, communicate with clients, and manage your profile. Use the sidebar to navigate between different sections.</p>
+            <div style="margin-top: 30px; display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; flex: 1; min-width: 200px;">
+                    <h3><i class="fas fa-briefcase" style="color: #1976d2;"></i> Available Jobs</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin-top: 10px;">124</p>
+                </div>
+                <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; flex: 1; min-width: 200px;">
+                    <h3><i class="fas fa-check-circle" style="color: #388e3c;"></i> Applications Sent</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin-top: 10px;">15</p>
+                </div>
+                <div style="background: #fff8e1; padding: 20px; border-radius: 8px; flex: 1; min-width: 200px;">
+                    <h3><i class="fas fa-comments" style="color: #ffa000;"></i> Unread Messages</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin-top: 10px;">3</p>
+                </div>
+            </div>
+        </div>
+
+        <iframe id="contentFrame" class="content-frame" style="display: none;"></iframe>
+    </div>
+
+    <script>
+        // Set dashboard as active by default
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('dashboardBtn').classList.add('active');
+        });
+
+        function loadSection(section) {
+            // Hide welcome message and show iframe
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('contentFrame').style.display = 'block';
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.sidebar button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Load the appropriate content
+            const frame = document.getElementById('contentFrame');
+
+            switch (section) {
+                case 'dashboard':
+                    document.getElementById('dashboardContent').style.display = 'block';
+                    frame.style.display = 'none';
+                    break;
+                case 'jobBrowsing':
+                    frame.src = 'jobBrowse.html';
+                    break;
+                case 'applyJob':
+                    frame.src = 'jobApply.html';
+                    break;
+                case 'messages':
+                    frame.src = 'Message.html';
+                    break;
+                case 'filterBySkill':
+                    frame.src = 'jobs.html?filter=skill';
+                    break;
+                case 'profile':
+                    frame.src = 'freelancerprofile.html';
+                    break;
+                default:
+                    document.getElementById('dashboardContent').style.display = 'block';
+                    frame.style.display = 'none';
+            }
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function markAllAsRead() {
+            const unreadItems = document.querySelectorAll('.notification-item.unread');
+            const badge = document.querySelector('.notification-badge');
+
+            unreadItems.forEach(item => {
+                item.classList.remove('unread');
+            });
+
+            badge.textContent = '0';
+        }
+
+        // Close notifications when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const bell = document.querySelector('.notification-bell');
+
+            if (!bell.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        function logout() {
+            // Add logout functionality here
+            alert('Logging out...');
+        }
+
+        function loadNotifications() {
+            try {
+                const notifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
+                const notificationContainer = document.querySelector('.notification-dropdown');
+                const notificationItems = notificationContainer.querySelectorAll('.notification-item');
+
+                // Remove existing notification items except the header
+                notificationItems.forEach(item => {
+                    if (!item.classList.contains('notification-header')) {
+                        item.remove();
+                    }
+                });
+
+                // Add new notifications
+                notifications.forEach(notification => {
+                    const notificationItem = document.createElement('div');
+                    notificationItem.className = `notification-item ${notification.read ? '' : 'unread'}`;
+
+                    // Add priority indicator if it's a high priority notification
+                    const priorityIndicator = notification.priority === 'high' ?
+                        '<span style="color: #ff5722; margin-right: 5px;">●</span>' : '';
+
+                    notificationItem.innerHTML = `
+                        <div class="notification-title">${priorityIndicator}${notification.title}</div>
+                        <div class="notification-message">${notification.message}</div>
+                        <div class="notification-time">${formatTimeAgo(new Date(notification.time))}</div>
+                    `;
+
+                    // Add click handler to view notification details
+                    notificationItem.addEventListener('click', () => {
+                        handleNotificationClick(notification);
+                        markNotificationAsRead(notification.id);
+                    });
+
+                    // Insert after the header
+                    notificationContainer.insertBefore(notificationItem, notificationContainer.children[1]);
+                });
+
+                // Update notification badge
+                const unreadCount = notifications.filter(n => !n.read).length;
+                const badge = document.querySelector('.notification-badge');
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+
+                // Store the updated count
+                localStorage.setItem('freelancerNotificationCount', unreadCount);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        // Add auto-refresh for notifications
+        setInterval(loadNotifications, 30000); // Refresh every 30 seconds
+
+        // Load notifications when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotifications();
+            // ... existing DOMContentLoaded code ...
+        });
+
+        function handleNotificationClick(notification) {
+            switch (notification.type) {
+                case 'new_project':
+                    showProjectDetailsModal(notification);
+                    break;
+                case 'application_viewed':
+                    showApplicationStatusModal(notification);
+                    break;
+                case 'payment_received':
+                    showPaymentModal(notification);
+                    break;
+                case 'new_message':
+                    showMessageModal(notification);
+                    break;
+                default:
+                    console.log('Unknown notification type:', notification.type);
+            }
+        }
+
+        function showProjectDetailsModal(notification) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+
+            const projectData = notification.projectData;
+            modal.innerHTML = `
+                <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; max-width: 800px; width: 90%;">
+                    <span class="close" style="float: right; cursor: pointer; font-size: 24px;">&times;</span>
+                    <h2>${projectData.title}</h2>
+                    <div style="margin-top: 20px;">
+                        <p><strong>Company:</strong> ${projectData.company}</p>
+                        <p><strong>Job Type:</strong> ${projectData.jobType}</p>
+                        <p><strong>Location:</strong> ${projectData.location}</p>
+                        <p><strong>Salary Range:</strong> $${projectData.salaryMin} - $${projectData.salaryMax} per ${projectData.salaryPeriod}</p>
+                        <div style="margin-top: 15px;">
+                            <strong>Description:</strong>
+                            <p style="margin-top: 5px; white-space: pre-wrap;">${projectData.description}</p>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <strong>Required Skills:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                                ${projectData.skills.map(skill => 
+                                    `<span style="background: #e0f2fe; padding: 5px 10px; border-radius: 15px;">${skill}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button onclick="viewFullProjectDetails('${projectData.projectId}')" 
+                                style="background: #f0f0f0; color: #333; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                            View Full Details
+                        </button>
+                        <button onclick="applyForProject('${projectData.projectId}')" 
+                                style="background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                            Apply Now
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('.close').onclick = () => document.body.removeChild(modal);
+            modal.onclick = (e) => {
+                if (e.target === modal) document.body.removeChild(modal);
+            };
+        }
+
+        function applyForProject(projectId) {
+            try {
+                // Store the project ID in localStorage
+                localStorage.setItem('selectedProjectId', projectId);
+                
+                // Get the project details
+                const projects = JSON.parse(localStorage.getItem('projects')) || [];
+                const project = projects.find(p => p.projectId === projectId);
+                
+                if (!project) {
+                    throw new Error('Project not found');
+                }
+
+                // Close the modal
+                const modal = document.querySelector('.modal');
+                if (modal) {
+                    document.body.removeChild(modal);
+                }
+
+                // Redirect to application form
+                window.location.href = 'applicationform.html';
+            } catch (error) {
+                console.error('Error applying for project:', error);
+                alert('Error applying for project. Please try again.');
+            }
+        }
+
+        function viewFullProjectDetails(projectId) {
+            // Store the project ID and redirect to the full project details page
+            localStorage.setItem('selectedProjectId', projectId);
+            window.location.href = 'jobBrowse.html';
+        }
+
+        function showApplicationStatusModal(notification) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%;">
+                    <span class="close" style="float: right; cursor: pointer; font-size: 24px;">&times;</span>
+                    <h2>Application Status</h2>
+                    <div style="margin-top: 20px;">
+                        <p><strong>Project:</strong> ${notification.projectTitle}</p>
+                        <p><strong>Status:</strong> ${notification.status}</p>
+                        <p><strong>Viewed At:</strong> ${new Date(notification.viewedAt).toLocaleString()}</p>
+                        ${notification.clientFeedback ? `
+                            <div style="margin-top: 15px;">
+                                <strong>Client Feedback:</strong>
+                                <p style="margin-top: 5px; white-space: pre-wrap;">${notification.clientFeedback}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button onclick="viewApplicationDetails('${notification.applicationId}')" 
+                                style="background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('.close').onclick = () => document.body.removeChild(modal);
+            modal.onclick = (e) => {
+                if (e.target === modal) document.body.removeChild(modal);
+            };
+        }
+
+        function showPaymentModal(notification) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%;">
+                    <span class="close" style="float: right; cursor: pointer; font-size: 24px;">&times;</span>
+                    <h2>Payment Details</h2>
+                    <div style="margin-top: 20px;">
+                        <p><strong>Amount:</strong> $${notification.paymentData.amount}</p>
+                        <p><strong>Project:</strong> ${notification.projectTitle}</p>
+                        <p><strong>Payment ID:</strong> ${notification.paymentData.paymentId}</p>
+                        <p><strong>Status:</strong> ${notification.paymentData.status}</p>
+                        <p><strong>Client:</strong> ${notification.paymentData.clientName}</p>
+                    </div>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button onclick="acceptPayment('${notification.paymentData.paymentId}')" 
+                                style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                            Accept Payment
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('.close').onclick = () => document.body.removeChild(modal);
+            modal.onclick = (e) => {
+                if (e.target === modal) document.body.removeChild(modal);
+            };
+        }
+
+        function showMessageModal(notification) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%;">
+                    <span class="close" style="float: right; cursor: pointer; font-size: 24px;">&times;</span>
+                    <h2>New Message</h2>
+                    <div style="margin-top: 20px;">
+                        <p><strong>From:</strong> ${notification.senderName}</p>
+                        <p><strong>Subject:</strong> ${notification.messageSubject}</p>
+                        <div style="margin-top: 15px;">
+                            <strong>Message:</strong>
+                            <p style="margin-top: 5px; white-space: pre-wrap;">${notification.messageContent}</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button onclick="replyToMessage('${notification.senderId}')" 
+                                style="background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                            Reply
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('.close').onclick = () => document.body.removeChild(modal);
+            modal.onclick = (e) => {
+                if (e.target === modal) document.body.removeChild(modal);
+            };
+        }
+
+        // Action handlers for notifications
+        function viewApplicationDetails(applicationId) {
+            // Implement application details view logic
+            console.log('Viewing application details for:', applicationId);
+            // Add your implementation here
+        }
+
+        function acceptPayment(paymentId) {
+            // Implement payment acceptance logic
+            console.log('Accepting payment:', paymentId);
+            // Add your implementation here
+        }
+
+        function replyToMessage(senderId) {
+            // Implement message reply logic
+            console.log('Replying to message from:', senderId);
+            // Add your implementation here
+        }
+
+        function markNotificationAsRead(notificationId) {
+            const notifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
+            const updatedNotifications = notifications.map(notification => {
+                if (notification.id === notificationId) {
+                    return {...notification, read: true};
+                }
+                return notification;
+            });
+            localStorage.setItem('freelancerNotifications', JSON.stringify(updatedNotifications));
+            loadNotifications();
+        }
+
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + ' years ago';
+
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + ' months ago';
+
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + ' days ago';
+
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + ' hours ago';
+
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + ' minutes ago';
+
+            return Math.floor(seconds) + ' seconds ago';
+        }
+    </script>
+
+</body>
+
+</html>

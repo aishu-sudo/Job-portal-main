@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign-Up Form</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="/styles/signup.css">
+    <script type="module" src="/scripts/firebaseauth.js"></script>
+
+</head>
+
+<body>
+    <div class="container">
+        <!-- 🔹 Fixed Sign-Up Message (Added `id="signUpMessage"`) -->
+        <div id="signUpMessage" style="display: none; color: rgb(178, 6, 152); font-weight: bold; text-align: center;">
+        </div>
+
+        <div class="signup-container">
+            <div class="logo">
+                <img src="/images/braintel.png" alt="Logo">
+            </div>
+            <h2>Sign Up</h2>
+
+            <button class="social-login google">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+
+            <button class="social-login facebook">
+                <i class="fab fa-facebook"></i> Continue with Facebook
+            </button>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <!-- 🔹 Fixed Form -->
+            <form id="signupForm">
+                <div class="input-group">
+                    <input type="text" id="firstName" placeholder="First Name" required>
+                    <input type="text" id="lastName" placeholder="Last Name" required>
+                </div>
+                <div class="email-group">
+                    <input type="email" id="email" placeholder="Email" required>
+                </div>
+
+                <div class="password-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                    <span class="toggle-password"><i class="fa-solid fa-eye-slash"></i></span>
+                </div>
+
+                <!-- 🔹 Fixed Buttons (Added `id` attributes) -->
+                <button type="button" id="submitSignUpFreelancer" class="signup-btn">join as freelancer</button>
+                <button type="button" id="submitSignUpClient" class="signup-btn">join as client</button>
+            </form>
+
+            <p>Already have an account? <a href="login.html">Log In</a></p>
+        </div>
+    </div>
+
+</body>
+
+</html>

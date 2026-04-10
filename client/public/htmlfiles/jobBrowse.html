@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Portal - Browse Jobs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Global Styles */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+        /* Header Styles */
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 20px;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        nav ul li a:hover {
+            color: #3498db;
+        }
+        /* Search Section */
+        
+        .search-section {
+            background-color: #3498db;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+        
+        .search-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .search-button {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .search-button:hover {
+            background-color: #1a252f;
+        }
+        /* Talent Categories Section */
+        
+        .talent-categories {
+            margin-bottom: 40px;
+        }
+        
+        .talent-categories h2 {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .category-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .category-rating {
+            font-size: 16px;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+        
+        .category-skills {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        /* Filters */
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .filter-label {
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        /* Job Listings */
+        
+        .job-listings {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .job-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .job-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .job-company {
+            font-weight: 500;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        
+        .job-location,
+        .job-salary,
+        .job-type {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .job-location i,
+        .job-salary i,
+        .job-type i {
+            margin-right: 8px;
+            color: #7f8c8d;
+        }
+        
+        .job-description {
+            margin: 15px 0;
+            color: #555;
+        }
+        
+        .apply-button {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .apply-button:hover {
+            background-color: #2980b9;
+        }
+        
+        .applied-badge {
+            color: #27ae60;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 10px;
+        }
+        
+        .job-posted {
+            font-size: 14px;
+            color: #95a5a6;
+            margin-top: 15px;
+        }
+        /* Pagination */
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        
+        .pagination a {
+            color: #2c3e50;
+            padding: 8px 16px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            margin: 0 4px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .pagination a.active {
+            background-color: #3498db;
+            color: white;
+            border: 1px solid #3498db;
+        }
+        
+        .pagination a:hover:not(.active) {
+            background-color: #ddd;
+        }
+        /* Saved Jobs Indicator */
+        
+        .saved-jobs-count {
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        /* Modal Styles */
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        /* Application Form Styles */
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="tel"],
+        .form-group input[type="url"],
+        .form-group textarea,
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-group input {
+            margin-right: 10px;
+        }
+        
+        .submit-application-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        .submit-application-btn:hover {
+            background-color: #2980b9;
+        }
+        /* Client Information Section */
+        
+        .client-info-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .client-info-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .client-info-item {
+            margin-bottom: 5px;
+            display: flex;
+        }
+        
+        .client-info-label {
+            font-weight: 500;
+            min-width: 120px;
+            color: #555;
+        }
+        
+        .client-info-value {
+            flex: 1;
+        }
+        /* Responsive Design */
+        
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            nav ul {
+                margin-top: 15px;
+                justify-content: center;
+            }
+            .categories-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .job-listings {
+                grid-template-columns: 1fr;
+            }
+            .client-info-item {
+                flex-direction: column;
+            }
+            .client-info-label {
+                margin-bottom: 3px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <div class="logo">JobPortal</div>
+            <nav>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#" class="active">Browse Jobs</a></li>
+                    <li><a href="#">Companies</a></li>
+                    <li><a href="#">Dashboard</a></li>
+                    <li><a href="#" id="saved-jobs-link">Saved Jobs <span id="saved-jobs-count" class="saved-jobs-count">0</span></a></li>
+                    <li><a href="#">Login/Register</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="search-section">
+        <div class="container">
+            <form class="search-form" id="job-search-form">
+                <input type="text" class="search-input" id="job-title-input" placeholder="Job title, keywords, or company">
+                <input type="text" class="search-input" id="location-input" placeholder="Location">
+                <button type="submit" class="search-button">Search Jobs</button>
+            </form>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- Talent Categories Section -->
+        <section class="talent-categories">
+            <h2>Browse Talent by Category</h2>
+            <div class="categories-grid">
+                <div class="category-card">
+                    <h3 class="category-title">Development & IT</h3>
+                    <div class="category-rating">4.835</div>
+                    <div class="category-skills">1853 skills</div>
+                </div>
+                <div class="category-card">
+                    <h3 class="category-title">AI Services</h3>
+                    <div class="category-rating">4.815</div>
+                    <div class="category-skills">294 skills</div>
+                </div>
+                <div class="category-card">
+                    <h3 class="category-title">Design & Creative</h3>
+                    <div class="category-rating">4.915</div>
+                    <div class="category-skills">988 skills</div>
+                </div>
+                <div class="category-card">
+                    <h3 class="category-title">Sales & Marketing</h3>
+                    <div class="category-rating">4.7775</div>
+                    <div class="category-skills">392 skills</div>
+                </div>
+                <div class="category-card">
+                    <h3 class="category-title">Writing & Translation</h3>
+                    <div class="category-rating">4.835</div>
+                    <div class="category-skills">1976 skills</div>
+                </div>
+                <div class="category-card">
+                    <h3 class="category-title">Admin & Customer Services</h3>
+                    <div class="category-rating">4.85</div>
+                    <div class="category-skills">450 skills</div>
+                </div>
+                <div class="category-card">
+                    <h3 class="category-title">Finance & Accounting</h3>
+                    <div class="category-rating">4.915</div>
+                    <div class="category-skills">900 skills</div>
+                </div>
+                <div class="category-card">
+                    <h3 class="category-title">Engineering & Architecture</h3>
+                    <div class="category-rating">4.7775</div>
+                    <div class="category-skills">300 skills</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="filters">
+            <div class="filter-group">
+                <span class="filter-label">Filter by:</span>
+                <select class="filter-select" id="job-type-filter">
+                    <option value="all">All Jobs</option>
+                    <option value="full-time">Full-time</option>
+                    <option value="part-time">Part-time</option>
+                    <option value="remote">Remote</option>
+                    <option value="contract">Contract</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label">Sort by:</span>
+                <select class="filter-select" id="sort-by">
+                    <option value="recent">Most Recent</option>
+                    <option value="salary">Highest Salary</option>
+                    <option value="applied">Most Applied</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="job-listings" id="job-listings-container">
+            <!-- Job listings will be dynamically inserted here -->
+        </div>
+
+        <div class="pagination" id="pagination">
+            <a href="#" class="page-nav" data-page="prev">&laquo;</a>
+            <!-- Page numbers will be dynamically inserted here -->
+            <a href="#" class="page-nav" data-page="next">&raquo;</a>
+        </div>
+    </main>
+
+    <!-- Application Form Modal -->
+    <div id="application-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Apply for <span id="modal-job-title"></span></h2>
+            <p>at <span id="modal-company-name"></span></p>
+
+            <!-- Client Information Section -->
+            <div class="client-info-section">
+                <div class="client-info-title">Hiring Information</div>
+                <div class="client-info-item">
+                    <span class="client-info-label">Contact Person:</span>
+                    <span class="client-info-value" id="client-contact-person"></span>
+                </div>
+                <div class="client-info-item">
+                    <span class="client-info-label">Contact Email:</span>
+                    <span class="client-info-value" id="client-email"></span>
+                </div>
+                <div class="client-info-item">
+                    <span class="client-info-label">Contact Phone:</span>
+                    <span class="client-info-value" id="client-phone"></span>
+                </div>
+                <div class="client-info-item">
+                    <span class="client-info-label">Application Deadline:</span>
+                    <span class="client-info-value" id="application-deadline"></span>
+                </div>
+                <div class="client-info-item">
+                    <span class="client-info-label">Special Instructions:</span>
+                    <span class="client-info-value" id="client-notes"></span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="#" id="continue-to-application" class="apply-button" style="padding: 12px 30px; font-size: 16px;">Continue to Application</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Job data with client information
+        const jobs = [{
+            id: 1,
+            title: "Frontend Developer",
+            company: "Tech Solutions Inc.",
+            location: "San Francisco, CA (Remote)",
+            salary: "$90,000 - $120,000 per year",
+            type: "full-time",
+            description: "We're looking for a skilled Frontend Developer with experience in React.js to join our growing team. You'll work on building responsive user interfaces for our SaaS platform.",
+            posted: "2 days ago",
+            postedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            salaryMin: 90000,
+            salaryMax: 120000,
+            applications: 24,
+            clientInfo: {
+                contactPerson: "Sarah Johnson (HR Manager)",
+                email: "hr@techsolutions.com",
+                phone: "(415) 555-1234",
+                deadline: "June 15, 2023",
+                notes: "Please include your GitHub profile or portfolio link in your application."
+            },
+            skills: ["React.js", "JavaScript", "HTML/CSS", "Redux", "Responsive Design"]
+        }, {
+            id: 2,
+            title: "UX/UI Designer",
+            company: "Creative Minds LLC",
+            location: "New York, NY",
+            salary: "$80,000 - $100,000 per year",
+            type: "full-time",
+            description: "Join our design team to create beautiful, intuitive interfaces for web and mobile applications. Must have portfolio demonstrating UX process and visual design skills.",
+            posted: "1 week ago",
+            postedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            salaryMin: 80000,
+            salaryMax: 100000,
+            applications: 18,
+            clientInfo: {
+                contactPerson: "Michael Chen (Design Lead)",
+                email: "design@creativeminds.com",
+                phone: "(212) 555-5678",
+                deadline: "June 30, 2023",
+                notes: "Portfolio review will be the first step in our interview process."
+            },
+            skills: ["UI Design", "UX Research", "Figma", "Adobe XD", "Prototyping"]
+        }, {
+            id: 3,
+            title: "Backend Engineer",
+            company: "DataSystems Corp",
+            location: "Austin, TX (Hybrid)",
+            salary: "$110,000 - $140,000 per year",
+            type: "full-time",
+            description: "Seeking experienced Backend Engineer proficient in Node.js and Python to develop and maintain our API services and database architecture.",
+            posted: "3 days ago",
+            postedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            salaryMin: 110000,
+            salaryMax: 140000,
+            applications: 32,
+            clientInfo: {
+                contactPerson: "David Wilson (Engineering Manager)",
+                email: "engineering@datasystems.com",
+                phone: "(512) 555-9012",
+                deadline: "July 10, 2023",
+                notes: "Experience with cloud infrastructure (AWS/Azure) is a plus. Please highlight relevant experience in your cover letter."
+            },
+            skills: ["Node.js", "Python", "API Development", "Database Design", "AWS"]
+        }, {
+            id: 4,
+            title: "Marketing Specialist",
+            company: "Growth Marketing Co.",
+            location: "Chicago, IL",
+            salary: "$60,000 - $75,000 per year",
+            type: "full-time",
+            description: "Looking for a creative Marketing Specialist to develop and execute digital marketing campaigns across various channels including social media and email.",
+            posted: "5 days ago",
+            postedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            salaryMin: 60000,
+            salaryMax: 75000,
+            applications: 12,
+            clientInfo: {
+                contactPerson: "Emily Rodriguez (Marketing Director)",
+                email: "marketing@growthmarketing.com",
+                phone: "(312) 555-3456",
+                deadline: "June 25, 2023",
+                notes: "Include examples of successful campaigns you've worked on. Case studies are preferred."
+            },
+            skills: ["Digital Marketing", "Social Media", "Content Creation", "SEO", "Email Marketing"]
+        }, {
+            id: 5,
+            title: "DevOps Engineer",
+            company: "CloudTech Solutions",
+            location: "Remote",
+            salary: "$120,000 - $150,000 per year",
+            type: "contract",
+            description: "Contract position for DevOps Engineer with AWS, Kubernetes, and CI/CD pipeline experience to help migrate our infrastructure to the cloud.",
+            posted: "1 day ago",
+            postedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+            salaryMin: 120000,
+            salaryMax: 150000,
+            applications: 8,
+            clientInfo: {
+                contactPerson: "Robert Taylor (CTO)",
+                email: "tech@cloudtechsolutions.com",
+                phone: "(800) 555-7890",
+                deadline: "July 5, 2023",
+                notes: "6-month contract with possibility of extension. Please indicate your availability in your application."
+            },
+            skills: ["AWS", "Kubernetes", "CI/CD", "Docker", "Infrastructure as Code"]
+        }, {
+            id: 6,
+            title: "Data Scientist",
+            company: "Analytics Ventures",
+            location: "Boston, MA",
+            salary: "$100,000 - $130,000 per year",
+            type: "full-time",
+            description: "Join our data team to develop machine learning models and analyze large datasets to drive business decisions. Python and SQL expertise required.",
+            posted: "2 weeks ago",
+            postedDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+            salaryMin: 100000,
+            salaryMax: 130000,
+            applications: 45,
+            clientInfo: {
+                contactPerson: "Dr. James Peterson (Head of Data Science)",
+                email: "datascience@analyticsventures.com",
+                phone: "(617) 555-2345",
+                deadline: "June 20, 2023",
+                notes: "PhD in quantitative field preferred but not required. Please include links to any published research."
+            },
+            skills: ["Python", "Machine Learning", "SQL", "Data Analysis", "Statistics"]
+        }, {
+            id: 7,
+            title: "Product Manager",
+            company: "InnovateTech",
+            location: "Seattle, WA (Hybrid)",
+            salary: "$95,000 - $125,000 per year",
+            type: "full-time",
+            description: "Lead product development from conception to launch. Work with cross-functional teams to deliver exceptional user experiences.",
+            posted: "4 days ago",
+            postedDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+            salaryMin: 95000,
+            salaryMax: 125000,
+            applications: 22,
+            clientInfo: {
+                contactPerson: "Lisa Wong (VP of Product)",
+                email: "product@innovatetech.com",
+                phone: "(206) 555-6789",
+                deadline: "July 15, 2023",
+                notes: "Experience with Agile methodologies required. Please describe your approach to product development in your cover letter."
+            },
+            skills: ["Product Management", "Agile", "User Stories", "Market Research", "Roadmapping"]
+        }, {
+            id: 8,
+            title: "Content Writer",
+            company: "Digital Media Group",
+            location: "Remote",
+            salary: "$50,000 - $65,000 per year",
+            type: "part-time",
+            description: "Create engaging content for our digital platforms. Must have excellent writing skills and ability to adapt tone for different audiences.",
+            posted: "3 days ago",
+            postedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            salaryMin: 50000,
+            salaryMax: 65000,
+            applications: 15,
+            clientInfo: {
+                contactPerson: "Thomas Bennett (Editorial Director)",
+                email: "editorial@digitalmediagroup.com",
+                phone: "(555) 555-1234",
+                deadline: "Ongoing",
+                notes: "Please submit 3 writing samples with your application. Include both long-form and short-form examples if possible."
+            },
+            skills: ["Content Writing", "SEO", "Copywriting", "Editing", "Blogging"]
+        }, {
+            id: 9,
+            title: "Senior Software Engineer",
+            company: "CodeCraft Inc.",
+            location: "Remote",
+            salary: "$130,000 - $160,000 per year",
+            type: "full-time",
+            description: "We're seeking an experienced Senior Software Engineer to lead our core product development. You'll architect solutions and mentor junior engineers.",
+            posted: "1 day ago",
+            postedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+            salaryMin: 130000,
+            salaryMax: 160000,
+            applications: 28,
+            clientInfo: {
+                contactPerson: "Daniel Kim (Engineering Director)",
+                email: "engineering@codecraft.com",
+                phone: "(888) 555-4567",
+                deadline: "July 1, 2023",
+                notes: "System design interview will be part of the process. Please be prepared to discuss your architectural decisions on past projects."
+            },
+            skills: ["System Architecture", "Java", "Microservices", "Cloud Computing", "Mentoring"]
+        }, {
+            id: 10,
+            title: "Digital Marketing Manager",
+            company: "Online Growth Partners",
+            location: "Chicago, IL (Hybrid)",
+            salary: "$85,000 - $110,000 per year",
+            type: "full-time",
+            description: "Lead our digital marketing team to develop and execute comprehensive online marketing strategies across multiple channels.",
+            posted: "4 days ago",
+            postedDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+            salaryMin: 85000,
+            salaryMax: 110000,
+            applications: 19,
+            clientInfo: {
+                contactPerson: "Jessica Martinez (CMO)",
+                email: "marketing@onlinegrowth.com",
+                phone: "(312) 555-8901",
+                deadline: "June 28, 2023",
+                notes: "Experience with Google Ads and Facebook Ads required. Please include performance metrics from past campaigns."
+            },
+            skills: ["Digital Strategy", "PPC Advertising", "Social Media", "Analytics", "Team Leadership"]
+        }, {
+            id: 11,
+            title: "Cybersecurity Analyst",
+            company: "SecureNet Systems",
+            location: "Washington, DC",
+            salary: "$95,000 - $125,000 per year",
+            type: "full-time",
+            description: "Protect our systems and data by identifying vulnerabilities and implementing security measures. CISSP certification preferred.",
+            posted: "1 week ago",
+            postedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            salaryMin: 95000,
+            salaryMax: 125000,
+            applications: 31,
+            clientInfo: {
+                contactPerson: "Mark Reynolds (Chief Security Officer)",
+                email: "security@securenetsystems.com",
+                phone: "(202) 555-4567",
+                deadline: "July 7, 2023",
+                notes: "Must be eligible for security clearance. Please indicate your clearance status in your application."
+            },
+            skills: ["Cybersecurity", "Network Security", "Risk Assessment", "CISSP", "Incident Response"]
+        }, {
+            id: 12,
+            title: "Mobile App Developer",
+            company: "AppVenture",
+            location: "Remote",
+            salary: "$100,000 - $135,000 per year",
+            type: "contract",
+            description: "Develop cross-platform mobile applications using Flutter. Experience with Firebase and state management required.",
+            posted: "2 days ago",
+            postedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            salaryMin: 100000,
+            salaryMax: 135000,
+            applications: 14,
+            clientInfo: {
+                contactPerson: "Amanda Lee (Product Lead)",
+                email: "mobile@appventure.com",
+                phone: "(555) 555-6789",
+                deadline: "June 30, 2023",
+                notes: "Please include links to any published apps in the Apple App Store or Google Play Store."
+            },
+            skills: ["Flutter", "Dart", "Firebase", "State Management", "Mobile Development"]
+        }, {
+            id: 13,
+            title: "UI/UX Designer",
+            company: "Digital Design Agency",
+            location: "Remote",
+            salary: "$85,000 - $110,000 per year",
+            type: "full-time",
+            description: "Design a modern website interface with a focus on user experience and responsive design principles. Create wireframes, prototypes, and high-fidelity designs.",
+            posted: "1 day ago",
+            postedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+            salaryMin: 85000,
+            salaryMax: 110000,
+            applications: 15,
+            clientInfo: {
+                contactPerson: "Alexandra Park (Design Director)",
+                email: "design@digitaldesign.com",
+                phone: "(555) 555-1234",
+                deadline: "July 10, 2023",
+                notes: "Please include a portfolio with at least 3 website design projects."
+            },
+            skills: ["UI Design", "UX Research", "Figma", "Adobe XD", "Prototyping"]
+        }, {
+            id: 14,
+            title: "Full Stack Developer",
+            company: "Tech Innovators Inc.",
+            location: "Remote",
+            salary: "$100,000 - $130,000 per year",
+            type: "full-time",
+            description: "Develop a MERN stack application with React frontend and Node.js backend. Build RESTful APIs and implement database solutions with MongoDB.",
+            posted: "2 days ago",
+            postedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            salaryMin: 100000,
+            salaryMax: 130000,
+            applications: 22,
+            clientInfo: {
+                contactPerson: "Michael Chen (CTO)",
+                email: "tech@techinnovators.com",
+                phone: "(555) 555-5678",
+                deadline: "July 15, 2023",
+                notes: "Experience with TypeScript is a plus. Please include links to GitHub repositories."
+            },
+            skills: ["React", "Node.js", "MongoDB", "Express", "JavaScript"]
+        }, {
+            id: 15,
+            title: "Graphic Designer",
+            company: "Brand Visionaries",
+            location: "New York, NY",
+            salary: "$65,000 - $85,000 per year",
+            type: "full-time",
+            description: "Create a logo & branding kit including color palette, typography, and brand guidelines for various clients across different industries.",
+            posted: "3 days ago",
+            postedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            salaryMin: 65000,
+            salaryMax: 85000,
+            applications: 17,
+            clientInfo: {
+                contactPerson: "Sarah Johnson (Creative Director)",
+                email: "creative@brandvision.com",
+                phone: "(555) 555-9012",
+                deadline: "July 5, 2023",
+                notes: "Submit 3 logo concepts with your application. Experience with brand guidelines preferred."
+            },
+            skills: ["Logo Design", "Branding", "Adobe Illustrator", "Photoshop", "Typography"]
+        }, {
+            id: 16,
+            title: "SEO Specialist",
+            company: "Digital Growth Partners",
+            location: "Remote",
+            salary: "$70,000 - $90,000 per year",
+            type: "full-time",
+            description: "Optimize website for better ranking through on-page and technical SEO improvements. Conduct keyword research and implement content strategies.",
+            posted: "4 days ago",
+            postedDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+            salaryMin: 70000,
+            salaryMax: 90000,
+            applications: 11,
+            clientInfo: {
+                contactPerson: "David Wilson (Marketing Director)",
+                email: "marketing@digitalgrowth.com",
+                phone: "(555) 555-3456",
+                deadline: "July 20, 2023",
+                notes: "Please include case studies of successful SEO campaigns you've managed."
+            },
+            skills: ["SEO", "Google Analytics", "Keyword Research", "On-Page SEO", "Technical SEO"]
+        }, {
+            id: 17,
+            title: "Marketing Expert",
+            company: "Social Media Solutions",
+            location: "Chicago, IL",
+            salary: "$75,000 - $95,000 per year",
+            type: "full-time",
+            description: "Boost business through social media marketing campaigns and content strategy. Manage paid advertising and organic growth across platforms.",
+            posted: "5 days ago",
+            postedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            salaryMin: 75000,
+            salaryMax: 95000,
+            applications: 14,
+            clientInfo: {
+                contactPerson: "Emily Rodriguez (Marketing Manager)",
+                email: "marketing@socialmediasol.com",
+                phone: "(555) 555-7890",
+                deadline: "July 12, 2023",
+                notes: "Experience with Facebook Ads Manager and Google Analytics required."
+            },
+            skills: ["Social Media Marketing", "Content Strategy", "Facebook Ads", "Instagram", "LinkedIn"]
+        }, {
+            id: 18,
+            title: "Beauty & Makeup Artist",
+            company: "Glamour Studios",
+            location: "Los Angeles, CA",
+            salary: "$45 - $75 per hour",
+            type: "part-time",
+            description: "Enhance looks with expert makeup skills for photo shoots, special events, and bridal clients. Work with diverse skin types and tones.",
+            posted: "1 week ago",
+            postedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            salaryMin: 45,
+            salaryMax: 75,
+            applications: 9,
+            clientInfo: {
+                contactPerson: "Olivia Martinez (Studio Manager)",
+                email: "bookings@glamourstudios.com",
+                phone: "(555) 555-2345",
+                deadline: "Ongoing",
+                notes: "Must have professional makeup kit. Portfolio required with application."
+            },
+            skills: ["Makeup Artistry", "Bridal Makeup", "Photo Shoot Makeup", "Special Effects", "Skincare"]
+        }, {
+            id: 19,
+            title: "Fitness Trainer",
+            company: "Health & Wellness Center",
+            location: "Miami, FL",
+            salary: "$50 - $100 per hour",
+            type: "part-time",
+            description: "Help people stay fit and healthy with personalized training programs. Conduct one-on-one and group fitness sessions.",
+            posted: "2 days ago",
+            postedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            salaryMin: 50,
+            salaryMax: 100,
+            applications: 7,
+            clientInfo: {
+                contactPerson: "Robert Johnson (Fitness Director)",
+                email: "fitness@healthwellness.com",
+                phone: "(555) 555-6789",
+                deadline: "July 25, 2023",
+                notes: "NASM or ACE certification required. Experience with special populations preferred."
+            },
+            skills: ["Personal Training", "Nutrition", "Weight Loss", "Strength Training", "Yoga"]
+        }, {
+            id: 20,
+            title: "Website Development",
+            company: "Web Solutions Inc.",
+            location: "Remote",
+            salary: "$80,000 - $120,000 per year",
+            type: "full-time",
+            description: "Create, build, and develop your website with skilled website developers using modern technologies. Work on both frontend and backend development.",
+            posted: "3 days ago",
+            postedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            salaryMin: 80000,
+            salaryMax: 120000,
+            applications: 19,
+            clientInfo: {
+                contactPerson: "Daniel Brown (Development Lead)",
+                email: "dev@websolutions.com",
+                phone: "(555) 555-4567",
+                deadline: "July 30, 2023",
+                notes: "Please include links to 3 websites you've developed in the past year."
+            },
+            skills: ["HTML/CSS", "JavaScript", "Responsive Design", "WordPress", "PHP"]
+        }];
+
+        // DOM elements
+        const jobListingsContainer = document.getElementById('job-listings-container');
+        const jobSearchForm = document.getElementById('job-search-form');
+        const jobTitleInput = document.getElementById('job-title-input');
+        const locationInput = document.getElementById('location-input');
+        const jobTypeFilter = document.getElementById('job-type-filter');
+        const sortBy = document.getElementById('sort-by');
+        const pagination = document.getElementById('pagination');
+        const savedJobsCount = document.getElementById('saved-jobs-count');
+        const savedJobsLink = document.getElementById('saved-jobs-link');
+        const applicationModal = document.getElementById('application-modal');
+        const modalJobTitle = document.getElementById('modal-job-title');
+        const modalCompanyName = document.getElementById('modal-company-name');
+        const continueToApplication = document.getElementById('continue-to-application');
+        const closeModalBtn = document.querySelector('.close');
+
+        // Client info elements
+        const clientContactPerson = document.getElementById('client-contact-person');
+        const clientEmail = document.getElementById('client-email');
+        const clientPhone = document.getElementById('client-phone');
+        const applicationDeadline = document.getElementById('application-deadline');
+        const clientNotes = document.getElementById('client-notes');
+
+        // State
+        let currentPage = 1;
+        const jobsPerPage = 6;
+        let savedJobs = JSON.parse(localStorage.getItem('savedJobs')) || [];
+        let appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
+        let filteredJobs = [...jobs];
+        let currentJobApplying = null;
+
+        // Initialize
+        updateSavedJobsCount();
+        renderJobListings();
+        renderPagination();
+
+        // Event listeners
+        jobSearchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            filterJobs();
+        });
+
+        jobTypeFilter.addEventListener('change', filterJobs);
+        sortBy.addEventListener('change', filterJobs);
+
+        pagination.addEventListener('click', function(e) {
+            if (e.target.classList.contains('page-nav')) {
+                e.preventDefault();
+                const action = e.target.getAttribute('data-page');
+                if (action === 'prev' && currentPage > 1) {
+                    currentPage--;
+                } else if (action === 'next' && currentPage < Math.ceil(filteredJobs.length / jobsPerPage)) {
+                    currentPage++;
+                }
+                renderJobListings();
+                renderPagination();
+            } else if (e.target.classList.contains('page-number')) {
+                e.preventDefault();
+                currentPage = parseInt(e.target.getAttribute('data-page'));
+                renderJobListings();
+                renderPagination();
+            }
+        });
+
+        savedJobsLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('Saved jobs feature would be implemented here');
+        });
+
+        // Modal close buttons
+        closeModalBtn.addEventListener('click', function() {
+            applicationModal.style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === applicationModal) {
+                applicationModal.style.display = 'none';
+            }
+        });
+
+        // Continue to application form
+        continueToApplication.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentJobApplying) {
+                const job = jobs.find(j => j.id === currentJobApplying);
+                if (job) {
+                    generateApplicationForm(job);
+                }
+            }
+        });
+
+        // Functions
+        function filterJobs() {
+            const titleSearch = jobTitleInput.value.toLowerCase();
+            const locationSearch = locationInput.value.toLowerCase();
+            const jobType = jobTypeFilter.value;
+            const sortOption = sortBy.value;
+
+            filteredJobs = jobs.filter(job => {
+                const matchesTitle = job.title.toLowerCase().includes(titleSearch) ||
+                    job.company.toLowerCase().includes(titleSearch);
+                const matchesLocation = job.location.toLowerCase().includes(locationSearch);
+                const matchesType = jobType === 'all' || job.type === jobType;
+
+                return matchesTitle && matchesLocation && matchesType;
+            });
+
+            // Sort jobs
+            switch (sortOption) {
+                case 'recent':
+                    filteredJobs.sort((a, b) => b.postedDate - a.postedDate);
+                    break;
+                case 'salary':
+                    filteredJobs.sort((a, b) => b.salaryMax - a.salaryMax);
+                    break;
+                case 'applied':
+                    filteredJobs.sort((a, b) => b.applications - a.applications);
+                    break;
+            }
+
+            currentPage = 1;
+            renderJobListings();
+            renderPagination();
+        }
+
+        function renderJobListings() {
+            const startIndex = (currentPage - 1) * jobsPerPage;
+            const endIndex = startIndex + jobsPerPage;
+            const jobsToDisplay = filteredJobs.slice(startIndex, endIndex);
+
+            jobListingsContainer.innerHTML = '';
+
+            if (jobsToDisplay.length === 0) {
+                jobListingsContainer.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No jobs found matching your criteria.</p>';
+                return;
+            }
+
+            jobsToDisplay.forEach(job => {
+                const isSaved = savedJobs.includes(job.id);
+                const isApplied = appliedJobs.includes(job.id);
+                const jobCard = document.createElement('div');
+                jobCard.className = 'job-card';
+                jobCard.innerHTML = `
+                <h3 class="job-title">${job.title}</h3>
+                <p class="job-company">${job.company}</p>
+                <p class="job-location">
+                    <i class="fas fa-map-marker-alt"></i> ${job.location}
+                </p>
+                <p class="job-salary">
+                    <i class="fas fa-dollar-sign"></i> ${job.salary}
+                </p>
+                <p class="job-type">
+                    <i class="fas fa-briefcase"></i> ${job.type.charAt(0).toUpperCase() + job.type.slice(1).replace('-', ' ')}
+                </p>
+                <p class="job-description">${job.description}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        ${isApplied ? '<span class="applied-badge"><i class="fas fa-check"></i> Applied</span>' : ''}
+                        <button class="apply-button" data-job-id="${job.id}" ${isApplied ? 'disabled style="background-color: #27ae60;"' : ''}>
+                            ${isApplied ? 'Applied' : 'Apply Now'}
+                        </button>
+                    </div>
+                    <button class="save-job-button" style="background: none; border: none; cursor: pointer; font-size: 20px; color: ${isSaved ? '#e74c3c' : '#95a5a6'}" data-job-id="${job.id}">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </div>
+                <p class="job-posted">Posted ${job.posted}</p>
+            `;
+                jobListingsContainer.appendChild(jobCard);
+            });
+
+            // Add event listeners to the new buttons
+            document.querySelectorAll('.apply-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const jobId = parseInt(this.getAttribute('data-job-id'));
+                    const job = jobs.find(j => j.id === jobId);
+                    if (job) {
+                        currentJobApplying = jobId;
+                        modalJobTitle.textContent = job.title;
+                        modalCompanyName.textContent = job.company;
+
+                        // Set client information in the modal
+                        if (job.clientInfo) {
+                            clientContactPerson.textContent = job.clientInfo.contactPerson;
+                            clientEmail.textContent = job.clientInfo.email;
+                            clientPhone.textContent = job.clientInfo.phone;
+                            applicationDeadline.textContent = job.clientInfo.deadline;
+                            clientNotes.textContent = job.clientInfo.notes;
+                        } else {
+                            // Default values if no client info is provided
+                            clientContactPerson.textContent = "Not specified";
+                            clientEmail.textContent = "Not specified";
+                            clientPhone.textContent = "Not specified";
+                            applicationDeadline.textContent = "Not specified";
+                            clientNotes.textContent = "None";
+                        }
+
+                        applicationModal.style.display = 'block';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.save-job-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const jobId = parseInt(this.getAttribute('data-job-id'));
+                    const heartIcon = this.querySelector('i');
+                    const index = savedJobs.indexOf(jobId);
+
+                    if (index === -1) {
+                        savedJobs.push(jobId);
+                        heartIcon.style.color = '#e74c3c';
+                    } else {
+                        savedJobs.splice(index, 1);
+                        heartIcon.style.color = '#95a5a6';
+                    }
+
+                    localStorage.setItem('savedJobs', JSON.stringify(savedJobs));
+                    updateSavedJobsCount();
+                });
+            });
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+            const paginationContainer = document.getElementById('pagination');
+
+            // Clear existing page numbers (keep prev/next buttons)
+            const existingLinks = Array.from(paginationContainer.children);
+            existingLinks.forEach(link => {
+                if (!link.classList.contains('page-nav')) {
+                    paginationContainer.removeChild(link);
+                }
+            });
+
+            // Find the prev and next buttons
+            const prevLink = document.querySelector('.page-nav[data-page="prev"]');
+            const nextLink = document.querySelector('.page-nav[data-page="next"]');
+
+            // Insert page numbers before the next button
+            for (let i = 1; i <= totalPages; i++) {
+                const pageLink = document.createElement('a');
+                pageLink.href = '#';
+                pageLink.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                pageLink.textContent = i;
+                pageLink.setAttribute('data-page', i);
+                paginationContainer.insertBefore(pageLink, nextLink);
+            }
+
+            // Disable prev/next buttons when appropriate
+            prevLink.style.display = currentPage === 1 ? 'none' : '';
+            nextLink.style.display = currentPage === totalPages || totalPages === 0 ? 'none' : '';
+        }
+
+        function generateApplicationForm(job) {
+            // Hide the modal
+            applicationModal.style.display = 'none';
+
+            // Create a new div for the application form
+            const applicationFormDiv = document.createElement('div');
+            applicationFormDiv.id = 'application-form-page';
+            applicationFormDiv.style.position = 'fixed';
+            applicationFormDiv.style.top = '0';
+            applicationFormDiv.style.left = '0';
+            applicationFormDiv.style.width = '100%';
+            applicationFormDiv.style.height = '100%';
+            applicationFormDiv.style.backgroundColor = '#f5f5f5';
+            applicationFormDiv.style.overflow = 'auto';
+            applicationFormDiv.style.zIndex = '1000';
+
+            // Generate the HTML for the application form
+            applicationFormDiv.innerHTML = `
+            <div class="container" style="margin-top: 30px; margin-bottom: 50px;">
+                <a href="#" class="back-link" id="back-to-jobs" style="display: inline-flex; align-items: center; color: #4f46e5; text-decoration: none; margin-bottom: 20px; font-weight: 500;">
+                    <i class="fas fa-arrow-left"></i> Back to job listing
+                </a>
+
+                <div class="job-header" style="background-color: white; border-radius: 8px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
+                    <h1 class="job-title" style="font-size: 28px; margin-bottom: 5px; color: #2d3748;">${job.title}</h1>
+                    <p class="job-company" style="font-size: 18px; color: #4f46e5; margin-bottom: 15px; font-weight: 500;">${job.company}</p>
+
+                    <div class="job-meta" style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+                        <div class="meta-item" style="display: flex; align-items: center; color: #4a5568;">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${job.location}</span>
+                        </div>
+                        <div class="meta-item" style="display: flex; align-items: center; color: #4a5568;">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>${job.salary}</span>
+                        </div>
+                        <div class="meta-item" style="display: flex; align-items: center; color: #4a5568;">
+                            <i class="fas fa-briefcase"></i>
+                            <span>${job.type.charAt(0).toUpperCase() + job.type.slice(1).replace('-', ' ')}</span>
+                        </div>
+                        <div class="meta-item" style="display: flex; align-items: center; color: #4a5568;">
+                            <i class="fas fa-clock"></i>
+                            <span>Posted ${job.posted}</span>
+                        </div>
+                    </div>
+
+                    <div class="job-description" style="margin: 25px 0; color: #4a5568; line-height: 1.7;">
+                        <p>${job.description}</p>
+                    </div>
+
+                    <div class="skills-section" style="margin-top: 25px;">
+                        <h4 style="margin-bottom: 15px; color: #4a5568;">Required Skills:</h4>
+                        <div class="skills-tags" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            ${job.skills.map(skill => `<span class="skill-tag" style="background-color: #e0e7ff; color: #4f46e5; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 500;">${skill}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="application-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div class="client-info" style="background-color: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); height: fit-content;">
+                        <h3 style="font-size: 20px; margin-bottom: 20px; color: #2d3748; border-bottom: 1px solid #eee; padding-bottom: 10px;">Client Information</h3>
+
+                        <div class="client-detail" style="margin-bottom: 15px;">
+                            <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Contact Person</strong>
+                            <span style="color: #718096;">${job.clientInfo.contactPerson}</span>
+                        </div>
+
+                        <div class="client-detail" style="margin-bottom: 15px;">
+                            <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Email</strong>
+                            <span style="color: #718096;">${job.clientInfo.email}</span>
+                        </div>
+
+                        <div class="client-detail" style="margin-bottom: 15px;">
+                            <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Phone</strong>
+                            <span style="color: #718096;">${job.clientInfo.phone}</span>
+                        </div>
+
+                        <div class="client-detail" style="margin-bottom: 15px;">
+                            <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Application Deadline</strong>
+                            <span style="color: #718096;">${job.clientInfo.deadline}</span>
+                        </div>
+
+                        <div class="client-detail" style="margin-bottom: 15px;">
+                            <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Special Instructions</strong>
+                            <span style="color: #718096;">${job.clientInfo.notes}</span>
+                        </div>
+                    </div>
+
+                    <div class="application-form" style="background-color: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
+                        <h3 style="font-size: 20px; margin-bottom: 20px; color: #2d3748; border-bottom: 1px solid #eee; padding-bottom: 10px;">Application Form</h3>
+
+                        <form id="jobApplicationForm">
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="fullName" style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Full Name *</label>
+                                <input type="text" id="fullName" name="fullName" required style="width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 16px; transition: border-color 0.3s;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="email" style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Email *</label>
+                                <input type="email" id="email" name="email" required style="width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 16px; transition: border-color 0.3s;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="phone" style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" style="width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 16px; transition: border-color 0.3s;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="resume" style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Resume/CV *</label>
+                                <div class="file-upload" style="position: relative;">
+                                    <input type="file" id="resume" name="resume" class="file-upload-input" accept=".pdf,.doc,.docx" required style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                                    <label for="resume" class="file-upload-label" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border: 1px dashed #cbd5e0; border-radius: 6px; background-color: #f8fafc;">
+                                        <span class="file-selected" id="resumeFileName" style="color: #718096; font-size: 14px;">No file selected</span>
+                                        <span class="file-upload-button" style="background-color: #e2e8f0; color: #4a5568; padding: 8px 15px; border-radius: 4px; font-size: 14px;">Browse...</span>
+                                    </label>
+                                </div>
+                                <div class="file-requirements" style="font-size: 12px; color: #718096; margin-top: 5px;">Accepted formats: PDF, DOC, DOCX (Max 5MB)</div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="portfolio" style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Portfolio/Website</label>
+                                <input type="url" id="portfolio" name="portfolio" placeholder="https://" style="width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 16px; transition: border-color 0.3s;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="coverLetter" style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Cover Letter</label>
+                                <textarea id="coverLetter" name="coverLetter" rows="6" placeholder="Tell us why you're a good fit for this position..." style="width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 16px; min-height: 150px; resize: vertical; transition: border-color 0.3s;"></textarea>
+                            </div>
+
+                            <button type="submit" class="submit-button" style="background-color: #4f46e5; color: white; border: none; padding: 14px 25px; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; transition: background-color 0.3s;">Submit Application</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add the application form to the body
+        document.body.appendChild(applicationFormDiv);
+        
+        // Add event listeners for the form
+        document.getElementById('resume').addEventListener('change', function(e) {
+            const fileName = e.target.files.length > 0 ? e.target.files[0].name : 'No file selected';
+            document.getElementById('resumeFileName').textContent = fileName;
+
+            // Simple file validation
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                const maxSize = 5 * 1024 * 1024; // 5MB
+
+                if (!validTypes.includes(file.type)) {
+                    alert('Please upload a PDF, DOC, or DOCX file.');
+                    e.target.value = '';
+                    document.getElementById('resumeFileName').textContent = 'No file selected';
+                } else if (file.size > maxSize) {
+                    alert('File size exceeds 5MB limit.');
+                    e.target.value = '';
+                    document.getElementById('resumeFileName').textContent = 'No file selected';
+                }
+            }
+        });
+
+        // Form submission handler
+        document.getElementById('jobApplicationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Basic validation
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const resume = document.getElementById('resume').files.length > 0;
+
+            if (!fullName || !email || !resume) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            // In a real application, you would send this data to your server
+            const formData = {
+                jobId: job.id,
+                jobTitle: job.title,
+                company: job.company,
+                fullName: fullName,
+                email: email,
+                phone: document.getElementById('phone').value.trim(),
+                resume: document.getElementById('resume').files[0].name,
+                portfolio: document.getElementById('portfolio').value.trim(),
+                coverLetter: document.getElementById('coverLetter').value.trim(),
+                appliedDate: new Date().toISOString()
+            };
+
+            console.log('Application submitted:', formData);
+
+            // Add to applied jobs
+            if (!appliedJobs.includes(job.id)) {
+                appliedJobs.push(job.id);
+                localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
+            }
+
+            // Store application notification for client
+            const clientNotifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+            const newNotification = {
+                id: Date.now(),
+                type: 'new_application',
+                title: 'New Job Application',
+                message: `${fullName} has applied for the position "${job.title}"`,
+                time: new Date().toISOString(),
+                read: false,
+                jobId: job.id,
+                applicantInfo: {
+                    name: fullName,
+                    email: email,
+                    phone: document.getElementById('phone').value.trim(),
+                    resume: document.getElementById('resume').files[0].name,
+                    portfolio: document.getElementById('portfolio').value.trim(),
+                    coverLetter: document.getElementById('coverLetter').value.trim()
+                }
+            };
+            clientNotifications.unshift(newNotification);
+            localStorage.setItem('clientNotifications', JSON.stringify(clientNotifications));
+
+            // Show success message
+            alert('Your application has been submitted successfully!');
+
+            // Remove the application form and show the job listings again
+            document.body.removeChild(applicationFormDiv);
+            
+            // Refresh the job listings to show the applied status
+            renderJobListings();
+        });
+
+        // Back to jobs link handler
+        document.getElementById('back-to-jobs').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.body.removeChild(applicationFormDiv);
+        });
+
+        // Handle category selection from URL hash
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash;
+            if (hash) {
+                const category = hash.substring(1); // Remove the # symbol
+                const jobTitleInput = document.getElementById('job-title-input');
+                if (jobTitleInput) {
+                    // Set the search input to the category name
+                    jobTitleInput.value = category.split('-').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join(' ');
+                    
+                    // Trigger the search
+                    const searchForm = document.getElementById('job-search-form');
+                    if (searchForm) {
+                        searchForm.dispatchEvent(new Event('submit'));
+                    }
+                }
+            }
+        });
+    }
+
+    function updateSavedJobsCount() {
+        savedJobsCount.textContent = savedJobs.length;
+    }
+    </script>
+
+</body>
+
+</html>

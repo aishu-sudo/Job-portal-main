@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://js.braintreegateway.com/web/3.85.2/js/client.min.js"></script>
+    <script src="https://js.braintreegateway.com/web/3.85.2/js/hosted-fields.min.js"></script>
+    <script src="https://js.braintreegateway.com/web/3.85.2/js/paypal.min.js"></script>
+    <script src="https://js.braintreegateway.com/web/3.85.2/js/data-collector.min.js"></script>
+    <style>
+         :root {
+            --primary-color: #4361ee;
+            --primary-light: #e0e7ff;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --danger-color: #f72585;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gray-color: #6c757d;
+            --white-color: #ffffff;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .payment-container {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+        
+        .payment-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .payment-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .payment-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .payment-body {
+            padding: 1.5rem;
+        }
+        
+        .amount-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .amount-section label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-color);
+        }
+        
+        .amount-input {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .amount-input .currency {
+            position: absolute;
+            left: 12px;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+        
+        .amount-input input {
+            width: 100%;
+            padding: 0.75rem 0.75rem 0.75rem 2rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+        
+        .payment-method-selector {
+            margin-bottom: 1.5rem;
+        }
+        
+        .payment-method-selector h3 {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            color: var(--gray-color);
+        }
+        
+        .method-options {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .method-option {
+            flex: 1;
+            padding: 1rem;
+            background-color: var(--light-color);
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .method-option i {
+            font-size: 1.5rem;
+        }
+        
+        .method-option span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .method-option:hover {
+            background-color: #e9ecef;
+        }
+        
+        .method-option.active {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .payment-form {
+            display: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .payment-form.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .hosted-field {
+            height: 45px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background-color: white;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+        
+        .save-card-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .save-card-option input {
+            width: auto;
+        }
+        
+        .payment-note {
+            font-size: 0.8rem;
+            color: var(--gray-color);
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .submit-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .submit-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            margin: 1rem 0;
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .message.success {
+            background-color: rgba(76, 201, 240, 0.2);
+            color: var(--success-color);
+        }
+        
+        .message.error {
+            background-color: rgba(247, 37, 133, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .payment-security {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--gray-color);
+        }
+        
+        #paypal-button-container,
+        #venmo-button-container {
+            margin: 1rem 0;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .method-options {
+                flex-direction: column;
+            }
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="payment-container">
+            <div class="payment-header">
+                <h1><i class="fas fa-hand-holding-usd"></i> Pay for Services</h1>
+                <p>Complete your payment securely</p>
+            </div>
+
+            <div class="payment-body">
+                <div class="amount-section">
+                    <label for="payment-amount">Amount to Pay ($)</label>
+                    <div class="amount-input">
+                        <span class="currency">$</span>
+                        <input type="number" id="payment-amount" min="1" step="0.01" value="50.00" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="payment-method-selector">
+                    <h3>Select Payment Method</h3>
+                    <div class="method-options">
+                        <button class="method-option active" data-method="card">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Credit/Debit Card</span>
+                        </button>
+                        <button class="method-option" data-method="paypal">
+                            <i class="fab fa-paypal"></i>
+                            <span>PayPal</span>
+                        </button>
+                        <button class="method-option" data-method="venmo">
+                            <i class="fab fa-vimeo-v"></i>
+                            <span>Venmo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="card-payment-form" class="payment-form active">
+                    <form id="card-form">
+                        <div class="form-group">
+                            <label>Card Number</label>
+                            <div id="card-number" class="hosted-field"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Expiration Date</label>
+                                <div id="expiration-date" class="hosted-field"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>CVV</label>
+                                <div id="cvv" class="hosted-field"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Name on Card</label>
+                            <input type="text" id="card-name" placeholder="John Smith">
+                        </div>
+                        <div class="save-card-option">
+                            <input type="checkbox" id="save-card-client">
+                            <label for="save-card-client">Save card for future payments</label>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="paypal-payment-form" class="payment-form">
+                    <div id="paypal-button-container"></div>
+                    <p class="payment-note">You'll be redirected to PayPal to complete your payment</p>
+                </div>
+
+                <div id="venmo-payment-form" class="payment-form">
+                    <div id="venmo-button-container"></div>
+                    <p class="payment-note">You'll be redirected to Venmo to complete your payment</p>
+                </div>
+
+                <button id="submit-payment" class="submit-btn">
+                    <i class="fas fa-lock"></i> Pay Now
+                </button>
+
+                <div id="client-message" class="message"></div>
+
+                <div class="payment-security">
+                    <i class="fas fa-lock"></i>
+                    <span>All payments are secure and encrypted</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Payment method switching
+            const methodOptions = document.querySelectorAll('.method-option');
+            const paymentForms = document.querySelectorAll('.payment-form');
+            const submitBtn = document.getElementById('submit-payment');
+            let currentPaymentMethod = 'card';
+
+            // Initialize Braintree
+            let braintreeClient;
+            let hostedFieldsInstance;
+            let paypalInstance;
+            let venmoInstance;
+            let dataCollectorInstance;
+
+            // Replace with your actual client token from server
+            const clientToken = 'sandbox_9dbg82cq_dcpspy2brwdjr3qn';
+
+            braintree.client.create({
+                authorization: clientToken
+            }, function(clientErr, clientInstance) {
+                if (clientErr) {
+                    console.error('Error creating client:', clientErr);
+                    showMessage('Payment system error. Please try again later.', 'error');
+                    return;
+                }
+
+                braintreeClient = clientInstance;
+                setupHostedFields(clientInstance);
+                setupPayPal(clientInstance);
+                setupVenmo(clientInstance);
+                setupDataCollector(clientInstance);
+            });
+
+            // Payment method switching
+            methodOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const method = this.getAttribute('data-method');
+                    currentPaymentMethod = method;
+
+                    // Update active method option
+                    methodOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Update active payment form
+                    paymentForms.forEach(form => form.classList.remove('active'));
+                    document.getElementById(`${method}-payment-form`).classList.add('active');
+                });
+            });
+
+            // Process payment when submit button clicked
+            submitBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                processPayment();
+            });
+
+            function processPayment() {
+                const amount = document.getElementById('payment-amount').value;
+                if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+                    showMessage('Please enter a valid amount', 'error');
+                    return;
+                }
+
+                // Disable button and show loading state
+                submitBtn.disabled = true;
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+                if (currentPaymentMethod === 'card') {
+                    processCardPayment();
+                } else {
+                    // For PayPal and Venmo, just reset the button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                    showMessage(`Please use the ${currentPaymentMethod} button above to complete your payment`, 'error');
+                }
+            }
+
+            function processCardPayment() {
+                const amount = document.getElementById('payment-amount').value;
+                const cardName = document.getElementById('card-name').value;
+                const saveCard = document.getElementById('save-card-client').checked;
+
+                if (!cardName) {
+                    showMessage('Please enter the name on your card', 'error');
+                    resetSubmitButton();
+                    return;
+                }
+
+                hostedFieldsInstance.tokenize(function(tokenizeErr, payload) {
+                    if (tokenizeErr) {
+                        showMessage('Payment failed: ' + getErrorMessage(tokenizeErr), 'error');
+                        resetSubmitButton();
+                        return;
+                    }
+
+                    // Simulate processing payment
+                    setTimeout(() => {
+                        showMessage(`Payment of $${amount} processed successfully!`, 'success');
+                        resetSubmitButton();
+
+                        // Create notification for freelancer
+                        const freelancerNotifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
+                        const newNotification = {
+                            id: Date.now().toString(),
+                            type: 'payment_received',
+                            title: 'Payment Received',
+                            message: `A client has made a payment of $${amount} for your services. Please accept the payment to proceed.`,
+                            time: new Date().toISOString(),
+                            read: false,
+                            paymentData: {
+                                amount: amount,
+                                paymentId: Date.now().toString(),
+                                clientName: cardName
+                            }
+                        };
+                        freelancerNotifications.unshift(newNotification);
+                        localStorage.setItem('freelancerNotifications', JSON.stringify(freelancerNotifications));
+
+                        // Clear form
+                        document.getElementById('card-form').reset();
+                        hostedFieldsInstance.clear();
+                    }, 2000);
+                });
+            }
+
+            function resetSubmitButton() {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-lock"></i> Pay Now';
+            }
+
+            function showMessage(message, type) {
+                const messageEl = document.getElementById('client-message');
+                messageEl.textContent = message;
+                messageEl.className = 'message ' + (type || '');
+            }
+
+            function getErrorMessage(error) {
+                if (error.details && error.details.invalidFieldKeys) {
+                    return 'Please check your card details and try again';
+                }
+                return error.message;
+            }
+
+            function setupHostedFields(clientInstance) {
+                braintree.hostedFields.create({
+                    client: clientInstance,
+                    styles: {
+                        'input': {
+                            'font-size': '16px',
+                            'color': '#333',
+                            'font-family': 'Roboto, sans-serif'
+                        },
+                        '.invalid': {
+                            'color': '#dc3545'
+                        },
+                        '.valid': {
+                            'color': '#28a745'
+                        }
+                    },
+                    fields: {
+                        number: {
+                            selector: '#card-number',
+                            placeholder: '4111 1111 1111 1111'
+                        },
+                        cvv: {
+                            selector: '#cvv',
+                            placeholder: '123'
+                        },
+                        expirationDate: {
+                            selector: '#expiration-date',
+                            placeholder: 'MM/YY'
+                        }
+                    }
+                }, function(hostedFieldsErr, instance) {
+                    if (hostedFieldsErr) {
+                        console.error('Error creating hosted fields:', hostedFieldsErr);
+                        showMessage('Error setting up card payment. Please try another method.', 'error');
+                        return;
+                    }
+
+                    hostedFieldsInstance = instance;
+                });
+            }
+
+            function setupPayPal(clientInstance) {
+                braintree.paypal.create({
+                    client: clientInstance
+                }, function(paypalErr, instance) {
+                    if (paypalErr) {
+                        console.error('Error creating PayPal instance:', paypalErr);
+                        return;
+                    }
+
+                    paypalInstance = instance;
+
+                    instance.Button.render({
+                        env: 'sandbox',
+                        style: {
+                            shape: 'rect',
+                            color: 'blue',
+                            size: 'responsive',
+                            label: 'paypal'
+                        },
+                        payment: function() {
+                            return instance.createPayment({
+                                flow: 'checkout',
+                                amount: document.getElementById('payment-amount').value,
+                                currency: 'USD'
+                            });
+                        },
+                        onAuthorize: function(data) {
+                            return instance.tokenizePayment(data, function(tokenizeErr, payload) {
+                                if (tokenizeErr) {
+                                    showMessage('Payment failed: ' + tokenizeErr.message, 'error');
+                                    return;
+                                }
+
+                                showMessage(`Payment of $${document.getElementById('payment-amount').value} processed successfully via PayPal!`, 'success');
+                            });
+                        },
+                        onCancel: function(data) {
+                            showMessage('PayPal payment canceled', 'error');
+                        },
+                        onError: function(err) {
+                            showMessage('PayPal error: ' + err.message, 'error');
+                        }
+                    }, '#paypal-button-container');
+                });
+            }
+
+            function setupVenmo(clientInstance) {
+                braintree.venmo.create({
+                    client: clientInstance,
+                    allowDesktop: true,
+                    paymentMethodUsage: 'multi_use'
+                }, function(venmoErr, instance) {
+                    if (venmoErr) {
+                        console.error('Error creating Venmo instance:', venmoErr);
+                        return;
+                    }
+
+                    venmoInstance = instance;
+
+                    if (!instance.isBrowserSupported()) {
+                        document.getElementById('venmo-button-container').innerHTML =
+                            '<p class="payment-note">Venmo is not supported in this browser</p>';
+                        return;
+                    }
+
+                    instance.create({
+                        includeDisplayName: true,
+                        requireEmail: true
+                    }, function(createErr, venmoButton) {
+                        if (createErr) {
+                            console.error('Error creating Venmo button:', createErr);
+                            return;
+                        }
+
+                        venmoButton.on('payment', function(venmoData) {
+                            showMessage(`Payment of $${document.getElementById('payment-amount').value} processed successfully via Venmo!`, 'success');
+                        });
+
+                        venmoButton.on('error', function(venmoError) {
+                            showMessage('Venmo error: ' + venmoError.message, 'error');
+                        });
+
+                        venmoButton.render('#venmo-button-container');
+                    });
+                });
+            }
+
+            function setupDataCollector(clientInstance) {
+                braintree.dataCollector.create({
+                    client: clientInstance,
+                    paypal: true
+                }, function(err, instance) {
+                    if (err) {
+                        console.error('Error creating data collector:', err);
+                        return;
+                    }
+
+                    dataCollectorInstance = instance;
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

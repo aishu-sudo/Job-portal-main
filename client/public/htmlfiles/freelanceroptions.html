@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hire Freelancers - Find Skilled Professionals</title>
+    <style>
+         :root {
+            --primary-color: #29b2ff;
+            --secondary-color: #1d2939;
+            --light-gray: #f8f9fa;
+            --dark-gray: #6c757d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #fff;
+            color: var(--secondary-color);
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        .search-container {
+            flex-grow: 1;
+            margin: 0 2rem;
+            position: relative;
+        }
+        
+        .search-bar {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+        
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .search-result-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+        
+        .search-result-item:hover {
+            background-color: var(--light-gray);
+        }
+        
+        .auth-buttons button {
+            padding: 0.5rem 1rem;
+            margin-left: 0.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .login-btn {
+            background: transparent;
+            color: var(--secondary-color);
+        }
+        
+        .signup-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+            background-color: var(--light-gray);
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--dark-gray);
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+        
+        .browse-options {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .option-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option-card h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .option-card p {
+            color: var(--dark-gray);
+        }
+        
+        .popular-categories {
+            padding: 2rem 5%;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .section-title h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-title p {
+            color: var(--dark-gray);
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .category-card {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .category-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .category-card i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .popular-locations {
+            padding: 2rem 5%;
+            background-color: var(--light-gray);
+        }
+        
+        .locations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .location-item {
+            padding: 1rem;
+            background: white;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .location-item:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .freelancers-section {
+            padding: 3rem 5%;
+        }
+        
+        .filter-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            align-items: center;
+        }
+        
+        .sort-options select {
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .freelancers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .freelancer-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .freelancer-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .freelancer-img {
+            height: 200px;
+            background-color: #eee;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .freelancer-info {
+            padding: 1.5rem;
+        }
+        
+        .freelancer-info h3 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .freelancer-info .title {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .freelancer-info .location {
+            color: var(--dark-gray);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .freelancer-info .location i {
+            margin-right: 0.5rem;
+        }
+        
+        .freelancer-info .skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .skill-tag {
+            background-color: #e9f7fe;
+            color: var(--primary-color);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+        }
+        
+        .freelancer-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .rating {
+            color: #ffc107;
+        }
+        
+        .view-profile-btn,
+        .hire-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+        
+        .view-profile-btn {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        /* Profile Modal Styles */
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .close-btn {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .profile-header {
+            display: flex;
+            margin-bottom: 2rem;
+        }
+        
+        .profile-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 2rem;
+        }
+        
+        .profile-info h2 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .profile-location {
+            color: var(--dark-gray);
+            margin-bottom: 1rem;
+        }
+        
+        .profile-rating {
+            color: #ffc107;
+            margin-bottom: 1rem;
+        }
+        
+        .profile-actions {
+            margin-bottom: 2rem;
+        }
+        
+        .profile-section {
+            margin-bottom: 2rem;
+        }
+        
+        .profile-section h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .skill-item {
+            background-color: #e9f7fe;
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .search-container {
+                margin: 1rem 0;
+                width: 100%;
+            }
+            .browse-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            .freelancers-grid {
+                grid-template-columns: 1fr;
+            }
+            .profile-header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .profile-img {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <div class="logo" id="homeLogo">Braintel</div>
+        <div class="search-container">
+            <input type="text" class="search-bar" id="searchInput" placeholder="Search for freelancers or skills...">
+            <div class="search-results" id="searchResults"></div>
+        </div>
+        <div class="auth-buttons">
+            <button class="login-btn">Log In</button>
+            <button class="signup-btn">Sign Up</button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Hire Top Freelancers</h1>
+        <p>Find the perfect freelancer for your project from our global talent pool. Browse by skill or location to find the right match.</p>
+
+        <div class="browse-options">
+            <div class="option-card" id="browseBySkill">
+                <h3>By Skill</h3>
+                <p>Looking for a freelancer with a specific skill? Start here.</p>
+            </div>
+            <div class="option-card" id="browseByLocation">
+                <h3>By Location</h3>
+                <p>Search for freelancers based on their location and timezone.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="popular-categories">
+        <div class="section-title">
+            <h2>Popular Skills Categories</h2>
+            <p>Choose from our most in-demand freelance skills</p>
+        </div>
+        <div class="categories-grid" id="skillsCategories">
+            <!-- Dynamically populated by JavaScript -->
+        </div>
+    </section>
+
+    <section class="popular-locations">
+        <div class="section-title">
+            <h2>Popular Locations</h2>
+            <p>Find freelancers from around the world</p>
+        </div>
+        <div class="locations-grid" id="locationsGrid">
+            <!-- Dynamically populated by JavaScript -->
+        </div>
+    </section>
+
+    <section class="freelancers-section">
+        <div class="section-title">
+            <h2>Available Freelancers</h2>
+            <p>Browse our talented professionals ready for your projects</p>
+        </div>
+
+        <div class="filter-bar">
+            <div>
+                <span id="filterText">Showing all freelancers</span>
+            </div>
+            <div class="sort-options">
+                <select id="sortFreelancers">
+                    <option value="rating">Sort by: Highest Rating</option>
+                    <option value="newest">Sort by: Newest</option>
+                    <option value="price-high">Sort by: Price (High to Low)</option>
+                    <option value="price-low">Sort by: Price (Low to High)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="freelancers-grid" id="freelancersGrid">
+            <!-- Dynamically populated by JavaScript -->
+        </div>
+    </section>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <div id="profileContent">
+                <!-- Profile content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced sample data for freelancers with more details
+        const freelancers = [
+            // Graphic Designers
+            {
+                id: 1,
+                name: "Sophia Williams",
+                title: "Graphic Designer",
+                location: "New York, USA",
+                skills: ["Logo Design", "Branding", "Illustration", "Photoshop", "Illustrator"],
+                rating: 4.9,
+                reviews: 142,
+                rate: "$80/hr",
+                image: "https://randomuser.me/api/portraits/women/44.jpg",
+                about: "Creative graphic designer with 7 years of experience specializing in branding and visual identity. I help businesses establish a strong visual presence through thoughtful design solutions.",
+                portfolio: "sophiadesigns.com",
+                experience: [{
+                    role: "Senior Graphic Designer",
+                    company: "Creative Minds Agency",
+                    duration: "2019 - Present",
+                    description: "Lead designer for branding projects, creating visual identities for startups and established companies."
+                }, {
+                    role: "Graphic Designer",
+                    company: "Visual Impact Studio",
+                    duration: "2016 - 2019",
+                    description: "Designed marketing materials, social media graphics, and branding assets for clients."
+                }],
+                education: "B.F.A. in Graphic Design, School of Visual Arts"
+            }, {
+                id: 2,
+                name: "James Rodriguez",
+                title: "3D Artist & Illustrator",
+                location: "Los Angeles, USA",
+                skills: ["3D Modeling", "Character Design", "Blender", "Maya", "ZBrush"],
+                rating: 4.8,
+                reviews: 98,
+                rate: "$95/hr",
+                image: "https://randomuser.me/api/portraits/men/32.jpg",
+                about: "3D artist specializing in character design and environmental modeling for games and animation. Passionate about bringing imaginative concepts to life through 3D art.",
+                portfolio: "james3dart.com",
+                experience: [{
+                    role: "3D Artist",
+                    company: "GameWorld Studios",
+                    duration: "2020 - Present",
+                    description: "Create 3D characters and assets for AAA game titles."
+                }, {
+                    role: "Freelance Illustrator",
+                    company: "Self-employed",
+                    duration: "2017 - 2020",
+                    description: "Worked with various clients on book illustrations and concept art."
+                }],
+                education: "B.A. in Digital Arts, California Institute of the Arts"
+            },
+
+            // Website Designers
+            {
+                id: 3,
+                name: "Emma Chen",
+                title: "Website Designer & Developer",
+                location: "Toronto, Canada",
+                skills: ["UI/UX Design", "WordPress", "Webflow", "Figma", "HTML/CSS"],
+                rating: 4.9,
+                reviews: 156,
+                rate: "$85/hr",
+                image: "https://randomuser.me/api/portraits/women/65.jpg",
+                about: "Full-service website designer and developer creating beautiful, functional websites that drive results. I specialize in custom WordPress and Webflow solutions for businesses.",
+                portfolio: "emmacreative.com",
+                experience: [{
+                    role: "Web Design Lead",
+                    company: "Digital Solutions Inc.",
+                    duration: "2021 - Present",
+                    description: "Design and develop custom websites for enterprise clients."
+                }, {
+                    role: "UI/UX Designer",
+                    company: "WebCraft Studios",
+                    duration: "2018 - 2021",
+                    description: "Created wireframes, prototypes, and final designs for client websites."
+                }],
+                education: "B.S. in Computer Science, University of Toronto"
+            }, {
+                id: 4,
+                name: "David Kim",
+                title: "UI/UX Designer",
+                location: "Seoul, South Korea",
+                skills: ["Figma", "User Research", "Prototyping", "Wireframing", "User Testing"],
+                rating: 4.8,
+                reviews: 112,
+                rate: "$75/hr",
+                image: "https://randomuser.me/api/portraits/men/75.jpg",
+                about: "User experience designer focused on creating intuitive and delightful digital products. I combine user research with beautiful design to solve real problems effectively.",
+                portfolio: "davidkimux.com",
+                experience: [{
+                    role: "UX Lead",
+                    company: "Digital Experience Co.",
+                    duration: "2021 - Present",
+                    description: "Lead UX design for all company products and services."
+                }, {
+                    role: "UI Designer",
+                    company: "Web Interactions",
+                    duration: "2018 - 2021",
+                    description: "Designed interfaces for web and mobile applications."
+                }],
+                education: "B.Des in Interaction Design, Seoul National University"
+            },
+
+            // Mobile App Developers
+            {
+                id: 5,
+                name: "Michael Johnson",
+                title: "Mobile App Developer",
+                location: "London, UK",
+                skills: ["Flutter", "Dart", "Firebase", "Android", "iOS"],
+                rating: 4.7,
+                reviews: 89,
+                rate: "$90/hr",
+                image: "https://randomuser.me/api/portraits/men/88.jpg",
+                about: "Cross-platform mobile developer with expertise in Flutter framework. I create beautiful, performant apps that work seamlessly across iOS and Android platforms.",
+                portfolio: "michaelappdev.com",
+                experience: [{
+                    role: "Mobile Developer",
+                    company: "AppWorks",
+                    duration: "2020 - Present",
+                    description: "Develop and maintain Flutter applications for various clients."
+                }, {
+                    role: "Junior Developer",
+                    company: "Mobile First",
+                    duration: "2018 - 2020",
+                    description: "Assisted in developing native Android applications."
+                }],
+                education: "M.Sc. in Computer Science, Imperial College London"
+            }, {
+                id: 6,
+                name: "Priya Patel",
+                title: "iOS Developer",
+                location: "Mumbai, India",
+                skills: ["Swift", "UIKit", "Core Data", "Firebase", "Xcode"],
+                rating: 4.6,
+                reviews: 76,
+                rate: "$50/hr",
+                image: "https://randomuser.me/api/portraits/women/22.jpg",
+                about: "iOS developer with 5 years of experience building native applications for iPhone and iPad. I specialize in creating polished, high-performance apps with clean code.",
+                portfolio: "priyaiosdev.com",
+                experience: [{
+                    role: "Senior iOS Developer",
+                    company: "AppFactory",
+                    duration: "2021 - Present",
+                    description: "Lead developer for several successful iOS apps in the App Store."
+                }, {
+                    role: "iOS Developer",
+                    company: "TechSolutions India",
+                    duration: "2018 - 2021",
+                    description: "Developed and maintained iOS applications for clients."
+                }],
+                education: "B.E. in Computer Engineering, Mumbai University"
+            },
+
+            // Software Developers
+            {
+                id: 7,
+                name: "John Smith",
+                title: "Full-stack Developer",
+                location: "San Francisco, USA",
+                skills: ["React", "Node.js", "MongoDB", "JavaScript", "TypeScript"],
+                rating: 4.9,
+                reviews: 128,
+                rate: "$110/hr",
+                image: "https://randomuser.me/api/portraits/men/1.jpg",
+                about: "Full-stack developer with 6+ years of experience building scalable web applications. I specialize in JavaScript technologies across the entire stack with a focus on performance and clean architecture.",
+                portfolio: "johncodes.com",
+                experience: [{
+                    role: "Senior Developer",
+                    company: "Tech Solutions Inc.",
+                    duration: "2020 - Present",
+                    description: "Leading a team of developers to build enterprise web applications."
+                }, {
+                    role: "Web Developer",
+                    company: "Digital Creations",
+                    duration: "2017 - 2020",
+                    description: "Developed and maintained client websites and web applications."
+                }],
+                education: "B.S. in Computer Science, Stanford University"
+            }, {
+                id: 8,
+                name: "Lisa Wong",
+                title: "Python Developer",
+                location: "Beijing, China",
+                skills: ["Python", "Django", "Flask", "Data Analysis", "Machine Learning"],
+                rating: 4.7,
+                reviews: 92,
+                rate: "$65/hr",
+                image: "https://randomuser.me/api/portraits/women/33.jpg",
+                about: "Python developer specializing in backend systems and data processing. I build robust APIs and data pipelines to power modern web applications and data-driven solutions.",
+                portfolio: "lisapython.dev",
+                experience: [{
+                    role: "Backend Developer",
+                    company: "DataSystems China",
+                    duration: "2019 - Present",
+                    description: "Develop and maintain Python backend services and APIs."
+                }, {
+                    role: "Data Analyst",
+                    company: "TechAnalytics",
+                    duration: "2017 - 2019",
+                    description: "Performed data analysis and built reporting tools using Python."
+                }],
+                education: "B.S. in Software Engineering, Tsinghua University"
+            },
+
+            // Additional freelancers from different locations
+            {
+                id: 9,
+                name: "Ahmed Khan",
+                title: "Web Developer",
+                location: "Karachi, Pakistan",
+                skills: ["PHP", "Laravel", "MySQL", "JavaScript", "Vue.js"],
+                rating: 4.5,
+                reviews: 68,
+                rate: "$35/hr",
+                image: "https://randomuser.me/api/portraits/men/55.jpg",
+                about: "Web developer with expertise in PHP and Laravel framework. I build custom web applications and e-commerce solutions for businesses of all sizes.",
+                portfolio: "ahmedwebdev.com",
+                experience: [{
+                    role: "Laravel Developer",
+                    company: "WebSolutions PK",
+                    duration: "2020 - Present",
+                    description: "Develop and maintain Laravel applications for various clients."
+                }, {
+                    role: "PHP Developer",
+                    company: "Digital Creations PK",
+                    duration: "2018 - 2020",
+                    description: "Built custom PHP applications and websites."
+                }],
+                education: "B.S. in Computer Science, University of Karachi"
+            }, {
+                id: 10,
+                name: "Maria Garcia",
+                title: "Illustrator",
+                location: "Madrid, Spain",
+                skills: ["Digital Illustration", "Character Design", "Procreate", "Adobe Fresco", "Children's Books"],
+                rating: 4.8,
+                reviews: 87,
+                rate: "$60/hr",
+                image: "https://randomuser.me/api/portraits/women/77.jpg",
+                about: "Professional illustrator specializing in children's books and character design. My work combines traditional drawing techniques with digital tools to create whimsical, engaging illustrations.",
+                portfolio: "mariadraws.com",
+                experience: [{
+                    role: "Freelance Illustrator",
+                    company: "Self-employed",
+                    duration: "2018 - Present",
+                    description: "Create illustrations for children's books, magazines, and advertising."
+                }, {
+                    role: "Graphic Designer",
+                    company: "Creative Studio Madrid",
+                    duration: "2015 - 2018",
+                    description: "Created illustrations and designs for various clients."
+                }],
+                education: "B.A. in Fine Arts, Complutense University of Madrid"
+            }, {
+                id: 11,
+                name: "Raj Patel",
+                title: "Android Developer",
+                location: "Bangalore, India",
+                skills: ["Kotlin", "Java", "Android SDK", "Firebase", "Jetpack Compose"],
+                rating: 4.7,
+                reviews: 79,
+                rate: "$45/hr",
+                image: "https://randomuser.me/api/portraits/men/66.jpg",
+                about: "Android developer with 4 years of experience building native mobile applications. I specialize in creating polished, user-friendly apps with modern Android technologies.",
+                portfolio: "rajandroid.dev",
+                experience: [{
+                    role: "Android Developer",
+                    company: "MobileTech India",
+                    duration: "2020 - Present",
+                    description: "Develop and maintain Android applications for various clients."
+                }, {
+                    role: "Junior Android Developer",
+                    company: "AppWorks India",
+                    duration: "2018 - 2020",
+                    description: "Assisted in developing and testing Android applications."
+                }],
+                education: "B.Tech in Computer Science, Indian Institute of Technology"
+            }, {
+                id: 12,
+                name: "Olivia Brown",
+                title: "Graphic Designer",
+                location: "Sydney, Australia",
+                skills: ["Branding", "Packaging Design", "Adobe Creative Suite", "Typography", "Print Design"],
+                rating: 4.8,
+                reviews: 104,
+                rate: "$70/hr",
+                image: "https://randomuser.me/api/portraits/women/88.jpg",
+                about: "Graphic designer specializing in branding and packaging design. I help businesses create memorable visual identities that stand out in competitive markets.",
+                portfolio: "oliviacreative.com",
+                experience: [{
+                    role: "Senior Designer",
+                    company: "BrandWorks Australia",
+                    duration: "2019 - Present",
+                    description: "Lead designer for branding and packaging projects."
+                }, {
+                    role: "Graphic Designer",
+                    company: "DesignHub Sydney",
+                    duration: "2016 - 2019",
+                    description: "Created visual designs for various clients across industries."
+                }],
+                education: "B.Des in Visual Communication, University of Sydney"
+            },
+
+            // Additional freelancers with diverse skills
+            {
+                id: 13,
+                name: "Sarah Chen",
+                title: "Data Scientist",
+                location: "Singapore",
+                skills: ["Python", "Machine Learning", "Data Analysis", "TensorFlow", "SQL", "Deep Learning"],
+                rating: 4.9,
+                reviews: 95,
+                rate: "$120/hr",
+                image: "https://randomuser.me/api/portraits/women/45.jpg",
+                about: "Data scientist specializing in machine learning and deep learning applications. I help businesses leverage their data to make informed decisions and build predictive models.",
+                portfolio: "sarahdata.ai",
+                experience: [{
+                    role: "Senior Data Scientist",
+                    company: "AI Solutions Singapore",
+                    duration: "2021 - Present",
+                    description: "Lead data science projects and develop ML models for enterprise clients."
+                }, {
+                    role: "Data Analyst",
+                    company: "Tech Analytics SG",
+                    duration: "2019 - 2021",
+                    description: "Performed data analysis and built predictive models for business insights."
+                }],
+                education: "M.Sc. in Data Science, National University of Singapore"
+            }, {
+                id: 14,
+                name: "Carlos Rodriguez",
+                title: "DevOps Engineer",
+                location: "Mexico City, Mexico",
+                skills: ["AWS", "Docker", "Kubernetes", "CI/CD", "Terraform", "Linux"],
+                rating: 4.8,
+                reviews: 82,
+                rate: "$85/hr",
+                image: "https://randomuser.me/api/portraits/men/42.jpg",
+                about: "DevOps engineer with expertise in cloud infrastructure and automation. I help organizations streamline their development and deployment processes.",
+                portfolio: "carlosdevops.com",
+                experience: [{
+                    role: "DevOps Lead",
+                    company: "Cloud Solutions MX",
+                    duration: "2020 - Present",
+                    description: "Lead DevOps initiatives and manage cloud infrastructure for multiple clients."
+                }, {
+                    role: "System Administrator",
+                    company: "TechOps Mexico",
+                    duration: "2018 - 2020",
+                    description: "Managed server infrastructure and implemented automation solutions."
+                }],
+                education: "B.S. in Computer Engineering, Universidad Nacional Autónoma de México"
+            }, {
+                id: 15,
+                name: "Aisha Khan",
+                title: "Blockchain Developer",
+                location: "Dubai, UAE",
+                skills: ["Solidity", "Ethereum", "Smart Contracts", "Web3.js", "DApps", "DeFi"],
+                rating: 4.7,
+                reviews: 68,
+                rate: "$95/hr",
+                image: "https://randomuser.me/api/portraits/women/67.jpg",
+                about: "Blockchain developer specializing in smart contracts and decentralized applications. I help businesses integrate blockchain technology into their operations.",
+                portfolio: "aishablockchain.dev",
+                experience: [{
+                    role: "Senior Blockchain Developer",
+                    company: "Crypto Solutions UAE",
+                    duration: "2021 - Present",
+                    description: "Develop smart contracts and DApps for various blockchain projects."
+                }, {
+                    role: "Blockchain Developer",
+                    company: "Digital Assets Dubai",
+                    duration: "2019 - 2021",
+                    description: "Built and deployed smart contracts for DeFi applications."
+                }],
+                education: "M.Sc. in Computer Science, American University of Dubai"
+            }, {
+                id: 16,
+                name: "Yuki Tanaka",
+                title: "Game Developer",
+                location: "Tokyo, Japan",
+                skills: ["Unity", "C#", "3D Modeling", "Game Design", "VR/AR", "Unreal Engine"],
+                rating: 4.9,
+                reviews: 112,
+                rate: "$90/hr",
+                image: "https://randomuser.me/api/portraits/men/89.jpg",
+                about: "Game developer with expertise in Unity and Unreal Engine. I create immersive gaming experiences across multiple platforms.",
+                portfolio: "yukigames.jp",
+                experience: [{
+                    role: "Lead Game Developer",
+                    company: "GameWorks Japan",
+                    duration: "2020 - Present",
+                    description: "Lead development of mobile and console games using Unity and Unreal Engine."
+                }, {
+                    role: "Game Developer",
+                    company: "Digital Entertainment Tokyo",
+                    duration: "2018 - 2020",
+                    description: "Developed mobile games and VR experiences."
+                }],
+                education: "B.S. in Game Development, Tokyo University of Technology"
+            }, {
+                id: 17,
+                name: "Maria Silva",
+                title: "Cybersecurity Expert",
+                location: "São Paulo, Brazil",
+                skills: ["Penetration Testing", "Network Security", "Ethical Hacking", "Security Auditing", "Incident Response"],
+                rating: 4.8,
+                reviews: 76,
+                rate: "$110/hr",
+                image: "https://randomuser.me/api/portraits/women/56.jpg",
+                about: "Cybersecurity expert specializing in penetration testing and security auditing. I help organizations protect their digital assets and maintain compliance.",
+                portfolio: "mariasecurity.com.br",
+                experience: [{
+                    role: "Senior Security Consultant",
+                    company: "SecureTech Brazil",
+                    duration: "2021 - Present",
+                    description: "Lead security assessments and penetration testing for enterprise clients."
+                }, {
+                    role: "Security Analyst",
+                    company: "CyberDefense BR",
+                    duration: "2019 - 2021",
+                    description: "Performed security audits and incident response."
+                }],
+                education: "M.Sc. in Cybersecurity, University of São Paulo"
+            }, {
+                id: 18,
+                name: "James Wilson",
+                title: "Cloud Architect",
+                location: "Toronto, Canada",
+                skills: ["AWS", "Azure", "GCP", "Cloud Architecture", "Microservices", "Serverless"],
+                rating: 4.9,
+                reviews: 98,
+                rate: "$130/hr",
+                image: "https://randomuser.me/api/portraits/men/23.jpg",
+                about: "Cloud architect with extensive experience in designing and implementing scalable cloud solutions. I help organizations migrate to and optimize their cloud infrastructure.",
+                portfolio: "jamescloud.ca",
+                experience: [{
+                    role: "Principal Cloud Architect",
+                    company: "Cloud Solutions Canada",
+                    duration: "2020 - Present",
+                    description: "Design and implement cloud architectures for enterprise clients."
+                }, {
+                    role: "Cloud Engineer",
+                    company: "TechCloud Toronto",
+                    duration: "2018 - 2020",
+                    description: "Managed cloud infrastructure and implemented cloud solutions."
+                }],
+                education: "M.Sc. in Computer Science, University of Toronto"
+            },
+            // Additional freelancers with diverse skills
+            {
+                id: 19,
+                name: "Alex Thompson",
+                title: "AI/ML Engineer",
+                location: "London, UK",
+                skills: ["TensorFlow", "PyTorch", "Natural Language Processing", "Computer Vision", "Deep Learning", "Python"],
+                rating: 4.9,
+                reviews: 105,
+                rate: "$125/hr",
+                image: "https://randomuser.me/api/portraits/men/34.jpg",
+                about: "AI/ML engineer specializing in deep learning and neural networks. I help businesses implement cutting-edge AI solutions for various applications.",
+                portfolio: "alexai.tech",
+                experience: [{
+                    role: "Senior AI Engineer",
+                    company: "AI Innovations UK",
+                    duration: "2021 - Present",
+                    description: "Lead AI projects and develop custom ML models for enterprise clients."
+                }, {
+                    role: "ML Engineer",
+                    company: "TechAI London",
+                    duration: "2019 - 2021",
+                    description: "Developed and deployed machine learning models for various applications."
+                }],
+                education: "Ph.D. in Machine Learning, Imperial College London"
+            }, {
+                id: 20,
+                name: "Sophie Martin",
+                title: "Digital Marketing Expert",
+                location: "Paris, France",
+                skills: ["SEO", "Social Media Marketing", "Content Strategy", "Google Analytics", "PPC", "Email Marketing"],
+                rating: 4.8,
+                reviews: 92,
+                rate: "$75/hr",
+                image: "https://randomuser.me/api/portraits/women/28.jpg",
+                about: "Digital marketing expert with a focus on data-driven strategies. I help businesses grow their online presence and achieve their marketing goals.",
+                portfolio: "sophiemarketing.fr",
+                experience: [{
+                    role: "Digital Marketing Director",
+                    company: "Marketing Solutions Paris",
+                    duration: "2020 - Present",
+                    description: "Lead digital marketing strategies for various clients across industries."
+                }, {
+                    role: "Marketing Consultant",
+                    company: "Digital Growth France",
+                    duration: "2018 - 2020",
+                    description: "Developed and implemented marketing campaigns for clients."
+                }],
+                education: "M.B.A. in Digital Marketing, HEC Paris"
+            }, {
+                id: 21,
+                name: "Rajesh Kumar",
+                title: "Full Stack Developer",
+                location: "Bangalore, India",
+                skills: ["React", "Node.js", "MongoDB", "AWS", "TypeScript", "GraphQL"],
+                rating: 4.7,
+                reviews: 88,
+                rate: "$45/hr",
+                image: "https://randomuser.me/api/portraits/men/67.jpg",
+                about: "Full stack developer with expertise in modern web technologies. I build scalable and performant web applications using the latest frameworks and tools.",
+                portfolio: "rajeshdev.in",
+                experience: [{
+                    role: "Senior Full Stack Developer",
+                    company: "Tech Solutions India",
+                    duration: "2021 - Present",
+                    description: "Lead development of enterprise web applications."
+                }, {
+                    role: "Web Developer",
+                    company: "Digital Creations Bangalore",
+                    duration: "2019 - 2021",
+                    description: "Developed and maintained web applications for various clients."
+                }],
+                education: "B.Tech in Computer Science, Indian Institute of Technology"
+            }, {
+                id: 22,
+                name: "Emma Wilson",
+                title: "UX/UI Designer",
+                location: "Melbourne, Australia",
+                skills: ["Figma", "User Research", "Wireframing", "Prototyping", "Design Systems", "User Testing"],
+                rating: 4.9,
+                reviews: 95,
+                rate: "$85/hr",
+                image: "https://randomuser.me/api/portraits/women/42.jpg",
+                about: "UX/UI designer focused on creating intuitive and engaging user experiences. I combine user research with beautiful design to solve complex problems.",
+                portfolio: "emmadesign.au",
+                experience: [{
+                    role: "Lead UX Designer",
+                    company: "Design Studio Melbourne",
+                    duration: "2020 - Present",
+                    description: "Lead UX design for various digital products and services."
+                }, {
+                    role: "UI Designer",
+                    company: "Creative Solutions Australia",
+                    duration: "2018 - 2020",
+                    description: "Designed interfaces for web and mobile applications."
+                }],
+                education: "B.Des in Interaction Design, University of Melbourne"
+            }, {
+                id: 23,
+                name: "Mohammed Ali",
+                title: "Mobile App Developer",
+                location: "Cairo, Egypt",
+                skills: ["Flutter", "React Native", "iOS", "Android", "Firebase", "Mobile UI/UX"],
+                rating: 4.8,
+                reviews: 82,
+                rate: "$55/hr",
+                image: "https://randomuser.me/api/portraits/men/45.jpg",
+                about: "Mobile app developer specializing in cross-platform development. I create beautiful and performant mobile applications for iOS and Android.",
+                portfolio: "mohammedapps.eg",
+                experience: [{
+                    role: "Senior Mobile Developer",
+                    company: "App Solutions Egypt",
+                    duration: "2021 - Present",
+                    description: "Lead development of mobile applications for various clients."
+                }, {
+                    role: "Mobile Developer",
+                    company: "Tech Mobile Cairo",
+                    duration: "2019 - 2021",
+                    description: "Developed and maintained mobile applications."
+                }],
+                education: "B.Sc. in Computer Science, Cairo University"
+            }, {
+                id: 24,
+                name: "Lina Chen",
+                title: "Data Engineer",
+                location: "Shanghai, China",
+                skills: ["Apache Spark", "Hadoop", "Python", "SQL", "ETL", "Data Warehousing"],
+                rating: 4.7,
+                reviews: 78,
+                rate: "$65/hr",
+                image: "https://randomuser.me/api/portraits/women/55.jpg",
+                about: "Data engineer specializing in big data processing and ETL pipelines. I help organizations build robust data infrastructure and analytics solutions.",
+                portfolio: "linadata.cn",
+                experience: [{
+                    role: "Senior Data Engineer",
+                    company: "Data Solutions China",
+                    duration: "2020 - Present",
+                    description: "Design and implement data pipelines and warehousing solutions."
+                }, {
+                    role: "Data Analyst",
+                    company: "Tech Analytics Shanghai",
+                    duration: "2018 - 2020",
+                    description: "Developed data processing pipelines and analytics solutions."
+                }],
+                education: "M.Sc. in Data Engineering, Shanghai Jiao Tong University"
+            },
+            // Adding freelancers from index.html
+            {
+                id: 25,
+                name: "David Chen",
+                title: "Web Developer",
+                location: "San Francisco, USA",
+                skills: ["Web Development", "React.js", "JavaScript", "HTML/CSS", "Node.js"],
+                rating: 4.9,
+                reviews: 120,
+                rate: "$85/hr",
+                image: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=600",
+                about: "Experienced web developer specializing in React.js and modern web technologies. I create responsive and performant web applications.",
+                portfolio: "davidchen.dev",
+                experience: [{
+                    role: "Senior Web Developer",
+                    company: "Tech Solutions Inc",
+                    duration: "2020 - Present",
+                    description: "Lead development of web applications using React.js and modern technologies."
+                }],
+                education: "B.S. in Computer Science, Stanford University"
+            }, {
+                id: 26,
+                name: "Sophia Martinez",
+                title: "Graphic Designer",
+                location: "New York, USA",
+                skills: ["Graphic Design", "Photoshop", "Illustrator", "Branding", "UI Design"],
+                rating: 4.8,
+                reviews: 95,
+                rate: "$75/hr",
+                image: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=600",
+                about: "Creative graphic designer with expertise in branding and visual design. I help businesses create compelling visual identities.",
+                portfolio: "sophiadesigns.com",
+                experience: [{
+                    role: "Senior Graphic Designer",
+                    company: "Creative Studio NY",
+                    duration: "2019 - Present",
+                    description: "Lead designer for branding and visual design projects."
+                }],
+                education: "B.F.A. in Graphic Design, Parsons School of Design"
+            }, {
+                id: 27,
+                name: "Raj Patel",
+                title: "SEO Specialist",
+                location: "Mumbai, India",
+                skills: ["SEO", "Marketing", "Content Strategy", "Analytics", "Digital Marketing"],
+                rating: 4.7,
+                reviews: 85,
+                rate: "$45/hr",
+                image: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=600",
+                about: "SEO specialist helping businesses improve their online visibility and search rankings through strategic optimization.",
+                portfolio: "rajseo.in",
+                experience: [{
+                    role: "Senior SEO Consultant",
+                    company: "Digital Marketing Solutions",
+                    duration: "2020 - Present",
+                    description: "Lead SEO strategies for various clients across industries."
+                }],
+                education: "M.B.A. in Digital Marketing, Mumbai University"
+            }, {
+                id: 28,
+                name: "Ayesha Khan",
+                title: "UX/UI Designer",
+                location: "Dubai, UAE",
+                skills: ["UX/UI Design", "Figma", "User Research", "Prototyping", "Design Systems"],
+                rating: 4.95,
+                reviews: 110,
+                rate: "$80/hr",
+                image: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=600",
+                about: "UX/UI designer focused on creating intuitive and engaging user experiences. I combine user research with beautiful design.",
+                portfolio: "ayeshadesign.ae",
+                experience: [{
+                    role: "Lead UX Designer",
+                    company: "Design Studio Dubai",
+                    duration: "2021 - Present",
+                    description: "Lead UX design for various digital products and services."
+                }],
+                education: "B.Des in Interaction Design, Dubai Design Institute"
+            }, {
+                id: 29,
+                name: "Marcus Johnson",
+                title: "Mobile App Developer",
+                location: "London, UK",
+                skills: ["Mobile App Development", "Flutter", "iOS", "Android", "Cross-platform Development"],
+                rating: 4.85,
+                reviews: 98,
+                rate: "$90/hr",
+                image: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=600",
+                about: "Mobile app developer specializing in cross-platform development using Flutter. I create beautiful and performant mobile applications.",
+                portfolio: "marcusapps.co.uk",
+                experience: [{
+                    role: "Senior Mobile Developer",
+                    company: "App Solutions UK",
+                    duration: "2020 - Present",
+                    description: "Lead development of mobile applications for various clients."
+                }],
+                education: "B.Sc. in Computer Science, University of London"
+            }, {
+                id: 30,
+                name: "Yuki Tanaka",
+                title: "Data Analyst",
+                location: "Tokyo, Japan",
+                skills: ["Data Analysis", "Python", "SQL", "Machine Learning", "Data Visualization"],
+                rating: 4.1,
+                reviews: 65,
+                rate: "$70/hr",
+                image: "https://images.pexels.com/photos/1181685/pexels-photo-1181685.jpeg?auto=compress&cs=tinysrgb&w=600",
+                about: "Data analyst specializing in data processing and visualization. I help businesses make data-driven decisions.",
+                portfolio: "yukidata.jp",
+                experience: [{
+                    role: "Senior Data Analyst",
+                    company: "Data Solutions Japan",
+                    duration: "2021 - Present",
+                    description: "Lead data analysis projects and develop insights for clients."
+                }],
+                education: "M.Sc. in Data Science, University of Tokyo"
+            }, {
+                id: 31,
+                name: "Lisa Anderson",
+                title: "Software Engineer",
+                location: "Boston, USA",
+                skills: ["Reverse Engineering", "Python", "Software Development", "System Architecture", "Debugging"],
+                rating: 4.90,
+                reviews: 105,
+                rate: "$95/hr",
+                image: "https://images.pexels.com/photos/1181687/pexels-photo-1181687.jpeg?auto=compress&cs=tinysrgb&w=600",
+                about: "Software engineer with expertise in reverse engineering and system architecture. I help businesses optimize their software systems.",
+                portfolio: "lisaengineering.com",
+                experience: [{
+                    role: "Senior Software Engineer",
+                    company: "Tech Solutions Boston",
+                    duration: "2020 - Present",
+                    description: "Lead software development and system optimization projects."
+                }],
+                education: "M.S. in Computer Science, MIT"
+            }, {
+                id: 32,
+                name: "Omar Hassan",
+                title: "Marketing Specialist",
+                location: "Cairo, Egypt",
+                skills: ["Marketing", "MySQL", "Digital Marketing", "Analytics", "Strategy"],
+                rating: 4.62,
+                reviews: 78,
+                rate: "$55/hr",
+                image: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=600",
+                about: "Marketing specialist with expertise in digital marketing and analytics. I help businesses grow their online presence.",
+                portfolio: "omarhassan.eg",
+                experience: [{
+                    role: "Senior Marketing Consultant",
+                    company: "Digital Marketing Egypt",
+                    duration: "2021 - Present",
+                    description: "Lead marketing strategies and campaigns for various clients."
+                }],
+                education: "M.B.A. in Marketing, Cairo University"
+            }
+        ];
+
+        // Sample data for skills categories
+        const skillsCategories = [{
+            name: "Graphic Designers",
+            icon: "fas fa-paint-brush"
+        }, {
+            name: "Website Designers",
+            icon: "fas fa-laptop-code"
+        }, {
+            name: "Mobile App Developers",
+            icon: "fas fa-mobile-alt"
+        }, {
+            name: "Software Developers",
+            icon: "fas fa-code"
+        }, {
+            name: "3D Artists",
+            icon: "fas fa-cube"
+        }, {
+            name: "Illustration",
+            icon: "fas fa-pencil-alt"
+        }];
+
+        // Sample data for locations
+        const locations = [
+            "United States", "United Kingdom", "Canada",
+            "India", "Australia", "Pakistan",
+            "Bangladesh", "Indonesia", "Brazil",
+            "China", "Turkey", "Philippines"
+        ];
+
+        // DOM elements
+        const skillsCategoriesEl = document.getElementById('skillsCategories');
+        const locationsGridEl = document.getElementById('locationsGrid');
+        const freelancersGridEl = document.getElementById('freelancersGrid');
+        const filterTextEl = document.getElementById('filterText');
+        const sortFreelancersEl = document.getElementById('sortFreelancers');
+        const browseBySkillEl = document.getElementById('browseBySkill');
+        const browseByLocationEl = document.getElementById('browseByLocation');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const profileModal = document.getElementById('profileModal');
+        const closeModal = document.getElementById('closeModal');
+        const profileContent = document.getElementById('profileContent');
+        const homeLogo = document.getElementById('homeLogo');
+
+        // Current filter state
+        let currentFilter = {
+            skill: null,
+            location: null
+        };
+
+        // Initialize the page
+        function initPage() {
+            // Add a flag to check if coming from index
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromIndex = urlParams.get('from') === 'index';
+
+            renderSkillsCategories();
+            renderLocations();
+            renderFreelancers(fromIndex);
+
+            // Set up event listeners
+            sortFreelancersEl.addEventListener('change', handleSortChange);
+            browseBySkillEl.addEventListener('click', () => {
+                document.querySelector('.popular-categories').scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+            browseByLocationEl.addEventListener('click', () => {
+                document.querySelector('.popular-locations').scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+
+            // Search functionality
+            searchInput.addEventListener('input', handleSearch);
+            searchInput.addEventListener('focus', () => {
+                if (searchInput.value.trim() !== '') {
+                    searchResults.style.display = 'block';
+                }
+            });
+            document.addEventListener('click', (e) => {
+                if (e.target !== searchInput) {
+                    searchResults.style.display = 'none';
+                }
+            });
+
+            // Modal functionality
+            closeModal.addEventListener('click', () => {
+                profileModal.style.display = 'none';
+            });
+
+            // Home logo click
+            homeLogo.addEventListener('click', () => {
+                currentFilter.skill = null;
+                currentFilter.location = null;
+                updateFilterText();
+                renderFreelancers(fromIndex);
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+
+                // Reset category and location highlights
+                document.querySelectorAll('.category-card').forEach(c => {
+                    c.style.borderColor = '#eee';
+                });
+                document.querySelectorAll('.location-item').forEach(l => {
+                    l.style.backgroundColor = 'white';
+                    l.style.color = 'inherit';
+                });
+            });
+        }
+
+        // Render skills categories
+        function renderSkillsCategories() {
+            skillsCategoriesEl.innerHTML = skillsCategories.map(category => `
+                <div class="category-card" data-skill="${category.name}">
+                    <i class="${category.icon}"></i>
+                    <h3>${category.name}</h3>
+                </div>
+            `).join('');
+
+            // Add click event to category cards
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const skill = this.getAttribute('data-skill');
+                    currentFilter.skill = skill;
+                    currentFilter.location = null;
+                    updateFilterText();
+                    renderFreelancers();
+
+                    // Highlight selected category
+                    document.querySelectorAll('.category-card').forEach(c => {
+                        c.style.borderColor = '#eee';
+                    });
+                    this.style.borderColor = 'var(--primary-color)';
+
+                    // Scroll to freelancers section
+                    document.querySelector('.freelancers-section').scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        }
+
+        // Render locations
+        function renderLocations() {
+            locationsGridEl.innerHTML = locations.map(location => `
+                <div class="location-item" data-location="${location}">${location}</div>
+            `).join('');
+
+            // Add click event to location items
+            document.querySelectorAll('.location-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const location = this.getAttribute('data-location');
+                    currentFilter.location = location;
+                    currentFilter.skill = null;
+                    updateFilterText();
+                    renderFreelancers();
+
+                    // Highlight selected location
+                    document.querySelectorAll('.location-item').forEach(l => {
+                        l.style.backgroundColor = 'white';
+                        l.style.color = 'inherit';
+                    });
+                    this.style.backgroundColor = 'var(--primary-color)';
+                    this.style.color = 'white';
+
+                    // Scroll to freelancers section
+                    document.querySelector('.freelancers-section').scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        }
+
+        // Render freelancers based on current filter
+        function renderFreelancers(fromIndex = false) {
+            let filteredFreelancers = [...freelancers];
+
+            if (currentFilter.skill) {
+                filteredFreelancers = filteredFreelancers.filter(freelancer =>
+                    freelancer.skills.some(skill =>
+                        skill.toLowerCase().includes(currentFilter.skill.toLowerCase())) ||
+                    freelancer.title.toLowerCase().includes(currentFilter.skill.toLowerCase())
+                );
+            }
+
+            if (currentFilter.location) {
+                filteredFreelancers = filteredFreelancers.filter(freelancer =>
+                    freelancer.location.toLowerCase().includes(currentFilter.location.toLowerCase())
+                );
+            }
+
+            // Sort freelancers based on selected option
+            const sortOption = sortFreelancersEl.value;
+            switch (sortOption) {
+                case 'rating':
+                    filteredFreelancers.sort((a, b) => b.rating - a.rating);
+                    break;
+                case 'newest':
+                    filteredFreelancers.sort((a, b) => b.id - a.id);
+                    break;
+                case 'price-high':
+                    filteredFreelancers.sort((a, b) =>
+                        parseFloat(b.rate.replace('$', '')) - parseFloat(a.rate.replace('$', ''))
+                    );
+                    break;
+                case 'price-low':
+                    filteredFreelancers.sort((a, b) =>
+                        parseFloat(a.rate.replace('$', '')) - parseFloat(b.rate.replace('$', ''))
+                    );
+                    break;
+            }
+
+            if (filteredFreelancers.length === 0) {
+                freelancersGridEl.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                        <h3>No freelancers found matching your criteria</h3>
+                        <p>Try adjusting your filters or search for a different skill/location</p>
+                    </div>
+                `;
+                return;
+            }
+
+            freelancersGridEl.innerHTML = filteredFreelancers.map(freelancer => `
+                <div class="freelancer-card" data-id="${freelancer.id}">
+                    <div class="freelancer-img" style="background-image: url('${freelancer.image}')"></div>
+                    <div class="freelancer-info">
+                        <h3>${freelancer.name}</h3>
+                        <p class="title">${freelancer.title}</p>
+                        <p class="location"><i class="fas fa-map-marker-alt"></i> ${freelancer.location}</p>
+                        <div class="skills">
+                            ${freelancer.skills.slice(0, 4).map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+                            ${freelancer.skills.length > 4 ? `<span class="skill-tag">+${freelancer.skills.length - 4}</span>` : ''}
+                        </div>
+                        <div class="freelancer-footer">
+                            <div class="rating">
+                                ${'<i class="fas fa-star"></i>'.repeat(Math.floor(freelancer.rating))}
+                                ${freelancer.rating % 1 >= 0.5 ? '<i class="fas fa-star-half-alt"></i>' : ''}
+                                <span>${freelancer.rating} (${freelancer.reviews})</span>
+                            </div>
+                            <div>
+                                <button class="view-profile-btn" data-id="${freelancer.id}">Profile</button>
+                                <button class="hire-btn" data-from-index="${fromIndex}">Hire</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add click event to profile buttons
+            document.querySelectorAll('.view-profile-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const freelancerId = parseInt(e.target.getAttribute('data-id'));
+                    showFreelancerProfile(freelancerId, fromIndex);
+                });
+            });
+            
+            // Add click event to hire buttons
+            document.querySelectorAll('.hire-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const fromIndex = this.getAttribute('data-from-index') === 'true';
+                    if (fromIndex) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
+                    if (!this.classList.contains('hired')) {
+                        this.textContent = 'Hired';
+                        this.classList.add('hired');
+                        this.style.backgroundColor = '#28a745';
+                        this.style.cursor = 'default';
+                        this.disabled = true;
+                    }
+                });
+            });
+        }
+        
+        // Show freelancer profile in modal
+        function showFreelancerProfile(id, fromIndex = false) {
+            const freelancer = freelancers.find(f => f.id === id);
+            if (!freelancer) return;
+            
+            profileContent.innerHTML = `
+                <div class="profile-header">
+                    <img src="${freelancer.image}" alt="${freelancer.name}" class="profile-img">
+                    <div class="profile-info">
+                        <h2>${freelancer.name}</h2>
+                        <p class="profile-location"><i class="fas fa-map-marker-alt"></i> ${freelancer.location}</p>
+                        <p class="profile-rating">
+                            ${'<i class="fas fa-star"></i>'.repeat(Math.floor(freelancer.rating))}
+                            ${freelancer.rating % 1 >= 0.5 ? '<i class="fas fa-star-half-alt"></i>' : ''}
+                            ${freelancer.rating} (${freelancer.reviews} reviews)
+                        </p>
+                        <p><strong>Hourly Rate:</strong> ${freelancer.rate}</p>
+                        <div class="profile-actions">
+                            <button class="hire-btn" data-from-index="${fromIndex}">Hire ${freelancer.name}</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-section">
+                    <h3>About Me</h3>
+                    <p>${freelancer.about}</p>
+                </div>
+                
+                <div class="profile-section">
+                    <h3>Skills</h3>
+                    <div class="skills-list">
+                        ${freelancer.skills.map(skill => `<span class="skill-item">${skill}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div class="profile-section">
+                    <h3>Experience</h3>
+                    ${freelancer.experience.map(exp => `
+                        <div style="margin-bottom: 1rem;">
+                            <h4>${exp.role}</h4>
+                            <p><strong>${exp.company}</strong> | ${exp.duration}</p>
+                            <p>${exp.description}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="profile-section">
+                    <h3>Education</h3>
+                    <p>${freelancer.education}</p>
+                </div>
+                
+                <div class="profile-section">
+                    <h3>Portfolio</h3>
+                    <p><a href="https://${freelancer.portfolio}" target="_blank">${freelancer.portfolio}</a></p>
+                </div>
+            `;
+            
+            // Add click event to hire button in modal
+            profileContent.querySelector('.hire-btn').addEventListener('click', function() {
+                const fromIndex = this.getAttribute('data-from-index') === 'true';
+                if (fromIndex) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                if (!this.classList.contains('hired')) {
+                    this.textContent = 'Hired';
+                    this.classList.add('hired');
+                    this.style.backgroundColor = '#28a745';
+                    this.style.cursor = 'default';
+                    this.disabled = true;
+                    
+                    // Also update the hire button in the grid if it exists
+                    const gridHireBtn = document.querySelector(`.freelancer-card[data-id="${freelancer.id}"] .hire-btn`);
+                    if (gridHireBtn) {
+                        gridHireBtn.textContent = 'Hired';
+                        gridHireBtn.classList.add('hired');
+                        gridHireBtn.style.backgroundColor = '#28a745';
+                        gridHireBtn.style.cursor = 'default';
+                        gridHireBtn.disabled = true;
+                    }
+                }
+            });
+            
+            profileModal.style.display = 'block';
+        }
+        
+        // Update filter text based on current filter
+        function updateFilterText() {
+            if (currentFilter.skill) {
+                filterTextEl.textContent = `Showing freelancers with skill: ${currentFilter.skill}`;
+            } else if (currentFilter.location) {
+                filterTextEl.textContent = `Showing freelancers from: ${currentFilter.location}`;
+            } else {
+                filterTextEl.textContent = 'Showing all freelancers';
+            }
+        }
+        
+        // Handle sort change
+        function handleSortChange() {
+            renderFreelancers();
+        }
+        
+        // Handle search input
+        function handleSearch() {
+            const query = searchInput.value.trim().toLowerCase();
+            if (query === '') {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            // Search in freelancer names, titles, and skills
+            const results = freelancers.filter(freelancer => 
+                freelancer.name.toLowerCase().includes(query) ||
+                freelancer.title.toLowerCase().includes(query) ||
+                freelancer.skills.some(skill => skill.toLowerCase().includes(query))
+            );
+            
+            if (results.length > 0) {
+                searchResults.innerHTML = results.map(freelancer => `
+                    <div class="search-result-item" data-id="${freelancer.id}">
+                        <div style="display: flex; align-items: center;">
+                            <img src="${freelancer.image}" alt="${freelancer.name}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
+                            <div>
+                                <strong>${freelancer.name}</strong>
+                                <div style="font-size: 0.8rem; color: var(--dark-gray);">${freelancer.title}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Add click event to search results
+                document.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const freelancerId = parseInt(item.getAttribute('data-id'));
+                        showFreelancerProfile(freelancerId);
+                        searchResults.style.display = 'none';
+                        searchInput.value = '';
+                    });
+                });
+                
+                searchResults.style.display = 'block';
+            } else {
+                searchResults.innerHTML = '<div class="search-result-item">No results found</div>';
+                searchResults.style.display = 'block';
+            }
+        }
+        
+        // Initialize the page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+
+</html>

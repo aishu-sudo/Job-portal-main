@@ -1,0 +1,909 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 15px 40px;
+            /* Increased padding for better spacing */
+            color: white;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        
+        .nav-logo img {
+            height: 60px;
+        }
+        /* Flex container for navigation links */
+        
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            /* More gap between menu items */
+            flex-grow: 1;
+            /* Takes available space */
+            justify-content: space;
+            margin-left: 40px;
+            /* Center the nav links */
+        }
+        
+        .nav-item a {
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .nav-auth {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            /* Increased spacing between items */
+        }
+        /* Styling for buttons */
+        
+        .nav-auth a {
+            text-decoration: none;
+            color: inherit;
+            font-size: 1rem;
+        }
+        /* Search bar styling */
+        
+        .search-bar {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid white;
+            outline: none;
+            color: black;
+            font-size: 14px;
+            width: 220px;
+            /* Slightly wider for better visibility */
+            margin: 0 40px;
+            /* Even spacing between sections */
+        }
+        /* Button for posting a project */
+        
+        .post-project {
+            background-color: #ff1493;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+        /* HERO SECTION - FULLSCREEN SLIDESHOW */
+        
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: black;
+            overflow: hidden;
+        }
+        
+        #ad-media {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            /* Align content to the left */
+        }
+        
+        .ad-slide {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            position: absolute;
+            /* Ensures image doesn’t interfere */
+            top: 0;
+            left: 0;
+            z-index: 1;
+            /* Keep image behind */
+        }
+        /* Ensure text stays visible */
+        
+        .hero-text {
+            position: absolute;
+            top: 25%;
+            left: 3%;
+            max-width: 600px;
+            color: white;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.6);
+            /* Adds contrast */
+            padding: 20px;
+            border-radius: 10px;
+            display: block;
+            /* Ensures it's always visible */
+        }
+        
+        .hero-text h1 {
+            font-size: 50px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+        
+        .hero-text ul {
+            margin-top: 15px;
+            font-size: 18px;
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* Ensures spacing between text and image */
+            background: rgb(0, 0, 0);
+            /* Your background color */
+            padding: 20px;
+            /* border-radius: 10px; */
+            color: white;
+            width: 100%;
+        }
+        
+        .why-choose {
+            width: 50%;
+            /* Text stays on the left */
+            text-align: left;
+        }
+        
+        .why {
+            color: rgb(186, 30, 150);
+            /* Adjust heading color */
+            margin-bottom: 20px;
+            margin-left: 30px;
+        }
+        
+        .point {
+            margin-top: 20px;
+            color: white;
+        }
+        
+        .why-choose p {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-left: 40px;
+        }
+        
+        .image-demo {
+            width: 50%;
+            /* Image stays on the right */
+            display: flex;
+            justify-content: flex-end;
+            /* Aligns image properly */
+            margin-bottom: 50px;
+        }
+        
+        .image-demo img {
+            height: auto;
+            width: 90%;
+            /* Adjust image size */
+            max-width: 400px;
+            /* Prevents it from being too large */
+            object-fit: contain;
+        }
+        
+        .top-rated-jobs {
+            text-align: center;
+            padding: 50px 20px;
+            background: #000000;
+            color: white;
+            margin-bottom: 5px;
+            z-index: 1000;
+        }
+        
+        .top-rated-jobs h2 {
+            font-size: 2rem;
+            margin-bottom: 60px;
+            color: #ff1493;
+        }
+        
+        .jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: auto;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+        
+        .job-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: 0.3s;
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .job-card a {
+            text-decoration: none;
+            /* Remove underline */
+            color: inherit;
+            /* Keep text color unchanged */
+            display: block;
+            /* Ensure the entire card is clickable */
+        }
+        
+        .job-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .box-image {
+            width: 100%;
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 10px;
+        }
+        
+        .job-info {
+            text-align: center;
+        }
+        
+        .job-info h3 {
+            font-size: 1.2rem;
+            color: #ff1493;
+            margin: center;
+        }
+        
+        .job-info p {
+            display: block;
+            text-align: center;
+            margin: 0 auto;
+        }
+        
+        .browse-talent {
+            text-align: center;
+            padding: 40px;
+            background-color: black;
+        }
+        
+        .browse-talent h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ff1493;
+        }
+        
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            /* Ensures 4 columns */
+            gap: 15px;
+            /* Space between cards */
+            padding: 20px;
+            max-width: 1100px;
+            /* Keeps grid centered */
+            margin: auto;
+            /* Centers the grid */
+        }
+        
+        .category-card {
+            background: rgb(0, 0, 0);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            border: 1px solid #ddd;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .category-card a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-5px);
+            cursor: pointer;
+            background-color: purple;
+        }
+        
+        .category-card h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .category-card p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #d36f11;
+        }
+        
+        .category-card p:first-of-type {
+            color: green;
+            font-weight: bold;
+        }
+        /* Responsive for smaller screens */
+        
+        @media (max-width: 1024px) {
+            .categories {
+                grid-template-columns: repeat(2, 1fr);
+                /* 2 columns on tablets */
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .categories {
+                grid-template-columns: repeat(1, 1fr);
+                /* 1 column on phones */
+            }
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        /* Centering the heading properly */
+        
+        .freelancer-section {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .freelancer-section h2 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff1493;
+            /* Pink color for emphasis */
+            margin-bottom: 20px;
+        }
+        
+        .freelancer-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #000;
+        }
+        
+        .freelancer {
+            width: 250px;
+            background-color: #111;
+            color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        }
+        
+        .freelancer-image {
+            width: 100%;
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            background-color: #222;
+        }
+        
+        .freelancer-details {
+            padding: 15px;
+        }
+        
+        .freelancer a {
+            text-decoration: none;
+            /* Remove underline */
+            color: inherit;
+            /* Keep original text color */
+            display: block;
+            /* Make the entire card clickable */
+        }
+        
+        .freelancer:hover .freelancer-details {
+            opacity: 1;
+        }
+        
+        .freelancer:hover {
+            transform: scale(1.05);
+        }
+        
+        h3 {
+            margin: 5px 0;
+            font-size: 18px;
+        }
+        
+        p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .freelancer-gallery p {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .freelancer-container {
+            display: flex;
+            gap: 40px;
+            background-color: #111;
+            padding: 30px;
+            border-radius: 10px;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 1100px;
+            z-index: 100;
+            color: white;
+        }
+        
+        .search-options {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 180px;
+            padding-right: 12px;
+        }
+        
+        .option h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .freelancer-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px 0;
+        }
+        
+        .freelancer-card {
+            width: 95%;
+            max-width: 145px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-color: #000000;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+        }
+        
+        .freelancer-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(223, 221, 221, 0.989);
+        }
+        
+        .freelancer-card img {
+            width: 90%;
+            height: 110px;
+            object-fit: cover;
+        }
+        
+        .card-text {
+            padding: 15px;
+        }
+        
+        .card-text span {
+            display: block;
+            font-size: 0.9rem;
+            color: #777;
+        }
+        
+        .card-text strong {
+            font-size: 1.1rem;
+            color: #cd1185;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        .card span {
+            display: block;
+            font-size: 14px;
+            color: #ccc;
+        }
+        
+        .card strong {
+            font-weight: bold;
+            font-size: 16px;
+            color: white;
+        }
+        
+        .card strong :hover {
+            size-adjust: 30px;
+        }
+        
+        .nav-item.dropdown {
+            position: relative;
+        }
+        
+        .freelancer-container {
+            display: none;
+        }
+        
+        .nav-item.dropdown:hover .freelancer-container {
+            display: flex;
+        }
+        /* Previous styles remain the same, add these new ones */
+        
+        .content-sections {
+            flex: 1;
+            position: relative;
+        }
+        
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        /* Skills section styles */
+        
+        .skills-section .freelancer-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        /* Locations section styles */
+        /* Location section specific styles */
+        
+        .locations-section {
+            padding: 15px;
+        }
+        
+        .location-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .location-header p {
+            font-size: 0.9rem;
+            color: #fdfdfd;
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .location-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .location-item {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: #ffffff;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .location-item:hover {
+            background-color: #f5f5f5;
+            color: #0066cc;
+        }
+        /* Responsive adjustments */
+        
+        @media (max-width: 768px) {
+            .location-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .location-list {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .option h3 {
+            cursor: pointer;
+        }
+        
+        .dropdown-trigger span {
+            cursor: pointer;
+        }
+        /* Style for the option container */
+        
+        .option {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        
+        .option:hover {
+            background-color: #69489f;
+        }
+        /* Style for the icon row */
+        
+        .icon-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon-row h3 {
+            margin: 0;
+            flex-grow: 1;
+            /* Makes the title take available space */
+            font-size: 1rem;
+            color: #ffffff;
+        }
+        
+        .icon-row i {
+            font-size: 1rem;
+            color: #ffffff;
+        }
+        /* Style for the description */
+        
+        .option p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #ffffff;
+            padding-left: 28px;
+            /* Align with first icon */
+        }
+        
+        .nav-item.dropdown:hover .dropdown-trigger i {
+            transform: rotate(180deg);
+        }
+        
+        .find-work-nav {
+            position: relative;
+        }
+        
+        .work-dropdown {
+            position: relative;
+        }
+        /* Dropdown Trigger */
+        
+        .dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            color: white;
+            font-size: 15px;
+        }
+        
+        .dropdown-header i {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        .work-dropdown:hover .dropdown-header i {
+            transform: rotate(180deg);
+        }
+        
+        .work-options-container {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 1000px;
+            background-color: #111;
+            padding: 30px;
+            border-radius: 10px;
+            z-index: 100;
+            color: white;
+            gap: 40px;
+        }
+        
+        .work-dropdown:hover .work-options-container {
+            display: flex;
+        }
+        /* Left Side - Search Options */
+        
+        .search-categories {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 180px;
+            padding-right: 12px;
+        }
+        
+        .category-option {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        
+        .category-option:hover {
+            background-color: #69489f;
+        }
+        
+        .option-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .option-header h3 {
+            margin: 0;
+            flex-grow: 1;
+            font-size: 1rem;
+            color: #ffffff;
+        }
+        
+        .option-header i {
+            font-size: 1rem;
+            color: #ffffff;
+        }
+        
+        .option-header h3 {
+            cursor: pointer;
+        }
+        
+        .category-option p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #ffffff;
+            padding-left: 28px;
+        }
+        /* Right Side - Content Sections */
+        
+        .work-content-sections {
+            flex: 1;
+            position: relative;
+        }
+        
+        .work-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .work-section {
+            display: none;
+        }
+        
+        .work-section.active {
+            display: block;
+        }
+        /* Skills Section */
+        
+        .job-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            padding: 20px 0;
+        }
+        
+        .job {
+            width: 95%;
+            max-width: 145px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-color: #000000;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+        }
+        
+        .job,
+        .job .card-label strong {
+            text-decoration: none;
+        }
+        
+        .job:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(223, 221, 221, 0.989);
+        }
+        
+        .job img {
+            width: 90%;
+            height: 110px;
+            object-fit: cover;
+        }
+        
+        .card-label {
+            padding: 15px;
+        }
+        
+        .card-label strong {
+            font-size: 1.1rem;
+            color: #cd1185;
+            margin-top: 5px;
+            display: block;
+        }
+        /* Languages Section */
+        
+        .language-content {
+            padding: 15px;
+        }
+        
+        .featured-jobs-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .featured-jobs-header h3 {
+            font-size: 1rem;
+            color: #ffffff;
+            margin: 0 0 5px 0;
+        }
+        
+        .featured-jobs-header p {
+            font-size: 0.9rem;
+            color: #fdfdfd;
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .language-options h3 {
+            font-size: 1rem;
+            color: #ffffff;
+            margin: 20px 0 15px 0;
+        }
+        
+        .language-columns-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+        
+        .language-option {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: #ffffff;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .language-option:hover {
+            background-color: #ffffff;
+            color: rgb(27, 103, 197);
+        }
+        /* Animation */
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        /* Active State for Options */
+        
+        .category-option.active {
+            background-color: #69489f;
+        }
+        
+        .clickable-heading {
+            cursor: pointer;
+            color: #0066cc;
+            /* // text-decoration: underline; */
+            margin: 0;
+        }
+        
+        .clickable-heading:hover {
+            color: #004499;
+        }

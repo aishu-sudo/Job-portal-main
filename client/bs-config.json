@@ -1,0 +1,6 @@
+{
+    "server": {
+        "baseDir": "public",
+        "port": 3000
+    }
+}

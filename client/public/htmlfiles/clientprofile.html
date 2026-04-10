@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+         :root {
+            --primary-color: #5e35b1;
+            --secondary-color: #3949ab;
+            --accent-color: #7c4dff;
+            --light-color: #f5f5f5;
+            --dark-color: #263238;
+            --success-color: #43a047;
+            --warning-color: #ffb300;
+            --border-radius: 10px;
+            --box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e0e0e0 0%, #b0bec5 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .client-card {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .client-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .client-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+        
+        .company-logo {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 5px 15px rgba(94, 53, 177, 0.4);
+            transition: transform 0.3s ease;
+        }
+        
+        .company-logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .company-name {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .company-industry {
+            text-align: center;
+            color: #757575;
+            margin-bottom: 25px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            margin: 25px 0 15px;
+            font-size: 18px;
+            position: relative;
+            padding-bottom: 8px;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 3px;
+        }
+        
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .contact-icon {
+            background: rgba(94, 53, 177, 0.1);
+            color: var(--primary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-item:hover .contact-icon {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .contact-details {
+            flex: 1;
+        }
+        
+        .contact-label {
+            font-size: 12px;
+            color: #757575;
+            margin-bottom: 2px;
+        }
+        
+        .contact-value {
+            font-weight: 500;
+            color: var(--dark-color);
+            word-break: break-all;
+        }
+        
+        .client-since {
+            background: rgba(67, 160, 71, 0.1);
+            color: var(--success-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .edit-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .edit-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(94, 53, 177, 0.3);
+        }
+        
+        .message-btn {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .message-btn:hover {
+            background-color: #388e3c;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 160, 71, 0.3);
+        }
+        
+        .projects {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 15px;
+        }
+        
+        .project-stat {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .project-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .project-label {
+            font-size: 12px;
+            color: #757575;
+        }
+        
+        @media (max-width: 480px) {
+            .client-card {
+                padding: 20px;
+            }
+            .buttons {
+                flex-direction: column;
+            }
+            .projects {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="client-card">
+        <div class="company-logo">DD</div>
+        <h1 class="company-name" id="companyName">Digital Design Co.</h1>
+        <p class="company-industry" id="companyIndustry">Creative Design Agency</p>
+
+        <h2>Contact Person</h2>
+        <div class="contact-info">
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-label">Design Director</div>
+                    <div class="contact-value" id="contactPerson">Alexandra Park</div>
+                </div>
+            </div>
+
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-label">Email</div>
+                    <div class="contact-value" id="contactEmail">design@digitaldesign.com</div>
+                </div>
+            </div>
+
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-label">Phone</div>
+                    <div class="contact-value" id="contactPhone">(555) 555-1234</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="projects">
+            <div class="project-stat">
+                <div class="project-number" id="activeProjects">12</div>
+                <div class="project-label">Active Projects</div>
+            </div>
+            <div class="project-stat">
+                <div class="project-number" id="completedProjects">47</div>
+                <div class="project-label">Completed</div>
+            </div>
+            <div class="project-stat">
+                <div class="project-number" id="yearsWorking">5</div>
+                <div class="project-label">Years Working</div>
+            </div>
+        </div>
+
+        <div class="client-since">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Client since: </span>
+            <span id="clientSince">2018</span>
+        </div>
+
+        <div class="buttons">
+            <button class="edit-btn" onclick="editClient()">
+                <i class="fas fa-edit"></i>
+                <span>Edit Profile</span>
+            </button>
+            <button class="message-btn" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+                <span>Send Message</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Client data - could be loaded from an API in a real application
+        const clientData = {
+            companyName: "Digital Design Co.",
+            companyIndustry: "Creative Design Agency",
+            contactPerson: "Alexandra Park",
+            contactTitle: "Design Director",
+            contactEmail: "design@digitaldesign.com",
+            contactPhone: "(555) 555-1234",
+            activeProjects: 12,
+            completedProjects: 47,
+            yearsWorking: 5,
+            clientSince: "2018"
+        };
+
+        // Initialize the profile with data
+        function initProfile() {
+            document.getElementById("companyName").textContent = clientData.companyName;
+            document.getElementById("companyIndustry").textContent = clientData.companyIndustry;
+            document.getElementById("contactPerson").textContent = clientData.contactPerson;
+            document.getElementById("contactEmail").textContent = clientData.contactEmail;
+            document.getElementById("contactPhone").textContent = clientData.contactPhone;
+            document.getElementById("activeProjects").textContent = clientData.activeProjects;
+            document.getElementById("completedProjects").textContent = clientData.completedProjects;
+            document.getElementById("yearsWorking").textContent = clientData.yearsWorking;
+            document.getElementById("clientSince").textContent = clientData.clientSince;
+
+            // Set company logo initials
+            const companyName = clientData.companyName;
+            const initials = companyName.split(' ').map(word => word[0]).join('');
+            document.querySelector(".company-logo").textContent = initials;
+        }
+
+        // Edit client profile
+        function editClient() {
+            const newCompanyName = prompt("Enter company name:", clientData.companyName);
+            const newCompanyIndustry = prompt("Enter industry:", clientData.companyIndustry);
+            const newContactPerson = prompt("Enter contact person:", clientData.contactPerson);
+            const newContactTitle = prompt("Enter contact title:", clientData.contactTitle);
+            const newContactEmail = prompt("Enter email:", clientData.contactEmail);
+            const newContactPhone = prompt("Enter phone:", clientData.contactPhone);
+            const newClientSince = prompt("Enter client since year:", clientData.clientSince);
+
+            if (newCompanyName) {
+                clientData.companyName = newCompanyName;
+                document.getElementById("companyName").textContent = newCompanyName;
+                // Update logo initials
+                const initials = newCompanyName.split(' ').map(word => word[0]).join('');
+                document.querySelector(".company-logo").textContent = initials;
+            }
+
+            if (newCompanyIndustry) {
+                clientData.companyIndustry = newCompanyIndustry;
+                document.getElementById("companyIndustry").textContent = newCompanyIndustry;
+            }
+
+            if (newContactPerson) {
+                clientData.contactPerson = newContactPerson;
+                document.getElementById("contactPerson").textContent = newContactPerson;
+            }
+
+            if (newContactTitle) {
+                clientData.contactTitle = newContactTitle;
+                document.querySelector(".contact-label").textContent = newContactTitle;
+            }
+
+            if (newContactEmail) {
+                clientData.contactEmail = newContactEmail;
+                document.getElementById("contactEmail").textContent = newContactEmail;
+            }
+
+            if (newContactPhone) {
+                clientData.contactPhone = newContactPhone;
+                document.getElementById("contactPhone").textContent = newContactPhone;
+            }
+
+            if (newClientSince) {
+                clientData.clientSince = newClientSince;
+                document.getElementById("clientSince").textContent = newClientSince;
+            }
+        }
+
+        // Send message to client
+        function sendMessage() {
+            const subject = encodeURIComponent("Regarding our project");
+            const body = encodeURIComponent(`Dear ${clientData.contactPerson},\n\n`);
+            window.location.href = `mailto:${clientData.contactEmail}?subject=${subject}&body=${body}`;
+        }
+
+        // Initialize the profile when the page loads
+        window.onload = initProfile;
+    </script>
+</body>
+
+</html>

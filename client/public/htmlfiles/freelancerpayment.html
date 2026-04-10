@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receive Payments</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+         :root {
+            --primary-color: #4895ef;
+            --primary-light: #e0f2fe;
+            --secondary-color: #3f7cac;
+            --success-color: #4cc9f0;
+            --danger-color: #f72585;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gray-color: #6c757d;
+            --white-color: #ffffff;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .payout-container {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        
+        .payout-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .payout-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .payout-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .payout-body {
+            padding: 1.5rem;
+        }
+        
+        .amount-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .amount-section label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-color);
+        }
+        
+        .amount-input {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .amount-input .currency {
+            position: absolute;
+            left: 12px;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+        
+        .amount-input input {
+            width: 100%;
+            padding: 0.75rem 0.75rem 0.75rem 2rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+        
+        .payout-method-selector {
+            margin-bottom: 1.5rem;
+        }
+        
+        .payout-method-selector h3 {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            color: var(--gray-color);
+        }
+        
+        .method-options {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .method-option {
+            flex: 1;
+            padding: 1rem;
+            background-color: var(--light-color);
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .method-option i {
+            font-size: 1.5rem;
+        }
+        
+        .method-option span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .method-option:hover {
+            background-color: #e9ecef;
+        }
+        
+        .method-option.active {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .payout-form {
+            display: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .payout-form.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .payout-note {
+            font-size: 0.8rem;
+            color: var(--gray-color);
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .submit-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .message {
+            margin: 1rem 0;
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .message.success {
+            background-color: rgba(76, 201, 240, 0.2);
+            color: var(--success-color);
+        }
+        
+        .message.error {
+            background-color: rgba(247, 37, 133, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .payout-info {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray-color);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .method-options {
+                flex-direction: column;
+            }
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="payout-container">
+        <div class="payout-header">
+            <h1><i class="fas fa-wallet"></i> Receive Payments</h1>
+            <p>Get paid for your work securely</p>
+        </div>
+
+        <div class="payout-body">
+            <div class="amount-section">
+                <label for="payout-amount">Amount to Receive ($)</label>
+                <div class="amount-input">
+                    <span class="currency">$</span>
+                    <input type="number" id="payout-amount" min="1" step="0.01" value="50.00" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="payout-method-selector">
+                <h3>Select Payout Method</h3>
+                <div class="method-options">
+                    <button class="method-option active" data-method="bank">
+                        <i class="fas fa-university"></i>
+                        <span>Bank Transfer</span>
+                    </button>
+                    <button class="method-option" data-method="paypal">
+                        <i class="fab fa-paypal"></i>
+                        <span>PayPal</span>
+                    </button>
+                    <button class="method-option" data-method="venmo">
+                        <i class="fab fa-vimeo-v"></i>
+                        <span>Venmo</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="bank-payout-form" class="payout-form active">
+                <form id="bank-form">
+                    <div class="form-group">
+                        <label>Bank Name</label>
+                        <input type="text" id="bank-name" placeholder="e.g. Chase Bank">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Routing Number</label>
+                            <input type="text" id="routing-number" placeholder="123456789">
+                        </div>
+                        <div class="form-group">
+                            <label>Account Number</label>
+                            <input type="text" id="account-number" placeholder="987654321">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Type</label>
+                        <select id="account-type">
+                            <option value="checking">Checking</option>
+                            <option value="savings">Savings</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Holder Name</label>
+                        <input type="text" id="account-holder-name" placeholder="Your full name">
+                    </div>
+                </form>
+            </div>
+
+            <div id="paypal-payout-form" class="payout-form">
+                <div class="form-group">
+                    <label>PayPal Email Address</label>
+                    <input type="email" id="paypal-email" placeholder="your@email.com">
+                </div>
+                <p class="payout-note">PayPal transfers typically complete within 1 business day</p>
+            </div>
+
+            <div id="venmo-payout-form" class="payout-form">
+                <div class="form-group">
+                    <label>Venmo Username</label>
+                    <input type="text" id="venmo-username" placeholder="@username">
+                </div>
+                <p class="payout-note">Venmo transfers are usually instant</p>
+            </div>
+
+            <button id="request-payout" class="submit-btn">
+                <i class="fas fa-paper-plane"></i> Request Payout
+            </button>
+
+            <div id="freelancer-message" class="message"></div>
+
+            <div class="payout-info">
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Payouts processed within 1-2 business days</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure and encrypted transfers</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for pending payment
+            const pendingPayment = JSON.parse(localStorage.getItem('pendingPayment'));
+            if (pendingPayment) {
+                document.getElementById('payout-amount').value = pendingPayment.amount;
+                localStorage.removeItem('pendingPayment');
+            }
+
+            // Payout method switching
+            const methodOptions = document.querySelectorAll('.method-option');
+            const payoutForms = document.querySelectorAll('.payout-form');
+            const requestBtn = document.getElementById('request-payout');
+
+            methodOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const method = option.getAttribute('data-method');
+
+                    // Update active method option
+                    methodOptions.forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+
+                    // Update active payout form
+                    payoutForms.forEach(form => form.classList.remove('active'));
+                    document.getElementById(`${method}-payout-form`).classList.add('active');
+                });
+            });
+
+            // Process payout when submit button clicked
+            requestBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+
+                const amount = document.getElementById('payout-amount').value;
+                if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+                    showMessage('Please enter a valid amount', 'error');
+                    return;
+                }
+
+                const activeMethod = document.querySelector('.method-option.active');
+                const method = activeMethod.getAttribute('data-method');
+
+                let payoutDetails = {};
+                let isValid = true;
+
+                // Disable button and show loading state
+                requestBtn.disabled = true;
+                const originalBtnText = requestBtn.innerHTML;
+                requestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+                switch (method) {
+                    case 'bank':
+                        const bankName = document.getElementById('bank-name').value;
+                        const routingNumber = document.getElementById('routing-number').value;
+                        const accountNumber = document.getElementById('account-number').value;
+                        const accountType = document.getElementById('account-type').value;
+                        const accountHolder = document.getElementById('account-holder-name').value;
+
+                        if (!bankName || !routingNumber || !accountNumber || !accountHolder) {
+                            showMessage('Please fill all bank details', 'error');
+                            isValid = false;
+                            break;
+                        }
+
+                        if (!/^\d{9}$/.test(routingNumber)) {
+                            showMessage('Routing number must be 9 digits', 'error');
+                            isValid = false;
+                            break;
+                        }
+
+                        payoutDetails = {
+                            method: 'bank',
+                            bankName: bankName,
+                            routingNumber: routingNumber,
+                            accountNumber: accountNumber,
+                            accountType: accountType,
+                            accountHolder: accountHolder
+                        };
+                        break;
+
+                    case 'paypal':
+                        const paypalEmail = document.getElementById('paypal-email').value;
+
+                        if (!paypalEmail || !isValidEmail(paypalEmail)) {
+                            showMessage('Please enter a valid PayPal email', 'error');
+                            isValid = false;
+                            break;
+                        }
+
+                        payoutDetails = {
+                            method: 'paypal',
+                            email: paypalEmail
+                        };
+                        break;
+
+                    case 'venmo':
+                        const venmoUsername = document.getElementById('venmo-username').value;
+
+                        if (!venmoUsername || !venmoUsername.startsWith('@')) {
+                            showMessage('Please enter a valid Venmo username starting with @', 'error');
+                            isValid = false;
+                            break;
+                        }
+
+                        payoutDetails = {
+                            method: 'venmo',
+                            username: venmoUsername
+                        };
+                        break;
+                }
+
+                if (isValid) {
+                    requestPayout(amount, payoutDetails);
+                } else {
+                    // Reset button if validation failed
+                    requestBtn.disabled = false;
+                    requestBtn.innerHTML = originalBtnText;
+                }
+            });
+
+            function requestPayout(amount, payoutDetails) {
+                // In a real app, you would send this to your server
+                console.log('Requesting payout:', {
+                    amount: amount,
+                    details: payoutDetails
+                });
+
+                // Show processing message
+                showMessage('Processing payout request...', '');
+
+                // Simulate API call
+                setTimeout(() => {
+                    // Show success message
+                    showMessage(`Payout of $${amount} requested successfully! Funds will arrive in 1-2 business days.`, 'success');
+
+                    // Create notification for client about payment acceptance
+                    const clientNotifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+                    const newNotification = {
+                        id: Date.now().toString(),
+                        type: 'payment_accepted',
+                        title: 'Payment Accepted',
+                        message: `Your payment of $${amount} has been accepted by the freelancer. The funds will be transferred within 1-2 business days.`,
+                        time: new Date().toISOString(),
+                        read: false,
+                        paymentData: {
+                            amount: amount,
+                            paymentId: Date.now().toString(),
+                            payoutMethod: payoutDetails.method
+                        }
+                    };
+                    clientNotifications.unshift(newNotification);
+                    localStorage.setItem('clientNotifications', JSON.stringify(clientNotifications));
+
+                    // Reset button
+                    requestBtn.disabled = false;
+                    requestBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Request Payout';
+
+                    // Clear form if it was a bank transfer
+                    if (payoutDetails.method === 'bank') {
+                        document.getElementById('bank-form').reset();
+                    }
+
+                    // Reset amount after successful request
+                    document.getElementById('payout-amount').value = '50.00';
+                }, 2000);
+            }
+
+            function showMessage(message, type) {
+                const messageEl = document.getElementById('freelancer-message');
+                messageEl.textContent = message;
+                messageEl.className = 'message';
+
+                if (type) {
+                    messageEl.classList.add(type);
+                }
+
+                // Clear message after 5 seconds if it's not a processing message
+                if (type !== '') {
+                    setTimeout(() => {
+                        messageEl.textContent = '';
+                        messageEl.className = 'message';
+                    }, 5000);
+                }
+            }
+
+            function isValidEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+        });
+    </script>
+</body>
+
+</html>

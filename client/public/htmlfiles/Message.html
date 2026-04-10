@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobPortal - Messages</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Global Styles */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+        /* Header Styles */
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 20px;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        nav ul li a:hover {
+            color: #3498db;
+        }
+        
+        nav ul li a.active {
+            color: #3498db;
+            font-weight: bold;
+        }
+        /* Messaging Container */
+        
+        .messaging-container {
+            display: flex;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            height: calc(100vh - 180px);
+            max-height: 700px;
+            overflow: hidden;
+        }
+        /* Contacts List */
+        
+        .contacts-list {
+            width: 350px;
+            border-right: 1px solid #eee;
+            overflow-y: auto;
+        }
+        
+        .contacts-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .contacts-header h3 {
+            color: #2c3e50;
+            font-size: 20px;
+        }
+        
+        .new-message-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .search-contacts {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-contacts input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .contact {
+            display: flex;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+        
+        .contact:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .contact.active {
+            background-color: #e8f4fc;
+        }
+        
+        .contact-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .contact-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .contact-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .contact-name span.unread-indicator {
+            color: #e74c3c;
+            margin-left: 5px;
+        }
+        
+        .contact-last-message {
+            font-size: 14px;
+            color: #7f8c8d;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .contact-time {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-left: 10px;
+        }
+        /* Chat Area */
+        
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Empty State */
+        
+        .empty-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-chat-icon {
+            font-size: 60px;
+            color: #bdc3c7;
+            margin-bottom: 20px;
+        }
+        
+        .empty-chat h3 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        
+        .empty-chat p {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 20px;
+            max-width: 300px;
+        }
+        /* Active Chat */
+        
+        .active-chat {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-header-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        
+        .chat-header-info {
+            flex: 1;
+        }
+        
+        .chat-header-name {
+            font-weight: 600;
+        }
+        
+        .chat-header-status {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        
+        .chat-header-actions {
+            display: flex;
+        }
+        
+        .chat-header-btn {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            margin-left: 15px;
+            font-size: 16px;
+        }
+        
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f5f7fa;
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .message.received {
+            justify-content: flex-start;
+        }
+        
+        .message.sent {
+            justify-content: flex-end;
+        }
+        
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .message.sent .message-avatar {
+            margin-right: 0;
+            margin-left: 10px;
+            background-color: #3498db;
+        }
+        
+        .message-content {
+            max-width: 70%;
+        }
+        
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+        }
+        
+        .message.received .message-bubble {
+            background-color: white;
+            border: 1px solid #eee;
+            border-top-left-radius: 0;
+        }
+        
+        .message.sent .message-bubble {
+            background-color: #3498db;
+            color: white;
+            border-top-right-radius: 0;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #95a5a6;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .message.sent .message-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .message-input-area {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            resize: none;
+            max-height: 100px;
+            margin-right: 10px;
+        }
+        
+        .send-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Date Divider */
+        
+        .date-divider {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .date-divider span {
+            background-color: #e0e5ec;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        /* Sidebar Styles */
+        
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #0c2333, #081c30);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+        
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 22px;
+            font-weight: 500;
+        }
+        
+        .sidebar button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 16px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .sidebar button:hover,
+        .sidebar button.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar .logout {
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        /* Main Content Styles */
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2><i class="fas fa-building"></i> Client</h2>
+        <button onclick="loadSection('dashboard')" id="dashboardBtn"><i class="fas fa-chart-line"></i> Dashboard</button>
+        <button onclick="loadSection('myProjects')" id="myProjectsBtn"><i class="fas fa-briefcase"></i> My Projects</button>
+        <button onclick="loadSection('post-project')" id="post-projectBtn"><i class="fas fa-plus-circle"></i> Post Project</button>
+        <button onclick="loadSection('applicants')" id="applicantsBtn"><i class="fas fa-users"></i> Applicants</button>
+        <button onclick="loadSection('clientprofile')" id="clientprofileBtn"><i class="fas fa-user-circle"></i> My Profile</button>
+        <button onclick="loadSection('ratingsReviews')" id="ratingsReviewsBtn"><i class="fas fa-star"></i> Ratings & Reviews</button>
+        <button onclick="loadSection('freelanceroptions')" id="freelanceroptionsBtn"><i class="fas fa-user"></i> Hire Freelancers</button>
+        <button onclick="loadSection('messages')" id="messagesBtn" class="active"><i class="fas fa-envelope"></i> Messages</button>
+        <button onclick="loadSection('clientpayment')" id="clientpaymentBtn"><i class="fas fa-credit-card"></i> Payment Options</button>
+        <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+
+    <div class="main-content">
+        <main class="container">
+            <div class="messaging-container">
+                <!-- Contacts List -->
+                <div class="contacts-list">
+                    <div class="contacts-header">
+                        <h3>Messages</h3>
+                        <button class="new-message-btn" title="New Message">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="search-contacts">
+                        <input type="text" placeholder="Search contacts...">
+                    </div>
+
+                    <div id="contactsContainer">
+                        <!-- Contact 1 -->
+                        <div class="contact" data-contact-id="1">
+                            <div class="contact-avatar">SD</div>
+                            <div class="contact-info">
+                                <div class="contact-name">Sarah Developer (Freelancer)</div>
+                                <div class="contact-last-message">I submitted the project draft</div>
+                            </div>
+                            <div class="contact-time">2:30 PM</div>
+                        </div>
+
+                        <!-- Contact 2 -->
+                        <div class="contact" data-contact-id="2">
+                            <div class="contact-avatar">MD</div>
+                            <div class="contact-info">
+                                <div class="contact-name">Mike Designer (Freelancer) <span class="unread-indicator">•</span></div>
+                                <div class="contact-last-message">The designs are ready for review</div>
+                            </div>
+                            <div class="contact-time">Yesterday</div>
+                        </div>
+
+                        <!-- Contact 3 -->
+                        <div class="contact" data-contact-id="3">
+                            <div class="contact-avatar">AW</div>
+                            <div class="contact-info">
+                                <div class="contact-name">Alex Writer (Freelancer)</div>
+                                <div class="contact-last-message">I have some questions about the requirements</div>
+                            </div>
+                            <div class="contact-time">Mar 20</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="chat-area" id="chatArea">
+                    <!-- Empty State -->
+                    <div class="empty-chat" id="emptyChatState">
+                        <div class="empty-chat-icon">
+                            <i class="far fa-comments"></i>
+                        </div>
+                        <h3>Select a conversation</h3>
+                        <p>Choose an existing conversation from the list or start a new one</p>
+                        <button class="new-message-btn" style="margin-top: 20px; width: auto; padding: 8px 20px; font-size: 14px;">
+                            <i class="fas fa-plus"></i> New Message
+                        </button>
+                    </div>
+
+                    <!-- Active Chat -->
+                    <div class="active-chat" id="activeChat">
+                        <!-- Chat Header -->
+                        <div class="chat-header">
+                            <div class="chat-header-avatar" id="chatAvatar">SD</div>
+                            <div class="chat-header-info">
+                                <div class="chat-header-name" id="chatUserName">Sarah Developer (Freelancer)</div>
+                                <div class="chat-header-status" id="chatUserStatus">Online</div>
+                            </div>
+                            <div class="chat-header-actions">
+                                <button class="chat-header-btn" title="Video Call">
+                                    <i class="fas fa-video"></i>
+                                </button>
+                                <button class="chat-header-btn" title="Phone Call">
+                                    <i class="fas fa-phone"></i>
+                                </button>
+                                <button class="chat-header-btn" title="View Profile" id="viewProfileBtn">
+                                    <i class="fas fa-user"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Messages Container -->
+                        <div class="messages-container" id="messagesContainer">
+                            <div class="date-divider">
+                                <span>Today</span>
+                            </div>
+
+                            <!-- Received Message -->
+                            <div class="message received">
+                                <div class="message-avatar">SD</div>
+                                <div class="message-content">
+                                    <div class="message-bubble">
+                                        Hi there! I've completed the project draft as requested. Please let me know if you'd like any changes.
+                                    </div>
+                                    <div class="message-time">10:15 AM</div>
+                                </div>
+                            </div>
+
+                            <!-- Sent Message -->
+                            <div class="message sent">
+                                <div class="message-content">
+                                    <div class="message-bubble">
+                                        Thanks Sarah! I'll review it and get back to you with feedback by tomorrow.
+                                    </div>
+                                    <div class="message-time">10:18 AM</div>
+                                </div>
+                                <div class="message-avatar">Y</div>
+                            </div>
+
+                            <!-- Received Message -->
+                            <div class="message received">
+                                <div class="message-avatar">SD</div>
+                                <div class="message-content">
+                                    <div class="message-bubble">
+                                        Great! I'll be available to make any necessary revisions. Also, I wanted to ask about the next phase of the project.
+                                    </div>
+                                    <div class="message-time">10:22 AM</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message Input Area -->
+                        <div class="message-input-area">
+                            <button class="attachment-btn">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <textarea class="message-input" placeholder="Type your message..." id="messageInput"></textarea>
+                            <button class="send-btn" id="sendMessageBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const emptyChatState = document.getElementById('emptyChatState');
+            const activeChat = document.getElementById('activeChat');
+            const contacts = document.querySelectorAll('.contact');
+            const newMessageBtn = document.querySelector('.new-message-btn');
+            const sendMessageBtn = document.getElementById('sendMessageBtn');
+            const messageInput = document.getElementById('messageInput');
+            const messagesContainer = document.getElementById('messagesContainer');
+            const viewProfileBtn = document.getElementById('viewProfileBtn');
+
+            // Sample messages data
+            const conversations = {
+                1: {
+                    name: "Sarah Developer (Freelancer)",
+                    avatar: "SD",
+                    status: "Online",
+                    messages: [{
+                        type: "received",
+                        text: "Hi there! I've completed the project draft as requested. Please let me know if you'd like any changes.",
+                        time: "10:15 AM"
+                    }, {
+                        type: "sent",
+                        text: "Thanks Sarah! I'll review it and get back to you with feedback by tomorrow.",
+                        time: "10:18 AM"
+                    }, {
+                        type: "received",
+                        text: "Great! I'll be available to make any necessary revisions. Also, I wanted to ask about the next phase of the project.",
+                        time: "10:22 AM"
+                    }]
+                },
+                2: {
+                    name: "Mike Designer (Freelancer)",
+                    avatar: "MD",
+                    status: "Offline",
+                    messages: [{
+                        type: "received",
+                        text: "The designs are ready for your review. I've included three different concepts as we discussed.",
+                        time: "Yesterday"
+                    }, {
+                        type: "sent",
+                        text: "These look fantastic! I particularly like concept #2. Can we schedule a call to discuss the next steps?",
+                        time: "Yesterday"
+                    }]
+                },
+                3: {
+                    name: "Alex Writer (Freelancer)",
+                    avatar: "AW",
+                    status: "Offline",
+                    messages: [{
+                        type: "received",
+                        text: "I have some questions about the requirements document you sent. Specifically about the target audience section.",
+                        time: "Mar 20"
+                    }, {
+                        type: "sent",
+                        text: "Happy to clarify. The primary audience is small business owners aged 25-45.",
+                        time: "Mar 20"
+                    }]
+                }
+            };
+
+            // Handle contact click
+            contacts.forEach(contact => {
+                contact.addEventListener('click', function() {
+                    // Remove active class from all contacts
+                    contacts.forEach(c => c.classList.remove('active'));
+
+                    // Add active class to clicked contact
+                    this.classList.add('active');
+
+                    // Hide empty state and show active chat
+                    emptyChatState.style.display = 'none';
+                    activeChat.style.display = 'flex';
+
+                    // Get contact ID
+                    const contactId = this.getAttribute('data-contact-id');
+                    const conversation = conversations[contactId];
+
+                    // Update chat header
+                    document.getElementById('chatAvatar').textContent = conversation.avatar;
+                    document.getElementById('chatUserName').textContent = conversation.name;
+                    document.getElementById('chatUserStatus').textContent = conversation.status;
+
+                    // Load messages
+                    loadMessages(conversation.messages);
+
+                    // Remove unread indicator if present
+                    const unreadIndicator = this.querySelector('.unread-indicator');
+                    if (unreadIndicator) {
+                        unreadIndicator.remove();
+                    }
+                });
+            });
+
+            // Load messages into the chat
+            function loadMessages(messages) {
+                messagesContainer.innerHTML = `
+                    <div class="date-divider">
+                        <span>Today</span>
+                    </div>
+                `;
+
+                messages.forEach(message => {
+                    const messageElement = document.createElement('div');
+                    messageElement.className = `message ${message.type}`;
+
+                    if (message.type === 'received') {
+                        messageElement.innerHTML = `
+                            <div class="message-avatar">${conversations[1].avatar}</div>
+                            <div class="message-content">
+                                <div class="message-bubble">${message.text}</div>
+                                <div class="message-time">${message.time}</div>
+                            </div>
+                        `;
+                    } else {
+                        messageElement.innerHTML = `
+                            <div class="message-content">
+                                <div class="message-bubble">${message.text}</div>
+                                <div class="message-time">${message.time}</div>
+                            </div>
+                            <div class="message-avatar">Y</div>
+                        `;
+                    }
+
+                    messagesContainer.appendChild(messageElement);
+                });
+
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Handle send message
+            sendMessageBtn.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            function sendMessage() {
+                const text = messageInput.value.trim();
+                if (text === '') return;
+
+                // Create new message element
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message sent';
+                messageElement.innerHTML = `
+                    <div class="message-content">
+                        <div class="message-bubble">${text}</div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                    <div class="message-avatar">Y</div>
+                `;
+
+                // Add to messages container
+                messagesContainer.appendChild(messageElement);
+
+                // Clear input
+                messageInput.value = '';
+
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // Simulate reply after 1-3 seconds
+                setTimeout(() => {
+                    const replyElement = document.createElement('div');
+                    replyElement.className = 'message received';
+                    replyElement.innerHTML = `
+                        <div class="message-avatar">${document.getElementById('chatAvatar').textContent}</div>
+                        <div class="message-content">
+                            <div class="message-bubble">Thanks for your message! I'll get back to you soon.</div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    `;
+
+                    messagesContainer.appendChild(replyElement);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 1000 + Math.random() * 2000);
+            }
+
+            // New message button
+            newMessageBtn.addEventListener('click', function() {
+                alert('New message functionality would open a modal to select a user to message');
+            });
+
+            // View profile button
+            viewProfileBtn.addEventListener('click', function() {
+                alert(`Viewing profile of ${document.getElementById('chatUserName').textContent}`);
+            });
+        });
+
+        // Add the loadSection function
+        function loadSection(section) {
+            window.location.href = `${section}.html`;
+        }
+
+        // Add the logout function
+        function logout() {
+            // Add your logout logic here
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+
+</html>

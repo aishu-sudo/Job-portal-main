@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review & Rating System</title>
+    <style>
+         :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .review-section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+        }
+        
+        .review-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .review-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            transition: transform 0.3s;
+        }
+        
+        .review-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .reviewer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .reviewer-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+        
+        .review-rating {
+            color: var(--warning-color);
+            font-size: 16px;
+        }
+        
+        .review-date {
+            color: #777;
+            font-size: 12px;
+        }
+        
+        .review-content {
+            margin-top: 8px;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background-color: #f0f0f0;
+        }
+        /* Review Form */
+        
+        .review-form {
+            margin-top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .rating-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .rating-label {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .stars {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .star {
+            font-size: 16px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .star.active {
+            color: var(--warning-color);
+        }
+        
+        .review-text {
+            width: 100%;
+            min-height: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 14px;
+        }
+        
+        .form-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        /* Tabs */
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        /* Action buttons */
+        
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+        /* Responsive */
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .review-card {
+                padding: 12px;
+            }
+            .reviewer-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Reviews & Ratings</h1>
+            <p>Manage your reviews and ratings for clients and freelancers</p>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="openAddReviewForm()">Add New Review</button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('pending')">Pending Reviews</div>
+            <div class="tab" onclick="switchTab('given')">Given Reviews</div>
+            <div class="tab" onclick="switchTab('received')">Received Reviews</div>
+        </div>
+
+        <div id="pending" class="tab-content">
+            <div class="review-section">
+                <h2 class="section-title">Pending Reviews</h2>
+                <div class="review-cards" id="pendingReviewsContainer">
+                    <!-- Sample pending review -->
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-info">
+                                <div class="reviewer-avatar" style="background-color: hsl(120, 70%, 60%);">JS</div>
+                                <div>
+                                    <h3>Jane Smith</h3>
+                                    <p>Website Redesign</p>
+                                </div>
+                            </div>
+                            <div class="review-date">Completed: May 15, 2023</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="openReviewForm()">Leave Review</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="given" class="tab-content" style="display: none;">
+            <div class="review-section">
+                <h2 class="section-title">Reviews You've Given</h2>
+                <div class="review-cards" id="givenReviewsContainer">
+                    <div class="empty-state">No reviews found.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="received" class="tab-content" style="display: none;">
+            <div class="review-section">
+                <h2 class="section-title">Reviews You've Received</h2>
+                <div class="review-cards" id="receivedReviewsContainer">
+                    <div class="empty-state">No reviews found.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Review Form (Initially hidden) -->
+        <div id="addReviewForm" class="review-section" style="display: none;">
+            <h2 class="section-title">Add New Review</h2>
+            <form class="review-form">
+                <div class="form-group">
+                    <label for="reviewName">Name</label>
+                    <input type="text" id="reviewName" class="form-control" placeholder="Enter name">
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewProject">Project</label>
+                    <input type="text" id="reviewProject" class="form-control" placeholder="Enter project name">
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewDate">Date</label>
+                    <input type="date" id="reviewDate" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <div class="rating-row">
+                        <span class="rating-label">Quality of Work</span>
+                        <div class="stars">
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                        </div>
+                    </div>
+
+                    <div class="rating-row">
+                        <span class="rating-label">Communication</span>
+                        <div class="stars">
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                        </div>
+                    </div>
+
+                    <div class="rating-row">
+                        <span class="rating-label">Meeting Deadlines</span>
+                        <div class="stars">
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                        </div>
+                    </div>
+
+                    <div class="rating-row">
+                        <span class="rating-label">Professionalism</span>
+                        <div class="stars">
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                            <span class="star active" onclick="rateStar(this)">★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewContent">Review Content</label>
+                    <textarea id="reviewContent" class="review-text" placeholder="Enter your review"></textarea>
+                </div>
+
+                <div class="form-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeAddReviewForm()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitNewReview()">Submit Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Current state
+        let currentTab = 'pending';
+        let reviewsData = {
+            pending: [{
+                id: 1,
+                name: "Jane Smith",
+                project: "Website Redesign",
+                completedDate: "2023-05-15",
+                type: "freelancer"
+            }],
+            given: [],
+            received: []
+        };
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date to today
+            document.getElementById('reviewDate').valueAsDate = new Date();
+        });
+
+        // Switch tabs
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Show the selected tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById(tab).style.display = 'block';
+        }
+
+        // Open the add review form
+        function openAddReviewForm() {
+            document.getElementById('addReviewForm').style.display = 'block';
+            // Reset form
+            document.getElementById('reviewName').value = '';
+            document.getElementById('reviewProject').value = '';
+            document.getElementById('reviewDate').valueAsDate = new Date();
+            document.getElementById('reviewContent').value = '';
+
+            // Reset all stars to active
+            document.querySelectorAll('.star').forEach(star => {
+                star.classList.add('active');
+            });
+        }
+
+        // Close the add review form
+        function closeAddReviewForm() {
+            document.getElementById('addReviewForm').style.display = 'none';
+        }
+
+        // Open the review form for pending review
+        function openReviewForm() {
+            // In a real app, this would populate with the specific review data
+            openAddReviewForm();
+            document.getElementById('reviewName').value = "Jane Smith";
+            document.getElementById('reviewProject').value = "Website Redesign";
+        }
+
+        // Rate a star
+        function rateStar(star) {
+            const stars = star.parentElement.querySelectorAll('.star');
+            const rating = Array.from(stars).indexOf(star) + 1;
+
+            // Update visual state
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        }
+
+        // Submit a new review
+        function submitNewReview() {
+            const name = document.getElementById('reviewName').value.trim();
+            const project = document.getElementById('reviewProject').value.trim();
+            const date = document.getElementById('reviewDate').value;
+            const reviewText = document.getElementById('reviewContent').value.trim();
+
+            // Get ratings (simplified for this example)
+            const ratings = {
+                quality: document.querySelectorAll('#addReviewForm .stars:nth-of-type(1) .active').length,
+                communication: document.querySelectorAll('#addReviewForm .stars:nth-of-type(2) .active').length,
+                deadlines: document.querySelectorAll('#addReviewForm .stars:nth-of-type(3) .active').length,
+                professionalism: document.querySelectorAll('#addReviewForm .stars:nth-of-type(4) .active').length
+            };
+
+            // Validate inputs
+            if (!name || !project || !date || !reviewText) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            // Create new review
+            const newReview = {
+                id: generateId(),
+                name: name,
+                project: project,
+                date: date,
+                type: "freelancer",
+                ratings: ratings,
+                review: reviewText,
+                anonymous: false
+            };
+
+            // Add to given reviews
+            reviewsData.given.push(newReview);
+
+            // Close form and show success message
+            closeAddReviewForm();
+            alert('Review submitted successfully!');
+
+            // Refresh the given reviews tab
+            if (currentTab === 'given') {
+                renderGivenReviews();
+            }
+        }
+
+        // Render given reviews
+        function renderGivenReviews() {
+            const container = document.getElementById('givenReviewsContainer');
+            container.innerHTML = '';
+
+            if (reviewsData.given.length === 0) {
+                container.innerHTML = '<div class="empty-state">No reviews found.</div>';
+                return;
+            }
+
+            reviewsData.given.forEach(review => {
+                const card = document.createElement('div');
+                card.className = 'review-card';
+
+                // Calculate average rating
+                const ratings = Object.values(review.ratings);
+                const avgRating = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+                const initials = getInitials(review.name);
+
+                card.innerHTML = `
+                    <div class="review-header">
+                        <div class="reviewer-info">
+                            <div class="reviewer-avatar" style="background-color: ${stringToColor(review.name)}">${initials}</div>
+                            <div>
+                                <h3>${review.name}</h3>
+                                <p>${review.project}</p>
+                            </div>
+                        </div>
+                        <div class="review-rating">${renderStars(avgRating)} <small>(${avgRating.toFixed(1)})</small></div>
+                    </div>
+                    <div class="review-date">${formatDate(review.date)}</div>
+                    <div class="review-content">
+                        <p>${review.review}</p>
+                    </div>
+                    <div class="review-ratings">
+                        <p><strong>Quality:</strong> ${renderStars(review.ratings.quality)}</p>
+                        <p><strong>Communication:</strong> ${renderStars(review.ratings.communication)}</p>
+                        <p><strong>Deadlines:</strong> ${renderStars(review.ratings.deadlines)}</p>
+                        <p><strong>Professionalism:</strong> ${renderStars(review.ratings.professionalism)}</p>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Helper function to format date
+        function formatDate(dateString) {
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        // Helper function to render star ratings
+        function renderStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let stars = '';
+
+            for (let i = 1; i <= 5; i++) {
+                if (i <= fullStars) {
+                    stars += '★';
+                } else if (i === fullStars + 1 && hasHalfStar) {
+                    stars += '½';
+                } else {
+                    stars += '☆';
+                }
+            }
+
+            return stars;
+        }
+
+        // Helper function to get initials from name
+        function getInitials(name) {
+            return name.split(' ')
+                .map(part => part[0])
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+        }
+
+        // Helper function to generate a color from a string
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+
+            const color = `hsl(${hash % 360}, 70%, 60%)`;
+            return color;
+        }
+
+        // Generate a unique ID
+        function generateId() {
+            return Math.floor(Math.random() * 1000000);
+        }
+    </script>
+</body>
+
+</html>
