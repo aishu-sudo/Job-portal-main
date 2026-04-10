@@ -5,25 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log-in form</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="/styles/loginstyle.css">
-    <script type="module" src="/scripts/logfirebaseauth.js"></script>
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
+    <!-- ✅ Correct CSS path -->
+    <link rel="stylesheet" href="../styles/loginstyle.css">
 </head>
 
 <body>
 
     <div class="login-container">
-        <div class="logo">
-            <img src="/images/braintel.png" alt="Logo">
-        </div>
 
-        <!-- ✅ Login Message Area -->
-        <div id="message" style="text-align: center; font-size: 18px; font-weight: bold; color: rgb(169, 15, 110); margin-bottom: 10px;"></div>
+        <!-- ✅ Correct image path -->
+        <div class="logo">
+            <img src="../images/braintel.png" alt="Logo">
+        </div>
 
         <h3>Welcome back</h3>
 
+        <!-- Social Buttons -->
         <button class="social-login google">
             <i class="fab fa-google"></i> Continue with Google
         </button>
@@ -36,6 +37,7 @@
             <span>OR</span>
         </div>
 
+        <!-- Login Form -->
         <form id="login-form">
             <input type="text" id="login-email" placeholder="Email or Username" required>
             <input type="password" id="login-password" placeholder="Password" required>
@@ -44,15 +46,14 @@
                 <label>
                     <input type="checkbox"> Remember me
                 </label>
-                <a href="#" id="forgot-password">Forgot Password?</a>
-
+                <a href="#">Forgot Password?</a>
             </div>
 
             <button type="submit" class="login-btn">Log in</button>
         </form>
 
         <p>Don't have an account? <a href="signup.html">Sign up</a></p>
-        <button id="logout" style="display: none;">Logout</button>
+
     </div>
 
 </body>
