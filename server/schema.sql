@@ -26,7 +26,8 @@ CREATE TABLE Applications (
   app_id NUMBER PRIMARY KEY,
   job_id NUMBER,
   freelancer_id NUMBER,
-  status VARCHAR2(20) DEFAULT 'pending',
+  status VARCHAR2(20) DEFAULT 'pending'
+  CHECK (status IN ('pending','accepted','rejected')),
   FOREIGN KEY (job_id) REFERENCES Jobs(job_id),
   FOREIGN KEY (freelancer_id) REFERENCES Users(user_id)
 );
@@ -78,6 +79,7 @@ CREATE TABLE Audit_Payments (
   changed_by VARCHAR2(50)
 );
 
+
 CREATE SEQUENCE users_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE jobs_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE app_seq START WITH 1 INCREMENT BY 1;
@@ -87,4 +89,4 @@ CREATE SEQUENCE audit_jobs_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE audit_app_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE audit_pay_seq START WITH 1 INCREMENT BY 1;
 
-GET schema.sql
+SELECT users_seq.NEXTVAL FROM dual;
