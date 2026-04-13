@@ -37,6 +37,8 @@ async function testDB() {
 
 testDB();
 
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
 
 // Start the server
 app.listen(5000, () => {
