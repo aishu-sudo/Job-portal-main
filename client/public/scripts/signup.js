@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
 
+        if (!name || !email || !password) {
+            alert("Please fill all fields !");
+            return;
+        }
+
         try {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
@@ -28,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await res.text();
             alert(data);
         } catch (err) {
-            console.error("Signup Error ❌", err);
+            console.error("Signup Error", err);
         }
     }
 
