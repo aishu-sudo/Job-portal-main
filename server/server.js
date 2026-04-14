@@ -8,12 +8,16 @@ const app = express();
 const shouldTestDbOnStartup = process.env.DB_CHECK_ON_STARTUP === 'true';
 
 app.use(express.json());
+app.use((req, res, next) => {
+    console.log("Incoming:", req.method, req.url);
+    next();
+});
 app.use('/api/jobs', jobRoutes);
 app.use('/api/payments', paymentRoutes);
 
 // Serve static files
 app.use(express.static(__dirname));
-app.use(express.static('client'));
+app.use(express.static('client/public'));
 
 // Route for serving freelancerDashboard.html
 app.get('/freelancerDashboard.html', (req, res) => {
@@ -28,13 +32,13 @@ async function testDB() {
         conn = await getConnection();
         await conn.execute('SELECT 1 FROM DUAL');
 
-        console.log("DB Connected ✅");
+        console.log("DB Connected ");
     } catch (err) {
         if (err.code === 'NJS-503') {
-            console.error('DB Error ❌ Oracle listener is unreachable. Set ORACLE_DB_CONNECT_STRING (or ORACLE_DB_HOST/PORT/SERVICE) to a running instance.');
+            console.error('DB Error  Oracle listener is unreachable. Set ORACLE_DB_CONNECT_STRING (or ORACLE_DB_HOST/PORT/SERVICE) to a running instance.');
             return;
         }
-        console.error("DB Error ❌", err);
+        console.error("DB Error ", err);
     } finally {
         if (conn) {
             await conn.close();
@@ -48,6 +52,7 @@ if (shouldTestDbOnStartup) {
 
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
+
 
 // Start the server
 app.listen(5000, () => {
