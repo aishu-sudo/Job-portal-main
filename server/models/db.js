@@ -16,5 +16,3 @@ function getOracleConfig() {
 async function getConnection() {
     return oracledb.getConnection(getOracleConfig());
 }
-
-module.exports = getConnection;
