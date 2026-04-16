@@ -1,0 +1,14 @@
+[
+  {
+    "name": "test user2",
+    "email": "test2@example.com",
+    "role": "freelancer",
+    "createdAt": "2026-04-16T16:37:49.017Z"
+  },
+  {
+    "name": "oishi jaman",
+    "email": "aishozaman@gmail.com",
+    "role": "freelancer",
+    "createdAt": "2026-04-16T17:06:03.670Z"
+  }
+]

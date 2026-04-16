@@ -91,6 +91,20 @@ CREATE SEQUENCE audit_pay_seq START WITH 1 INCREMENT BY 1;
 
 ALTER TABLE Users ADD password VARCHAR2(100);
 
+CREATE OR REPLACE PROCEDURE insert_user_p (
+    p_name IN VARCHAR2,
+    p_email IN VARCHAR2,
+    p_role IN VARCHAR2,
+    p_password IN VARCHAR2
+)
+AS
+BEGIN
+    INSERT INTO Users (user_id, name, email, role, password)
+    VALUES (users_seq.NEXTVAL, p_name, p_email, p_role, p_password);
+    COMMIT;
+END insert_user_p;
+/
+
 -- USERS
 -- INSERT INTO Users 
 -- VALUES (users_seq.NEXTVAL, 'Aishu', 'aishu@gmail.com', 'client', '123');

@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const jobRoutes = require('./routes/job');
 const paymentRoutes = require('./routes/payment');
 const path = require('path');
@@ -7,6 +8,7 @@ const getConnection = require('./models/db');
 const app = express();
 const shouldTestDbOnStartup = process.env.DB_CHECK_ON_STARTUP === 'true';
 
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use((req, res, next) => {
     console.log("Incoming:", req.method, req.url);

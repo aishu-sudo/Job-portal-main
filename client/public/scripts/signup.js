@@ -40,9 +40,24 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const data = await res.text();
+
+            if (!res.ok) {
+                alert('Signup failed: ' + data);
+                return;
+            }
+
             alert(data);
+
+            if (role === 'freelancer') {
+                window.location.href = '/htmlfiles/freelancerDashboard.html';
+            } else if (role === 'client') {
+                window.location.href = '/htmlfiles/clientDashboard.html';
+            } else {
+                window.location.href = '/htmlfiles/login.html';
+            }
         } catch (err) {
             console.error("Signup Error", err);
+            alert('Signup error. Check console for details.');
         }
     }
 
