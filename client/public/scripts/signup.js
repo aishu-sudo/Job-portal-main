@@ -1,17 +1,26 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    document.getElementById("submitSignUpFreelancer").addEventListener("click", signupFreelancer);
-    document.getElementById("submitSignUpClient").addEventListener("click", signupClient);
+    console.log("🔥 JS FILE LOADED");
+
+    document.getElementById("submitSignUpFreelancer")
+        .addEventListener("click", signupFreelancer);
+
+    document.getElementById("submitSignUpClient")
+        .addEventListener("click", signupClient);
 
     async function signupFreelancer() {
+        console.log("Freelancer clicked");
         await signup("freelancer");
     }
 
     async function signupClient() {
+        console.log("Client clicked");
         await signup("client");
     }
 
     async function signup(role) {
+        console.log("Signup running 🚀");
+
         const name = document.getElementById("firstName").value + " " +
             document.getElementById("lastName").value;
 
@@ -24,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const res = await fetch('/api/auth/signup', {
+            const res = await fetch('http://localhost:5000/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, role, password })

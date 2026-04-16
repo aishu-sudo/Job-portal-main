@@ -1,4 +1,5 @@
 const oracledb = require('oracledb');
+
 function getOracleConfig() {
     const host = process.env.ORACLE_DB_HOST || '127.0.0.1';
     const port = process.env.ORACLE_DB_PORT || '1521';
@@ -15,5 +16,3 @@ function getOracleConfig() {
 async function getConnection() {
     return oracledb.getConnection(getOracleConfig());
 }
-
-module.exports = getConnection;
