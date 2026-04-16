@@ -40,7 +40,15 @@ CREATE TABLE Payments (
   job_id NUMBER,
   amount NUMBER,
   payment_date DATE DEFAULT SYSDATE,
-  FOREIGN KEY (job_id) REFERENCES Jobs(job_id)
+  type VARCHAR2(20) CHECK (type IN ('client_payment','freelancer_payout')) DEFAULT 'client_payment',
+  status VARCHAR2(20) DEFAULT 'pending' CHECK (status IN ('pending','completed','failed')),
+  client_id NUMBER,
+  freelancer_id NUMBER,
+  transaction_id VARCHAR2(100),
+  error_message VARCHAR2(255),
+  FOREIGN KEY (job_id) REFERENCES Jobs(job_id),
+  FOREIGN KEY (client_id) REFERENCES Users(user_id),
+  FOREIGN KEY (freelancer_id) REFERENCES Users(user_id)
 );
 
 

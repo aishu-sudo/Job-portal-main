@@ -1,81 +1,151 @@
 const express = require('express');
+const oracledb = require('oracledb');
 const router = express.Router();
-const Job = require('../models/Job.js');
-const Application = require('../models/Application');
+const getConnection = require('../models/db');
 
-// 1️ Browse All Jobs
+function mapJobRow(row) {
+    return {
+        jobId: row.JOB_ID,
+        title: row.TITLE,
+        description: row.DESCRIPTION,
+        budget: row.BUDGET,
+        clientId: row.CLIENT_ID
+    };
+}
+
 router.get('/browse', async(req, res) => {
+    let conn;
     try {
-        const jobs = await Job.find().sort({ createdAt: -1 });
-        res.json(jobs);
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT job_id, title, description, budget, client_id
+             FROM Jobs
+             ORDER BY job_id DESC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json(result.rows.map(mapJobRow));
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch jobs' });
+        res.status(500).json({ error: 'Failed to fetch jobs', details: error.message });
+    } finally {
+        if (conn) await conn.close();
     }
 });
 
 // 2️ Apply for a Job
 router.post('/:jobId/apply', async(req, res) => {
-    const { freelancerId, proposalText, bidAmount } = req.body;
+    const { freelancerId } = req.body;
     const { jobId } = req.params;
+    let conn;
+
+    if (!freelancerId) {
+        return res.status(400).json({ error: 'freelancerId is required' });
+    }
 
     try {
-        const application = new Application({
-            jobId,
-            freelancerId,
-            proposalText,
-            bidAmount
-        });
+        conn = await getConnection();
+        await conn.execute(
+            `INSERT INTO Applications (app_id, job_id, freelancer_id, status)
+             VALUES (app_seq.NEXTVAL, :jobId, :freelancerId, 'pending')`, { jobId, freelancerId }, { autoCommit: true }
+        );
 
-        await application.save();
         res.status(201).json({ message: 'Application submitted successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to apply for job' });
+        res.status(500).json({ error: 'Failed to apply for job', details: error.message });
+    } finally {
+        if (conn) await conn.close();
     }
 });
 
 // 3️Filter by Category
 router.get('/category/:categoryName', async(req, res) => {
+    const categoryName = req.params.categoryName.toLowerCase();
+    let conn;
+
     try {
-        const jobs = await Job.find({ category: req.params.categoryName });
-        res.json(jobs);
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT job_id, title, description, budget, client_id
+             FROM Jobs
+             WHERE LOWER(title) LIKE :query OR LOWER(description) LIKE :query`, { query: `%${categoryName}%` }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json(result.rows.map(mapJobRow));
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch category jobs' });
+        res.status(500).json({ error: 'Failed to fetch category jobs', details: error.message });
+    } finally {
+        if (conn) await conn.close();
     }
 });
 
 // 4️ Filter by Skill or Language
 router.get('/filter', async(req, res) => {
     const { skill, language } = req.query;
+    let conn;
 
     try {
-        let query = {};
-        if (skill) query.skills = skill;
-        if (language) query.language = language;
+        conn = await getConnection();
+        let baseQuery = `SELECT job_id, title, description, budget, client_id FROM Jobs WHERE 1=1`;
+        const binds = {};
 
-        const jobs = await Job.find(query);
-        res.json(jobs);
+        if (skill) {
+            binds.skill = `%${skill.toLowerCase()}%`;
+            baseQuery += ` AND LOWER(description) LIKE :skill`;
+        }
+        if (language) {
+            binds.language = `%${language.toLowerCase()}%`;
+            baseQuery += ` AND LOWER(title) LIKE :language`;
+        }
+
+        const result = await conn.execute(baseQuery, binds, { outFormat: oracledb.OUT_FORMAT_OBJECT });
+        res.json(result.rows.map(mapJobRow));
     } catch (error) {
-        res.status(500).json({ error: 'Failed to filter jobs' });
+        res.status(500).json({ error: 'Failed to filter jobs', details: error.message });
+    } finally {
+        if (conn) await conn.close();
     }
 });
 
 // 5️ Top Rated Jobs
 router.get('/top-rated', async(req, res) => {
+    let conn;
     try {
-        const jobs = await Job.find({ isTopRated: true });
-        res.json(jobs);
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT job_id, title, description, budget, client_id
+             FROM Jobs
+             WHERE ROWNUM <= 10`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json(result.rows.map(mapJobRow));
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch top rated jobs' });
+        res.status(500).json({ error: 'Failed to fetch top rated jobs', details: error.message });
+    } finally {
+        if (conn) await conn.close();
     }
 });
 
 // 6️ Job Details (Optional)
 router.get('/:jobId', async(req, res) => {
+    const { jobId } = req.params;
+    let conn;
+
     try {
-        const job = await Job.findById(req.params.jobId);
-        res.json(job);
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT job_id, title, description, budget, client_id
+             FROM Jobs
+             WHERE job_id = :jobId`, { jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        if (!result.rows || result.rows.length === 0) {
+            return res.status(404).json({ error: 'Job not found' });
+        }
+
+        res.json(mapJobRow(result.rows[0]));
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch job details' });
+        res.status(500).json({ error: 'Failed to fetch job details', details: error.message });
+    } finally {
+        if (conn) await conn.close();
     }
 });
 
