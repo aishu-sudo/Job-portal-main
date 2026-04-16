@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post Your Project</title>
+    <script src="/scripts/config.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -326,59 +327,82 @@
             }
 
             // Form submission
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
+                const title = document.getElementById('project-title').value.trim();
+                const description = document.getElementById('project-description').value.trim();
+                const salaryMax = document.getElementById('salary-max').value;
+                const company = document.getElementById('company-name').value.trim();
+                const jobType = document.getElementById('job-type').value;
+                const location = document.getElementById('location').value.trim();
+                const salaryMin = document.getElementById('salary-min').value;
+                const salaryPeriod = document.getElementById('salary-period').value;
+
+                const formData = {
+                    title,
+                    company,
+                    jobType,
+                    location,
+                    salaryMin,
+                    salaryMax,
+                    salaryPeriod,
+                    description,
+                    skills,
+                    projectId: Date.now().toString(),
+                    postedAt: new Date().toISOString(),
+                    status: 'active'
+                };
+
+                // Try to post to the real API
                 try {
-                    // Get form values
-                    const formData = {
-                        title: document.getElementById('project-title').value,
-                        company: document.getElementById('company-name').value,
-                        jobType: document.getElementById('job-type').value,
-                        location: document.getElementById('location').value,
-                        salaryMin: document.getElementById('salary-min').value,
-                        salaryMax: document.getElementById('salary-max').value,
-                        salaryPeriod: document.getElementById('salary-period').value,
-                        description: document.getElementById('project-description').value,
-                        skills: skills,
-                        projectId: Date.now().toString(), // Generate unique project ID
-                        postedAt: new Date().toISOString(),
-                        status: 'active'
-                    };
-
-                    // Create notification for freelancers
-                    const freelancerNotifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
-                    const newNotification = {
-                        id: Date.now().toString(),
-                        type: 'new_project',
-                        title: 'New Job Posted',
-                        message: `A new ${formData.jobType} job "${formData.title}" has been posted by ${formData.company}`,
-                        time: new Date().toISOString(),
-                        read: false,
-                        projectData: formData,
-                        priority: 'high'
-                    };
-
-                    // Add notification to the beginning of the array
-                    freelancerNotifications.unshift(newNotification);
-                    localStorage.setItem('freelancerNotifications', JSON.stringify(freelancerNotifications));
-
-                    // Store the project data
-                    const projects = JSON.parse(localStorage.getItem('projects')) || [];
-                    projects.unshift(formData); // Add new project to the beginning
-                    localStorage.setItem('projects', JSON.stringify(projects));
-
-                    // Update notification count for freelancers
-                    const unreadCount = freelancerNotifications.filter(n => !n.read).length;
-                    localStorage.setItem('freelancerNotificationCount', unreadCount);
-
-                    alert('Project posted successfully!');
-                    // Redirect back to client dashboard
-                    window.parent.location.href = 'clientDashboard.html';
-                } catch (error) {
-                    console.error('Error posting project:', error);
-                    alert('Error posting project. Please try again.');
+                    const clientId = localStorage.getItem('userId');
+                    const token = localStorage.getItem('token');
+                    if (clientId && token) {
+                        const res = await fetch(`${window.API_BASE || 'http://localhost:5000'}/api/jobs`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                title,
+                                description,
+                                budget: Number(salaryMax) || Number(salaryMin) || 0,
+                                category: jobType || 'general',
+                                clientId: Number(clientId)
+                            })
+                        });
+                        if (res.ok) {
+                            const job = await res.json();
+                            formData.projectId = String(job.jobId);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('API unavailable, saving locally:', err.message);
                 }
+
+                // Always save to localStorage for offline/notification use
+                const freelancerNotifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
+                freelancerNotifications.unshift({
+                    id: Date.now().toString(),
+                    type: 'new_project',
+                    title: 'New Job Posted',
+                    message: `A new ${formData.jobType} job "${formData.title}" has been posted by ${formData.company}`,
+                    time: new Date().toISOString(),
+                    read: false,
+                    projectData: formData,
+                    priority: 'high'
+                });
+                localStorage.setItem('freelancerNotifications', JSON.stringify(freelancerNotifications));
+
+                const projects = JSON.parse(localStorage.getItem('projects')) || [];
+                projects.unshift(formData);
+                localStorage.setItem('projects', JSON.stringify(projects));
+                localStorage.setItem('freelancerNotificationCount', freelancerNotifications.filter(n => !n.read).length);
+
+                alert('Project posted successfully!');
+                window.parent.location.href = 'clientDashboard.html';
             });
 
             // Make removeSkill available globally for the skill tags

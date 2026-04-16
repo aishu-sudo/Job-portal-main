@@ -9,16 +9,53 @@ function mapJobRow(row) {
         title: row.TITLE,
         description: row.DESCRIPTION,
         budget: row.BUDGET,
-        clientId: row.CLIENT_ID
+        category: row.CATEGORY,
+        status: row.STATUS,
+        clientId: row.CLIENT_ID,
+        createdAt: row.CREATED_AT
     };
 }
+
+// POST / - Create a new job
+router.post('/', async (req, res) => {
+    const { title, description, budget, category, clientId } = req.body;
+    if (!title || !budget || !clientId) {
+        return res.status(400).json({ error: 'title, budget, and clientId are required' });
+    }
+    let conn;
+    try {
+        conn = await getConnection();
+        await conn.execute(
+            `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`,
+            {
+                title,
+                description: description || '',
+                budget: Number(budget),
+                category: category || 'general',
+                clientId: Number(clientId)
+            },
+            { autoCommit: true }
+        );
+        const result = await conn.execute(
+            `SELECT job_id, title, description, budget, category, status, client_id, created_at
+             FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC`,
+            { clientId: Number(clientId) },
+            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        res.status(201).json(mapJobRow(result.rows[0]));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to create job', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
 
 router.get('/browse', async(req, res) => {
     let conn;
     try {
         conn = await getConnection();
         const result = await conn.execute(
-            `SELECT job_id, title, description, budget, client_id
+            `SELECT job_id, title, description, budget, category, status, client_id, created_at
              FROM Jobs
              ORDER BY job_id DESC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
@@ -111,8 +148,8 @@ router.get('/top-rated', async(req, res) => {
     try {
         conn = await getConnection();
         const result = await conn.execute(
-            `SELECT job_id, title, description, budget, client_id
-             FROM Jobs
+            `SELECT job_id, title, description, budget, category, status, client_id, created_at
+             FROM (SELECT * FROM Jobs ORDER BY job_id DESC)
              WHERE ROWNUM <= 10`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
 

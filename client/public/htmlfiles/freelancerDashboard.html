@@ -274,9 +274,22 @@
     </div>
 
     <script>
+        // Auth check
+        (function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('userRole');
+            if (!token) { window.location.href = 'login.html'; return; }
+            if (userRole !== 'freelancer') {
+                window.location.href = userRole === 'client' ? 'clientDashboard.html' : 'login.html';
+            }
+        })();
+
         // Set dashboard as active by default
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('dashboardBtn').classList.add('active');
+            const userName = localStorage.getItem('userName');
+            if (userName) document.querySelector('.dashboard-header h1').textContent = `Welcome, ${userName}`;
+            loadNotifications();
         });
 
         function loadSection(section) {
@@ -327,14 +340,10 @@
         }
 
         function markAllAsRead() {
-            const unreadItems = document.querySelectorAll('.notification-item.unread');
-            const badge = document.querySelector('.notification-badge');
-
-            unreadItems.forEach(item => {
-                item.classList.remove('unread');
-            });
-
-            badge.textContent = '0';
+            const notifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
+            const updated = notifications.map(n => ({ ...n, read: true }));
+            localStorage.setItem('freelancerNotifications', JSON.stringify(updated));
+            loadNotifications();
         }
 
         // Close notifications when clicking outside
@@ -348,8 +357,8 @@
         });
 
         function logout() {
-            // Add logout functionality here
-            alert('Logging out...');
+            ['token', 'userId', 'userName', 'userEmail', 'userRole'].forEach(k => localStorage.removeItem(k));
+            window.location.href = 'login.html';
         }
 
         function loadNotifications() {

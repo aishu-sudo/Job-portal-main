@@ -312,89 +312,32 @@
     </div>
 
     <script>
-        // Import dependencies manually
-        const auth = window.auth;
-        const onAuthStateChanged = window.onAuthStateChanged;
-        const sendClientToFreelancerNotification = window.sendClientToFreelancerNotification;
-        const NotificationTypes = window.NotificationTypes;
-
-        // Check authentication state
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
+        // Auth check using localStorage token
+        (function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('userRole');
+            if (!token) {
                 window.location.href = 'login.html';
                 return;
             }
-
-            const userRole = localStorage.getItem('userRole');
             if (userRole !== 'client') {
-                window.location.href = userRole === 'freelancer' ? 'freelancerDashboard.html' : 'dashboard.html';
+                window.location.href = userRole === 'freelancer' ? 'freelancerDashboard.html' : 'login.html';
             }
-        });
+        })();
 
-        // Make logout function available globally
         window.logout = function() {
-            auth.signOut().then(() => {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.href = 'login.html';
-            }).catch((error) => {
-                console.error('Logout error:', error);
-                alert("Logout failed! Please try again.");
-            });
-        };
-
-        // Example functions to send notifications
-        window.sendProjectNotification = function(freelancerId, projectData) {
-            sendClientToFreelancerNotification(
-                freelancerId,
-                NotificationTypes.NEW_PROJECT,
-                'New Project Posted',
-                `A new project "${projectData.title}" has been posted that matches your skills.`, {
-                    projectData
-                }
-            );
-        };
-
-        window.sendApplicationAcceptedNotification = function(freelancerId, projectTitle) {
-            sendClientToFreelancerNotification(
-                freelancerId,
-                NotificationTypes.APPLICATION_ACCEPTED,
-                'Application Accepted',
-                `Your application for "${projectTitle}" has been accepted!`, {
-                    projectTitle
-                }
-            );
-        };
-
-        window.sendPaymentNotification = function(freelancerId, amount, projectTitle) {
-            sendClientToFreelancerNotification(
-                freelancerId,
-                NotificationTypes.PAYMENT_SENT,
-                'Payment Sent',
-                `Payment of $${amount} has been sent for "${projectTitle}".`, {
-                    amount,
-                    projectTitle
-                }
-            );
-        };
-
-        window.sendReviewNotification = function(freelancerId, projectTitle) {
-            sendClientToFreelancerNotification(
-                freelancerId,
-                NotificationTypes.REVIEW_POSTED,
-                'New Review Posted',
-                `A new review has been posted for "${projectTitle}".`, {
-                    projectTitle
-                }
-            );
+            ['token', 'userId', 'userName', 'userEmail', 'userRole'].forEach(k => localStorage.removeItem(k));
+            window.location.href = 'login.html';
         };
 
         // Set dashboard as active by default
         document.addEventListener('DOMContentLoaded', function() {
-            const dashboardBtn = document.getElementById('dashboardBtn');
-            if (dashboardBtn) {
-                dashboardBtn.classList.add('active');
+            const userName = localStorage.getItem('userName');
+            if (userName) {
+                document.querySelector('.dashboard-header h1').textContent = `Welcome, ${userName}`;
             }
+            const dashboardBtn = document.getElementById('dashboardBtn');
+            if (dashboardBtn) dashboardBtn.classList.add('active');
             loadNotifications();
         });
 
@@ -493,6 +436,13 @@
                 badge.textContent = unreadCount;
                 badge.style.display = unreadCount > 0 ? 'flex' : 'none';
             }
+        }
+
+        function markAllAsRead() {
+            const notifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+            const updated = notifications.map(n => ({ ...n, read: true }));
+            localStorage.setItem('clientNotifications', JSON.stringify(updated));
+            loadNotifications();
         }
 
         function markNotificationAsRead(notificationId) {

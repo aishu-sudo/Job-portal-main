@@ -1,64 +1,70 @@
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("Signup JS loaded");
 
-    console.log("🔥 JS FILE LOADED");
+    const togglePassword = document.querySelector('.toggle-password');
+    const passwordInput = document.getElementById('password');
 
-    document.getElementById("submitSignUpFreelancer")
-        .addEventListener("click", signupFreelancer);
-
-    document.getElementById("submitSignUpClient")
-        .addEventListener("click", signupClient);
-
-    async function signupFreelancer() {
-        console.log("Freelancer clicked");
-        await signup("freelancer");
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', () => {
+            const isHidden = passwordInput.type === 'password';
+            passwordInput.type = isHidden ? 'text' : 'password';
+            togglePassword.querySelector('i').className = isHidden ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+        });
     }
 
-    async function signupClient() {
-        console.log("Client clicked");
-        await signup("client");
-    }
+    document.getElementById("submitSignUpFreelancer").addEventListener("click", () => signup("freelancer"));
+    document.getElementById("submitSignUpClient").addEventListener("click", () => signup("client"));
 
     async function signup(role) {
-        console.log("Signup running 🚀");
-
-        const name = document.getElementById("firstName").value + " " +
-            document.getElementById("lastName").value;
-
-        const email = document.getElementById("email").value;
+        const firstName = document.getElementById("firstName").value.trim();
+        const lastName = document.getElementById("lastName").value.trim();
+        const name = `${firstName} ${lastName}`.trim();
+        const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
 
-        if (!name || !email || !password) {
-            alert("Please fill all fields !");
+        if (!firstName || !email || !password) {
+            alert("Please fill all required fields.");
+            return;
+        }
+
+        if (password.length < 6) {
+            alert("Password must be at least 6 characters.");
             return;
         }
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/signup', {
+            const res = await fetch(`${window.API_BASE}/api/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, role, password })
             });
 
-            const data = await res.text();
+            const data = await res.json();
 
             if (!res.ok) {
-                alert('Signup failed: ' + data);
+                alert(data.error || 'Signup failed.');
                 return;
             }
 
-            alert(data);
+            // Store auth info from response
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userId', data.user.id);
+                localStorage.setItem('userName', data.user.name);
+                localStorage.setItem('userEmail', data.user.email);
+                localStorage.setItem('userRole', data.user.role);
+            }
+
+            alert(data.message || 'Registered successfully!');
 
             if (role === 'freelancer') {
                 window.location.href = '/htmlfiles/freelancerDashboard.html';
-            } else if (role === 'client') {
-                window.location.href = '/htmlfiles/clientDashboard.html';
             } else {
-                window.location.href = '/htmlfiles/login.html';
+                window.location.href = '/htmlfiles/clientDashboard.html';
             }
         } catch (err) {
             console.error("Signup Error", err);
-            alert('Signup error. Check console for details.');
+            alert('Connection error. Make sure the server is running on port 5000.');
         }
     }
-
 });
