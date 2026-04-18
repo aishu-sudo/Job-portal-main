@@ -25,6 +25,20 @@ router.post('/', async(req, res) => {
     let conn;
     try {
         conn = await getConnection();
+
+        // Get client name for audit trail
+        let clientName = 'SYSTEM';
+        try {
+            const clientResult = await conn.execute(
+                `SELECT name FROM Users WHERE user_id = :clientId`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            );
+            if (clientResult.rows && clientResult.rows.length > 0) {
+                clientName = clientResult.rows[0].NAME;
+            }
+        } catch (e) {
+            console.log('Could not fetch client name:', e.message);
+        }
+
         await conn.execute(
             `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`, {
                 title,
@@ -34,6 +48,19 @@ router.post('/', async(req, res) => {
                 clientId: Number(clientId)
             }, { autoCommit: true }
         );
+
+        // Create audit record for job creation
+        const jobResult = await conn.execute(
+            `SELECT job_id FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC FETCH FIRST 1 ROW ONLY`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        if (jobResult.rows && jobResult.rows.length > 0) {
+            const jobId = jobResult.rows[0].JOB_ID;
+            await conn.execute(
+                `INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, operation_type, timestamp, changed_by, change_reason)
+                 VALUES (audit_job_seq.NEXTVAL, :jobId, NULL, 'open', 'INSERT', SYSDATE, :changedBy, 'Job created by client')`, { jobId: jobId, changedBy: clientName }, { autoCommit: true }
+            );
+        }
         const result = await conn.execute(
             `SELECT job_id, title, description, budget, category, status, client_id, created_at
              FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
@@ -46,6 +73,76 @@ router.post('/', async(req, res) => {
     }
 });
 
+// POST /projects - Create job from client project posting
+router.post('/projects', async(req, res) => {
+    const { description, title, budget, category } = req.body;
+
+    // Get clientId from request body or header
+    let clientId = req.body.clientId || req.headers['client-id'];
+
+    console.log('📝 Project posting request:', { description: description ? .substring(0, 50), clientId, title, budget, category });
+
+    if (!description || !clientId) {
+        console.error('❌ Missing description or clientId:', { hasDescription: !!description, hasClientId: !!clientId });
+        return res.status(400).json({ error: 'description and clientId are required' });
+    }
+
+    let conn;
+    try {
+        conn = await getConnection();
+
+        // Get client name for audit trail
+        let clientName = 'SYSTEM';
+        try {
+            const clientResult = await conn.execute(
+                `SELECT name FROM Users WHERE user_id = :clientId`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            );
+            if (clientResult.rows && clientResult.rows.length > 0) {
+                clientName = clientResult.rows[0].NAME;
+            }
+        } catch (e) {
+            console.log('Could not fetch client name:', e.message);
+        }
+
+        // Create job from project posting
+        await conn.execute(
+            `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`, {
+                title: title || 'Project',
+                description: description,
+                budget: Number(budget) || 0,
+                category: category || 'general',
+                clientId: Number(clientId)
+            }, { autoCommit: true }
+        );
+        console.log('✅ Job inserted successfully');
+
+        // Get the newly created job and create audit record
+        const jobResult = await conn.execute(
+            `SELECT job_id FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC FETCH FIRST 1 ROW ONLY`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        console.log('📊 Job query result:', jobResult.rows);
+
+        if (jobResult.rows && jobResult.rows.length > 0) {
+            const jobId = jobResult.rows[0].JOB_ID;
+            await conn.execute(
+                `INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, operation_type, timestamp, changed_by, change_reason)
+                 VALUES (audit_job_seq.NEXTVAL, :jobId, NULL, 'open', 'INSERT', SYSDATE, :changedBy, 'Project posted by client')`, { jobId: jobId, changedBy: clientName }, { autoCommit: true }
+            );
+        }
+
+        const jobId = jobResult.rows && jobResult.rows.length > 0 ? jobResult.rows[0].JOB_ID : null;
+        if (!jobId) {
+            return res.status(500).json({ error: 'Failed to retrieve created job ID' });
+        }
+        res.status(201).json({ success: true, message: 'Project posted successfully', jobId: jobId });
+    } catch (error) {
+        console.error('Project posting error:', error);
+        res.status(500).json({ error: 'Failed to post project', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
 router.get('/browse', async(req, res) => {
     let conn;
     try {
@@ -53,11 +150,15 @@ router.get('/browse', async(req, res) => {
         const result = await conn.execute(
             `SELECT job_id, title, description, budget, category, status, client_id, created_at
              FROM Jobs
-             ORDER BY job_id DESC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
+             ORDER BY created_at DESC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
-
+        console.log('📋 Browse: Returning', result.rows.length, 'jobs');
+        if (result.rows.length > 0) {
+            console.log('🔝 Latest job:', { jobId: result.rows[0].JOB_ID, title: result.rows[0].TITLE, created_at: result.rows[0].CREATED_AT });
+        }
         res.json(result.rows.map(mapJobRow));
     } catch (error) {
+        console.error('❌ Browse error:', error.message);
         res.status(500).json({ error: 'Failed to fetch jobs', details: error.message });
     } finally {
         if (conn) await conn.close();
@@ -78,11 +179,12 @@ router.post('/:jobId/apply', async(req, res) => {
         conn = await getConnection();
         await conn.execute(
             `INSERT INTO Applications (app_id, job_id, freelancer_id, status)
-             VALUES (app_seq.NEXTVAL, :jobId, :freelancerId, 'pending')`, { jobId, freelancerId }, { autoCommit: true }
+             VALUES (app_seq.NEXTVAL, :jobId, :freelancerId, 'pending')`, { jobId: Number(jobId), freelancerId: Number(freelancerId) }, { autoCommit: true }
         );
 
         res.status(201).json({ message: 'Application submitted successfully' });
     } catch (error) {
+        console.error('Application submission error:', error);
         res.status(500).json({ error: 'Failed to apply for job', details: error.message });
     } finally {
         if (conn) await conn.close();
@@ -274,11 +376,19 @@ router.put('/:jobId/status', async(req, res) => {
     let conn;
     try {
         conn = await getConnection();
+
+        // Extract user name from changedBy (format: "UserName (ROLE)")
+        let auditChangedBy = changedBy || 'SYSTEM';
+        if (changedBy && changedBy.includes('(')) {
+            // Keep the full format "UserName (ROLE)" for better audit trail
+            auditChangedBy = changedBy;
+        }
+
         await conn.execute(
             `BEGIN update_job_status_p(:jobId, :status, :changedBy, :reason); END;`, {
                 jobId: Number(jobId),
                 status,
-                changedBy: changedBy || 'SYSTEM',
+                changedBy: auditChangedBy,
                 reason: reason || 'Status updated'
             }, { autoCommit: true }
         );
@@ -289,7 +399,7 @@ router.put('/:jobId/status', async(req, res) => {
     } finally {
         if (conn) await conn.close();
     }
-});
+})
 
 // 8️ Update Job Budget (with Audit Trail)
 router.put('/:jobId/budget', async(req, res) => {
@@ -303,11 +413,19 @@ router.put('/:jobId/budget', async(req, res) => {
     let conn;
     try {
         conn = await getConnection();
+
+        // Extract user name from changedBy (format: "UserName (ROLE)")
+        let auditChangedBy = changedBy || 'SYSTEM';
+        if (changedBy && changedBy.includes('(')) {
+            // Keep the full format "UserName (ROLE)" for better audit trail
+            auditChangedBy = changedBy;
+        }
+
         await conn.execute(
             `BEGIN update_job_budget_p(:jobId, :budget, :changedBy, :reason); END;`, {
                 jobId: Number(jobId),
                 budget: Number(budget),
-                changedBy: changedBy || 'SYSTEM',
+                changedBy: auditChangedBy,
                 reason: reason || 'Budget updated'
             }, { autoCommit: true }
         );
@@ -455,6 +573,29 @@ router.get('/:jobId/audit/actions-summary', async(req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch actions summary', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// 14️ Get Client's Accepted/Active Jobs (only jobs with accepted applications)
+router.get('/client/:clientId/my-projects', async(req, res) => {
+    const { clientId } = req.params;
+    let conn;
+
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT DISTINCT j.job_id, j.title, j.description, j.budget, j.category, j.status, j.client_id, j.created_at
+             FROM Jobs j
+             INNER JOIN Applications a ON j.job_id = a.job_id
+             WHERE j.client_id = :clientId AND a.status = 'accepted'
+             ORDER BY j.created_at DESC`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json(result.rows.map(mapJobRow));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch my projects', details: error.message });
     } finally {
         if (conn) await conn.close();
     }

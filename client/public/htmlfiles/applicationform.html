@@ -343,6 +343,7 @@
         </div>
     </div>
 
+    <script src="../scripts/config.js"></script>
     <script>
         // Handle file input display
         document.getElementById('resume').addEventListener('change', function(e) {
@@ -384,15 +385,26 @@
             try {
                 // Get the selected project ID
                 const projectId = localStorage.getItem('selectedProjectId');
+                const userId = localStorage.getItem('userId');
+
+                console.log('Debug:', {
+                    projectId,
+                    userId
+                });
+
                 if (!projectId) {
-                    throw new Error('No project selected');
+                    throw new Error('No project selected. Please go back and select a job.');
+                }
+
+                if (!userId) {
+                    throw new Error('User ID not found. Please log in again.');
                 }
 
                 // Get project details
                 const projects = JSON.parse(localStorage.getItem('projects')) || [];
                 const project = projects.find(p => p.projectId === projectId);
                 if (!project) {
-                    throw new Error('Project not found');
+                    throw new Error('Project not found in local storage');
                 }
 
                 // Create application data
@@ -401,7 +413,7 @@
                     projectTitle: project.title,
                     appliedAt: new Date().toISOString(),
                     status: 'pending',
-                    freelancerId: localStorage.getItem('userId'),
+                    freelancerId: userId,
                     freelancerName: fullName,
                     email: email,
                     phone: document.getElementById('phone').value.trim(),
@@ -410,27 +422,44 @@
                     coverLetter: document.getElementById('coverLetter').value.trim()
                 };
 
-                // Store the application
+                // Store the application in projectApplications
                 const applications = JSON.parse(localStorage.getItem('projectApplications')) || [];
                 applications.push(applicationData);
                 localStorage.setItem('projectApplications', JSON.stringify(applications));
 
+                // Also add to appliedJobs list for job listing pages
+                const appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
+                if (!appliedJobs.includes(projectId)) {
+                    appliedJobs.push(projectId);
+                    localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
+                }
+
                 // Also save to DB via API
-                const API_BASE = localStorage.getItem('apiBase') || 'http://localhost:5000/api';
-                const freelancerId = localStorage.getItem('userId');
-                if (freelancerId && projectId) {
+                const API_BASE = window.API_BASE || 'http://localhost:5000';
+                if (userId && projectId) {
                     try {
-                        await fetch(`${API_BASE}/jobs/${projectId}/apply`, {
+                        console.log('Submitting to:', `${API_BASE}/api/jobs/${projectId}/apply`);
+                        const response = await fetch(`${API_BASE}/api/jobs/${projectId}/apply`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                freelancerId: Number(freelancerId)
+                                freelancerId: Number(userId)
                             })
                         });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            console.error('API Error:', errorData);
+                            throw new Error(errorData.error || `Server error: ${response.statusText}`);
+                        }
+
+                        const successData = await response.json();
+                        console.log('API Response:', successData);
                     } catch (apiErr) {
-                        console.log('Could not save application to DB:', apiErr);
+                        console.error('Could not save application to DB:', apiErr);
+                        // Don't fail the submission, but log the error
                     }
                 }
 
@@ -462,24 +491,7 @@
                 window.location.href = 'freelancerDashboard.html';
             } catch (error) {
                 console.error('Error submitting application:', error);
-                alert('Error submitting application. Please try again.');
-            }
-        });
-
-        // Back link functionality
-        document.querySelector('.back-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            // In a real app, this would navigate back to the job listings
-            console.log('Navigating back to job listings');
-            // window.history.back() or specific route
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load job details if coming from notification
-            const selectedProjectId = localStorage.getItem('selectedProjectId');
-            if (selectedProjectId) {
-                const projects = JSON.parse(localStorage.getItem('projects')) || [];
-                const project = projects.find(p => p.projectId === selectedProjectId);
+                alert('Error submitting application: ' + error.message);
 
                 if (project) {
                     // Update job details in the header

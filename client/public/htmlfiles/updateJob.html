@@ -431,9 +431,16 @@
 
                 if (response.ok) {
                     message.className = 'status-message success';
-                    message.textContent = '✅ ' + data.message;
+                    message.textContent = '✅ ' + data.message + ' - Status changed to: ' + status.toUpperCase();
                     document.getElementById('statusForm').reset();
-                    document.getElementById('jobDetailsStatus').style.display = 'none';
+
+                    // Fetch and display updated job details
+                    await loadJobDetailsForStatus(jobId);
+
+                    // Auto-refresh page after 2 seconds
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
                 } else {
                     message.className = 'status-message error';
                     message.textContent = '❌ ' + (data.error || 'Failed to update status');
@@ -470,9 +477,16 @@
 
                 if (response.ok) {
                     message.className = 'status-message success';
-                    message.textContent = '✅ ' + data.message;
+                    message.textContent = '✅ ' + data.message + ' - New budget: $' + Number(budget).toLocaleString();
                     document.getElementById('budgetForm').reset();
-                    document.getElementById('jobDetailsBudget').style.display = 'none';
+
+                    // Fetch and display updated job details
+                    await loadJobDetailsForBudget(jobId);
+
+                    // Auto-refresh page after 2 seconds
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
                 } else {
                     message.className = 'status-message error';
                     message.textContent = '❌ ' + (data.error || 'Failed to update budget');
@@ -482,6 +496,44 @@
                 message.textContent = '❌ Error: ' + error.message;
             } finally {
                 loading.classList.remove('active');
+            }
+        }
+
+        async function loadJobDetailsForStatus(jobId) {
+            try {
+                const response = await fetch(`${API_URL}/browse`);
+                if (response.ok) {
+                    const jobs = await response.json();
+                    const job = jobs.find(j => j.jobId == jobId);
+                    if (job) {
+                        document.getElementById('jobIdStatus').textContent = job.jobId;
+                        document.getElementById('jobTitleStatus').textContent = job.title;
+                        document.getElementById('jobCurrentStatus').textContent = job.status || 'N/A';
+                        document.getElementById('jobBudgetStatus').textContent = (job.budget || 0).toLocaleString();
+                        document.getElementById('jobDetailsStatus').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.log('Could not load updated job details:', error);
+            }
+        }
+
+        async function loadJobDetailsForBudget(jobId) {
+            try {
+                const response = await fetch(`${API_URL}/browse`);
+                if (response.ok) {
+                    const jobs = await response.json();
+                    const job = jobs.find(j => j.jobId == jobId);
+                    if (job) {
+                        document.getElementById('jobIdBudget').textContent = job.jobId;
+                        document.getElementById('jobTitleBudget').textContent = job.title;
+                        document.getElementById('jobCurrentBudget').textContent = (job.budget || 0).toLocaleString();
+                        document.getElementById('jobStatusBudget').textContent = job.status || 'N/A';
+                        document.getElementById('jobDetailsBudget').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.log('Could not load updated job details:', error);
             }
         }
 

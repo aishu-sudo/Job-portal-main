@@ -272,6 +272,7 @@
         <iframe id="contentFrame" class="content-frame" style="display: none;"></iframe>
     </div>
 
+    <script src="../scripts/config.js"></script>
     <script>
         // Auth check
         (function checkAuth() {
@@ -461,6 +462,15 @@
             `;
 
             const projectData = notification.projectData;
+
+            // Check if user has already applied for this project using appliedJobs
+            const appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
+            const hasApplied = appliedJobs.includes(projectData.projectId);
+            const applyButtonText = hasApplied ? 'Already Applied' : 'Apply Now';
+            const applyButtonStyle = hasApplied ?
+                'background: #4caf50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: not-allowed; opacity: 0.7;' :
+                'background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;';
+
             modal.innerHTML = `
                 <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; max-width: 800px; width: 90%;">
                     <span class="close" style="float: right; cursor: pointer; font-size: 24px;">&times;</span>
@@ -488,9 +498,9 @@
                                 style="background: #f0f0f0; color: #333; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
                             View Full Details
                         </button>
-                        <button onclick="applyForProject('${projectData.projectId}')" 
-                                style="background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
-                            Apply Now
+                        <button onclick="${hasApplied ? 'alert(\"You have already applied for this position!\"); return false;' : `applyForProject('${projectData.projectId}')`}" 
+                                style="${applyButtonStyle}" ${hasApplied ? 'disabled' : ''}>
+                            ${applyButtonText}
                         </button>
                     </div>
                 </div>

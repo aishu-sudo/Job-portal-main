@@ -358,9 +358,9 @@ BEGIN
 END;
 /
 
--- ============================================================================
+
 -- SAMPLE DATA INSERTION
--- ============================================================================
+
 
 -- Insert sample users
 INSERT INTO Users (user_id, name, email, role, password) VALUES (user_seq.NEXTVAL, 'Alice Johnson', 'alice@example.com', 'client', 'pass123');

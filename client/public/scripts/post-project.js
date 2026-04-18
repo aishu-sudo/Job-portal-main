@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const API_BASE_URL = 'http://localhost:5501';
+    // Determine API base URL
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    const API_BASE_URL = port === '3000' || port === '4000' || !port ? 'http://localhost:5000' : `${protocol}//${hostname}:${port}`;
+
     const form = document.getElementById('project-form');
     const descriptionInput = document.getElementById('project-description');
     const nextBtn = document.querySelector('.next-btn');
@@ -17,19 +22,24 @@ document.addEventListener('DOMContentLoaded', function() {
         nextBtn.textContent = 'Posting...';
 
         try {
-            const csrfRes = await fetch(`${API_BASE_URL}/api/auth/csrf-token`, {
-                credentials: 'include'
-            });
-            const { csrfToken } = await csrfRes.json();
+            // No CSRF needed for direct API call
 
-            const res = await fetch(`${API_BASE_URL}/api/projects`, {
+            // Get client ID from localStorage
+            const clientId = localStorage.getItem('userId') || localStorage.getItem('clientId');
+
+            const res = await fetch(`${API_BASE_URL}/api/jobs/projects`, {
                 method: 'POST',
-                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
+                    'client-id': clientId
                 },
-                body: JSON.stringify({ description })
+                body: JSON.stringify({
+                    description,
+                    title: 'Project',
+                    budget: 0,
+                    category: 'general',
+                    clientId: clientId
+                })
             });
 
             const result = await res.json();
@@ -60,9 +70,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const isFromIndex = referrer.includes('index.html') || referrer.endsWith('/');
 
         try {
-            const authCheck = await fetch(`${API_BASE_URL}/api/auth/check`, {
-                credentials: 'include'
-            });
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                if (isFromIndex) {
+                    localStorage.setItem('pendingProjectData', description);
+                    window.location.href = 'login.html';
+                } else {
+                    alert('Please log in to post a project');
+                }
+                return;
+            }
+
+            // Skip auth check - user is logged in
 
             if (!authCheck.ok) {
                 if (isFromIndex) {

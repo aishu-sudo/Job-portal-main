@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/jobs', jobRoutes);
+app.use('/api/jobs', jobRoutes); // Includes /api/jobs/projects endpoint
 app.use('/api/payments', paymentRoutes);
 app.use('/api/freelancers', freelancerRoutes);
 app.use('/api/notifications', notificationRoutes);

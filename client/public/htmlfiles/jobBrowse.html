@@ -461,34 +461,6 @@
 </head>
 
 <body>
-    <header>
-        <div class="container header-container">
-            <div class="logo">JobPortal</div>
-            <nav>
-                <ul>
-                    <li id="admin-nav" style="display: none;"><a href="adminDashboard.html">🎛️ Admin</a></li>
-                    <li><a href="jobBrowse.html" class="active">📋 Browse</a></li>
-                    <li id="post-nav" style="display: none;"><a href="post-project.html">➕ Post Job</a></li>
-                    <li id="update-nav" style="display: none;"><a href="updateJob.html">✏️ Update</a></li>
-                    <li id="provenance-nav" style="display: none;"><a href="viewProvenance.html">🔍 Provenance</a></li>
-                    <li id="notifications-nav" style="display: none;"><a href="freelancerNotifications.html">🔔 Notifications</a></li>
-                    <li><a href="#" id="saved-jobs-link">⭐ Saved <span id="saved-jobs-count" class="saved-jobs-count">0</span></a></li>
-                    <li id="user-info-nav" style="margin-left: auto; color: #3498db;"></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
-    <section class="search-section">
-        <div class="container">
-            <form class="search-form" id="job-search-form">
-                <input type="text" class="search-input" id="job-title-input" placeholder="Job title, keywords, or company">
-                <input type="text" class="search-input" id="location-input" placeholder="Location">
-                <button type="submit" class="search-button">Search Jobs</button>
-            </form>
-        </div>
-    </section>
-
     <main class="container">
         <!-- Talent Categories Section -->
         <section class="talent-categories">
@@ -537,26 +509,35 @@
             </div>
         </section>
 
-        <div class="filters">
-            <div class="filter-group">
-                <span class="filter-label">Filter by:</span>
-                <select class="filter-select" id="job-type-filter">
+        <!-- Latest Client Posted Jobs Section -->
+        <section style="margin: 40px 0; background: #f9f9f9; padding: 30px; border-radius: 8px; border-left: 4px solid #1976d2;">
+            <h2 style="margin-bottom: 20px; color: #0c2333;">🔥 Latest Job Postings from Clients</h2>
+            <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Fresh opportunities posted by clients - Apply now to get hired!</p>
+            <div id="client-jobs-section" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                <!-- Client posted jobs will be loaded here -->
+            </div>
+        </section>
+
+        <h2 style="margin-top: 40px; margin-bottom: 20px;">All Available Jobs</h2>
+        <div class="filter-group">
+            <span class="filter-label">Filter by:</span>
+            <select class="filter-select" id="job-type-filter">
                     <option value="all">All Jobs</option>
                     <option value="full-time">Full-time</option>
                     <option value="part-time">Part-time</option>
                     <option value="remote">Remote</option>
                     <option value="contract">Contract</option>
                 </select>
-            </div>
+        </div>
 
-            <div class="filter-group">
-                <span class="filter-label">Sort by:</span>
-                <select class="filter-select" id="sort-by">
+        <div class="filter-group">
+            <span class="filter-label">Sort by:</span>
+            <select class="filter-select" id="sort-by">
                     <option value="recent">Most Recent</option>
                     <option value="salary">Highest Salary</option>
                     <option value="applied">Most Applied</option>
                 </select>
-            </div>
+        </div>
         </div>
 
         <div class="job-listings" id="job-listings-container">
@@ -582,7 +563,8 @@
         </div>
     </div>
 
-    <script src="scripts/roleManager.js"></script>
+    <script src="../scripts/config.js"></script>
+    <script src="../scripts/roleManager.js"></script>
     <script>
         // Setup role-based navigation
         function setupRoleNav() {
@@ -1056,23 +1038,33 @@
         let appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
         let filteredJobs = [...jobs];
         let currentJobApplying = null;
+        let clientPostedJobs = []; // Store jobs posted by clients
 
         // Fetch DB jobs and merge with hardcoded ones
         async function loadDBJobs() {
             try {
-                const API_BASE = localStorage.getItem('apiBase') || 'http://localhost:5000/api';
+                const API_BASE = (window.API_BASE || 'http://localhost:5000') + '/api';
+                console.log('📡 Fetching jobs from:', `${API_BASE}/jobs/browse`);
                 const res = await fetch(`${API_BASE}/jobs/browse`);
                 if (res.ok) {
                     const dbJobs = await res.json();
+                    console.log('✅ Received', dbJobs.length, 'jobs from database');
+                    clientPostedJobs = [];
                     const maxId = Math.max(...jobs.map(j => j.id), 0);
+                    let addedCount = 0;
                     dbJobs.forEach((dj, i) => {
                         // Skip if already in hardcoded list by title match
-                        if (jobs.some(j => j.title === dj.title)) return;
-                        jobs.push({
+                        if (jobs.some(j => j.title === dj.title)) {
+                            console.log('⏭️  Skipping duplicate job:', dj.title);
+                            return;
+                        }
+                        addedCount++;
+
+                        const jobObj = {
                             id: dj.jobId,
                             dbJobId: dj.jobId,
                             title: dj.title,
-                            company: 'Job Portal',
+                            company: 'Job Portal Client',
                             location: 'Remote',
                             salary: dj.budget ? `$${Number(dj.budget).toLocaleString()}` : 'Negotiable',
                             type: 'contract',
@@ -1082,10 +1074,22 @@
                             salaryMin: dj.budget || 0,
                             salaryMax: dj.budget || 0,
                             applications: 0,
-                            clientInfo: {},
-                            skills: dj.category ? [dj.category] : ['General']
-                        });
+                            clientInfo: {
+                                status: 'Active'
+                            },
+                            skills: dj.category ? [dj.category] : ['General'],
+                            isClientPosted: true // Mark as client-posted
+                        };
+
+                        jobs.push(jobObj);
+                        clientPostedJobs.push(jobObj);
                     });
+
+                    console.log('📦 Added', addedCount, 'new jobs from database. Total clientPostedJobs:', clientPostedJobs.length);
+
+                    // Display client-posted jobs in the special section
+                    displayClientPostings();
+
                     filteredJobs = [...jobs];
                     renderJobListings();
                     renderPagination();
@@ -1095,6 +1099,83 @@
             }
         }
 
+        // Display client-posted jobs in a special section
+        function displayClientPostings() {
+            const clientJobsSection = document.getElementById('client-jobs-section');
+            clientJobsSection.innerHTML = '';
+
+            console.log('🎨 displayClientPostings called with', clientPostedJobs.length, 'jobs');
+
+            if (clientPostedJobs.length === 0) {
+                clientJobsSection.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666; padding: 20px;">No jobs posted by clients yet. Check back soon!</p>';
+                console.log('⚠️ No client posted jobs to display');
+                return;
+            }
+
+            clientPostedJobs.slice(0, 6).forEach(job => {
+                        const isSaved = savedJobs.includes(job.id);
+                        const isApplied = appliedJobs.includes(job.dbJobId);
+
+                        const jobCard = document.createElement('div');
+                        jobCard.style.cssText = `
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    border-top: 3px solid #1976d2;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                `;
+
+                        jobCard.onmouseover = () => {
+                            jobCard.style.transform = 'translateY(-4px)';
+                            jobCard.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                        };
+
+                        jobCard.onmouseout = () => {
+                            jobCard.style.transform = 'translateY(0)';
+                            jobCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                        };
+
+                        jobCard.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <h3 style="margin: 0; color: #0c2333; font-size: 16px; flex: 1;">${job.title}</h3>
+                        <span style="background: #1976d2; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;">NEW</span>
+                    </div>
+                    <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">
+                        <i class="fas fa-building" style="color: #1976d2;"></i> ${job.company}
+                    </p>
+                    <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">
+                        <i class="fas fa-map-marker-alt" style="color: #1976d2;"></i> ${job.location}
+                    </p>
+                    <p style="margin: 0 0 8px 0; color: #0c2333; font-weight: 600; font-size: 14px;">
+                        <i class="fas fa-dollar-sign" style="color: #27ae60;"></i> ${job.salary}
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #666; font-size: 13px;">
+                        <i class="fas fa-clock" style="color: #f39c12;"></i> Posted ${job.posted}
+                    </p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                        ${job.skills.map(skill => `<span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${skill}</span>`).join('')}
+                    </div>
+                    <p style="margin: 0 0 12px 0; color: #555; font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        ${job.description.substring(0, 100)}...
+                    </p>
+                    <div style="display: flex; gap: 8px; justify-content: space-between;">
+                        <button onclick="openJobModal(${job.dbJobId}, '${job.title.replace(/'/g, "\\'")}')" 
+                                style="flex: 1; background: #1976d2; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; ${isApplied ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                            ${isApplied ? '✓ Applied' : 'Apply Now'}
+                        </button>
+                        <button onclick="toggleSaveJob(${job.id})" 
+                                style="background: none; border: 1px solid #ccc; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; color: ${isSaved ? '#e74c3c' : '#999'};">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                `;
+                
+                clientJobsSection.appendChild(jobCard);
+            });
+        }
+
         function formatPostedDate(dateStr) {
             if (!dateStr) return 'Recently';
             const diff = Date.now() - new Date(dateStr).getTime();
@@ -1102,6 +1183,34 @@
             if (days === 0) return 'Today';
             if (days === 1) return '1 day ago';
             return `${days} days ago`;
+        }
+
+        // Open job modal for applying
+        function openJobModal(jobId, jobTitle) {
+            const job = jobs.find(j => j.dbJobId === jobId || j.id === jobId);
+            if (job) {
+                currentJobApplying = job.id;
+                modalJobTitle.textContent = jobTitle;
+                applicationModal.style.display = 'block';
+            }
+        }
+
+        // Toggle save job
+        function toggleSaveJob(jobId) {
+            const index = savedJobs.indexOf(jobId);
+            if (index === -1) {
+                savedJobs.push(jobId);
+            } else {
+                savedJobs.splice(index, 1);
+            }
+            localStorage.setItem('savedJobs', JSON.stringify(savedJobs));
+            updateSavedJobsCount();
+            displayClientPostings(); // Refresh the display
+        }
+
+        function updateSavedJobsCount() {
+            const count = savedJobs.length;
+            savedJobsCount.textContent = count;
         }
 
         // Initialize
@@ -1486,7 +1595,7 @@
             }
 
             // Call DB API to create application record (only for DB jobs)
-            const API_BASE = localStorage.getItem('apiBase') || 'http://localhost:5000/api';
+            const API_BASE = (window.API_BASE || 'http://localhost:5000') + '/api';
             const freelancerId = localStorage.getItem('userId');
 
             if (freelancerId && job.dbJobId) {
@@ -1571,10 +1680,6 @@
                 }
             }
         });
-    }
-
-    function updateSavedJobsCount() {
-        savedJobsCount.textContent = savedJobs.length;
     }
     </script>
 
