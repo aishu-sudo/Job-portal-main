@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const jobRoutes = require('./routes/job');
 const paymentRoutes = require('./routes/payment');
 const freelancerRoutes = require('./routes/freelancer');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 const shouldTestDbOnStartup = process.env.DB_CHECK_ON_STARTUP === 'true';
@@ -30,6 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/freelancers', freelancerRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Serve client static files
 const clientPublicPath = path.resolve(__dirname, '..', 'client', 'public');
@@ -42,6 +44,21 @@ async function testDB() {
         conn = await getConnection();
         await conn.execute('SELECT 1 FROM DUAL');
         console.log("DB Connected");
+
+        // Drop UPDATE triggers to avoid duplicate audit rows
+        // (stored procedures already handle audit logging with correct changedBy)
+        const triggers = ['trg_job_update', 'trg_application_update', 'trg_payment_update'];
+        for (const trg of triggers) {
+            try {
+                await conn.execute(`DROP TRIGGER ${trg}`);
+                console.log(`Dropped trigger: ${trg}`);
+            } catch (e) {
+                // trigger may already be dropped
+                if (!e.message.includes('ORA-04080')) {
+                    console.log(`Trigger ${trg} already removed or not found`);
+                }
+            }
+        }
     } catch (err) {
         if (err.code === 'NJS-503') {
             console.warn('Oracle listener unreachable — running without DB. Set ORACLE_DB_CONNECT_STRING to connect.');
@@ -53,9 +70,8 @@ async function testDB() {
     }
 }
 
-if (shouldTestDbOnStartup) {
-    testDB();
-}
+// Always run DB init on startup to drop duplicate triggers
+testDB();
 
 app.listen(5000, () => {
     console.log('Server running on http://localhost:5000');

@@ -63,11 +63,12 @@
         #mainContent {
             flex: 1;
             padding: 30px;
+            overflow: hidden;
         }
         
         .content-frame {
             width: 100%;
-            height: 600px;
+            height: calc(100vh - 120px);
             border: none;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -206,8 +207,6 @@
         <h2><i class="fas fa-user-tie"></i> Freelancer</h2>
         <button onclick="loadSection('dashboard')" id="dashboardBtn" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
         <button onclick="loadSection('jobBrowsing')" id="jobBrowsingBtn"><i class="fas fa-briefcase"></i> Browse Jobs</button>
-
-        <button onclick="loadSection('messages')" id="messagesBtn"><i class="fas fa-comments"></i> Messages</button>
         <button onclick="loadSection('filterBySkill')" id="filterBySkillBtn"><i class="fas fa-cogs"></i> JobsCategory</button>
 
         <button onclick="loadSection('profile')" id="profileBtn"><i class="fas fa-user"></i> My Profile</button>
@@ -278,7 +277,10 @@
         (function checkAuth() {
             const token = localStorage.getItem('token');
             const userRole = localStorage.getItem('userRole');
-            if (!token) { window.location.href = 'login.html'; return; }
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
             if (userRole !== 'freelancer') {
                 window.location.href = userRole === 'client' ? 'clientDashboard.html' : 'login.html';
             }
@@ -319,9 +321,6 @@
                 case 'applyJob':
                     frame.src = 'jobApply.html';
                     break;
-                case 'messages':
-                    frame.src = 'Message.html';
-                    break;
                 case 'filterBySkill':
                     frame.src = 'jobs.html?filter=skill';
                     break;
@@ -341,7 +340,9 @@
 
         function markAllAsRead() {
             const notifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
-            const updated = notifications.map(n => ({ ...n, read: true }));
+            const updated = notifications.map(n => ({...n,
+                read: true
+            }));
             localStorage.setItem('freelancerNotifications', JSON.stringify(updated));
             loadNotifications();
         }
@@ -434,6 +435,9 @@
                     break;
                 case 'new_message':
                     showMessageModal(notification);
+                    break;
+                case 'hire_request':
+                    showHireRequestModal(notification);
                     break;
                 default:
                     console.log('Unknown notification type:', notification.type);
@@ -664,6 +668,121 @@
             modal.onclick = (e) => {
                 if (e.target === modal) document.body.removeChild(modal);
             };
+        }
+
+        // ============================================
+        // HIRE REQUEST Modal — Accept / Reject
+        // ============================================
+        function showHireRequestModal(notification) {
+            const hd = notification.hireData || {};
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000;';
+
+            const alreadyResponded = notification.responded;
+            modal.innerHTML = `
+                <div class="modal-content" style="background:white;padding:25px;border-radius:12px;max-width:550px;width:90%;">
+                    <span class="close" style="float:right;cursor:pointer;font-size:24px;">&times;</span>
+                    <h2 style="color:#1d2939;">Hire Request</h2>
+                    <div style="margin-top:20px;">
+                        <p><strong>Client:</strong> ${hd.clientName || 'Unknown'}</p>
+                        <p><strong>Job:</strong> ${hd.jobTitle || 'N/A'}</p>
+                        <p><strong>Budget:</strong> ${hd.budget || 'N/A'}</p>
+                        <p><strong>Received:</strong> ${new Date(notification.time).toLocaleString()}</p>
+                    </div>
+                    ${alreadyResponded ? `
+                        <div style="margin-top:20px;padding:15px;border-radius:8px;background:${notification.responseStatus === 'accepted' ? '#d4edda' : '#f8d7da'};text-align:center;">
+                            <strong>You ${notification.responseStatus === 'accepted' ? 'accepted' : 'rejected'} this request.</strong>
+                        </div>
+                    ` : `
+                        <div style="margin-top:25px;display:flex;gap:12px;justify-content:flex-end;" id="hireActions">
+                            <button id="rejectHireBtn" style="background:#dc3545;color:white;border:none;padding:12px 28px;border-radius:6px;cursor:pointer;font-size:15px;">Reject</button>
+                            <button id="acceptHireBtn" style="background:#28a745;color:white;border:none;padding:12px 28px;border-radius:6px;cursor:pointer;font-size:15px;">Accept</button>
+                        </div>
+                    `}
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('.close').onclick = () => document.body.removeChild(modal);
+            modal.onclick = (e) => { if (e.target === modal) document.body.removeChild(modal); };
+
+            if (!alreadyResponded) {
+                modal.querySelector('#acceptHireBtn').onclick = () => respondToHire(notification, 'accepted', modal);
+                modal.querySelector('#rejectHireBtn').onclick = () => respondToHire(notification, 'rejected', modal);
+            }
+        }
+
+        async function respondToHire(notification, status, modal) {
+            const hd = notification.hireData;
+            const freelancerName = localStorage.getItem('userName') || 'Freelancer';
+            const actionsDiv = modal.querySelector('#hireActions');
+            if (actionsDiv) actionsDiv.innerHTML = '<p style="text-align:center;color:#666;">Processing...</p>';
+
+            try {
+                const resp = await fetch(`http://localhost:5000/api/freelancers/hire/${hd.appId}/respond`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status,
+                        changedBy: freelancerName + ' (freelancer)'
+                    })
+                });
+                const data = await resp.json();
+
+                if (resp.ok) {
+                    // Mark this notification as responded
+                    const notifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
+                    const updated = notifications.map(n => {
+                        if (n.id === notification.id) {
+                            return { ...n, responded: true, responseStatus: status };
+                        }
+                        return n;
+                    });
+                    localStorage.setItem('freelancerNotifications', JSON.stringify(updated));
+
+                    // Send notification to client
+                    const clientNotifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+                    clientNotifications.unshift({
+                        id: Date.now(),
+                        type: 'hire_response',
+                        title: status === 'accepted' ? 'Hire Accepted!' : 'Hire Declined',
+                        message: `${freelancerName} has ${status} your hire request for "${hd.jobTitle}".${status === 'accepted' ? ' Job is now in-progress.' : ''}`,
+                        time: new Date().toISOString(),
+                        read: false,
+                        hireData: hd
+                    });
+                    localStorage.setItem('clientNotifications', JSON.stringify(clientNotifications));
+
+                    // Update modal UI
+                    if (actionsDiv) {
+                        const color = status === 'accepted' ? '#d4edda' : '#f8d7da';
+                        actionsDiv.innerHTML = `<div style="padding:15px;border-radius:8px;background:${color};text-align:center;">
+                            <strong>You ${status === 'accepted' ? 'accepted' : 'rejected'} this request.</strong>
+                            ${status === 'accepted' ? '<br><span style="color:#155724;">Job status updated to in-progress.</span>' : ''}
+                        </div>`;
+                    }
+
+                    loadNotifications();
+
+                    if (status === 'accepted') {
+                        // Redirect to jobs page after short delay so user sees the confirmation
+                        setTimeout(() => {
+                            document.body.removeChild(modal);
+                            // Load the updateJob page in the iframe for editing
+                            const iframe = document.querySelector('iframe');
+                            if (iframe) {
+                                iframe.src = `updateJob.html?jobId=${hd.jobId}`;
+                            }
+                        }, 1500);
+                    }
+                } else {
+                    if (actionsDiv) actionsDiv.innerHTML = `<p style="color:red;">Error: ${data.error || 'Failed'}</p>`;
+                }
+            } catch (error) {
+                console.error('Hire response error:', error);
+                if (actionsDiv) actionsDiv.innerHTML = `<p style="color:red;">Network error: ${error.message}</p>`;
+            }
         }
 
         // Action handlers for notifications

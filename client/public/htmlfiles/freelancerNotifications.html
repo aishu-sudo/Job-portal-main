@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notifications - Job Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            color: #667eea;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .notification-badge {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .notification-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        
+        .notification-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .notification-card.pending {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        
+        .notification-card.accepted {
+            border-left-color: #28a745;
+            background: #f0f9f7;
+        }
+        
+        .notification-card.rejected {
+            border-left-color: #dc3545;
+            background: #fff0f0;
+        }
+        
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .notification-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .notification-badge-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .notification-badge-status.pending {
+            background: #ffc107;
+            color: white;
+        }
+        
+        .notification-badge-status.accepted {
+            background: #28a745;
+            color: white;
+        }
+        
+        .notification-badge-status.rejected {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .notification-badge-status.completed {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .notification-body {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .notification-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .meta-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .meta-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 12px;
+        }
+        
+        .meta-value {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .notification-time {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-section label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .filter-section input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .no-data-message {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 4px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .nav-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .nav-link:hover {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+        
+        .nav-link.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            .notification-meta {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="adminDashboard.html" class="nav-link">🎛️ Dashboard</a>
+            <a href="jobBrowse.html" class="nav-link">📋 Browse</a>
+            <a href="updateJob.html" class="nav-link">✏️ Update</a>
+            <a href="viewProvenance.html" class="nav-link">🔍 Provenance</a>
+            <a href="freelancerNotifications.html" class="nav-link active">🔔 Notifications</a>
+        </div>
+
+        <header>
+            <h1>
+                🔔 My Notifications
+                <span class="notification-badge" id="unreadBadge">0</span>
+            </h1>
+            <p>View your application updates, job changes, and payment notifications</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(event, 'all')">
+                📌 All Notifications
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'applications')">
+                📋 Applications
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'jobs')">
+                🔄 Job Updates
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'payments')">
+                💰 Payments
+            </button>
+        </div>
+
+        <!-- All Notifications Tab -->
+        <div id="all" class="tab-content active">
+            <div id="allLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading notifications...</p>
+            </div>
+            <div id="allNotifications"></div>
+        </div>
+
+        <!-- Applications Tab -->
+        <div id="applications" class="tab-content">
+            <div class="filter-section">
+                <label for="freelancerId">Your Freelancer ID</label>
+                <input type="number" id="freelancerId" placeholder="Enter your Freelancer ID" />
+            </div>
+            <div id="applicationsLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading applications...</p>
+            </div>
+            <div id="applicationsNotifications"></div>
+        </div>
+
+        <!-- Job Updates Tab -->
+        <div id="jobs" class="tab-content">
+            <div id="jobsLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading job updates...</p>
+            </div>
+            <div id="jobsNotifications"></div>
+        </div>
+
+        <!-- Payments Tab -->
+        <div id="payments" class="tab-content">
+            <div id="paymentsLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading payment notifications...</p>
+            </div>
+            <div id="paymentsNotifications"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/notifications';
+        let freelancerId = localStorage.getItem('freelancerId') || null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const idInput = document.getElementById('freelancerId');
+            if (freelancerId) {
+                idInput.value = freelancerId;
+                loadAllNotifications();
+            }
+            idInput.addEventListener('change', function() {
+                freelancerId = this.value;
+                localStorage.setItem('freelancerId', freelancerId);
+                if (freelancerId) {
+                    loadAllNotifications();
+                }
+            });
+        });
+
+        function switchTab(event, tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load data
+            if (freelancerId) {
+                if (tabName === 'all') loadAllNotifications();
+                else if (tabName === 'applications') loadApplicationNotifications();
+                else if (tabName === 'jobs') loadJobNotifications();
+                else if (tabName === 'payments') loadPaymentNotifications();
+            }
+        }
+
+        async function loadAllNotifications() {
+            if (!freelancerId) {
+                document.getElementById('allNotifications').innerHTML =
+                    '<div class="no-data-message">Please enter your Freelancer ID</div>';
+                return;
+            }
+
+            const loading = document.getElementById('allLoading');
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch(`${API_URL}/freelancer/${freelancerId}`);
+                const data = await response.json();
+
+                loading.classList.remove('active');
+
+                if (!response.ok) {
+                    document.getElementById('allNotifications').innerHTML =
+                        `<div class="no-data-message">Error: ${data.error}</div>`;
+                    return;
+                }
+
+                document.getElementById('unreadBadge').textContent = data.totalNotifications;
+
+                if (data.notifications.length === 0) {
+                    document.getElementById('allNotifications').innerHTML =
+                        '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No notifications yet</p></div>';
+                    return;
+                }
+
+                document.getElementById('allNotifications').innerHTML = data.notifications
+                    .map(n => createNotificationCard(n))
+                    .join('');
+
+            } catch (error) {
+                loading.classList.remove('active');
+                document.getElementById('allNotifications').innerHTML =
+                    `<div class="no-data-message">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadApplicationNotifications() {
+            if (!freelancerId) {
+                document.getElementById('applicationsNotifications').innerHTML =
+                    '<div class="no-data-message">Please enter your Freelancer ID</div>';
+                return;
+            }
+
+            const loading = document.getElementById('applicationsLoading');
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch(`${API_URL}/freelancer/${freelancerId}/applications`);
+                const data = await response.json();
+
+                loading.classList.remove('active');
+
+                if (!response.ok) {
+                    document.getElementById('applicationsNotifications').innerHTML =
+                        `<div class="no-data-message">Error: ${data.error}</div>`;
+                    return;
+                }
+
+                if (data.applications.length === 0) {
+                    document.getElementById('applicationsNotifications').innerHTML =
+                        '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No applications yet</p></div>';
+                    return;
+                }
+
+                document.getElementById('applicationsNotifications').innerHTML = data.applications
+                    .map(app => `
+                        <div class="notification-card ${app.applicationStatus.toLowerCase()}">
+                            <div class="notification-header">
+                                <div class="notification-title">📋 ${app.jobTitle}</div>
+                                <span class="notification-badge-status ${app.applicationStatus.toLowerCase()}">
+                                    ${app.applicationStatus.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="notification-body">
+                                <p>Client: <strong>${app.clientName}</strong></p>
+                                <p>Your Bid: <strong>$${app.bidAmount?.toFixed(2) || 'N/A'}</strong></p>
+                                <p>Job Budget: <strong>$${app.budget?.toFixed(2) || 'N/A'}</strong></p>
+                                ${app.proposal ? `<p>Proposal: ${app.proposal}</p>` : ''}
+                            </div>
+                            <div class="notification-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Application Date:</span>
+                                    <span class="meta-value">${new Date(app.appliedDate).toLocaleDateString()}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Job Status:</span>
+                                    <span class="meta-value">${app.jobStatus}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `)
+                    .join('');
+
+            } catch (error) {
+                loading.classList.remove('active');
+                document.getElementById('applicationsNotifications').innerHTML = 
+                    `<div class="no-data-message">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadJobNotifications() {
+            if (!freelancerId) {
+                document.getElementById('jobsNotifications').innerHTML = 
+                    '<div class="no-data-message">Please enter your Freelancer ID</div>';
+                return;
+            }
+
+            const loading = document.getElementById('jobsLoading');
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch(`${API_URL}/freelancer/${freelancerId}/jobs-status`);
+                const data = await response.json();
+
+                loading.classList.remove('active');
+
+                if (!response.ok) {
+                    document.getElementById('jobsNotifications').innerHTML = 
+                        `<div class="no-data-message">Error: ${data.error}</div>`;
+                    return;
+                }
+
+                if (data.jobStatusUpdates.length === 0) {
+                    document.getElementById('jobsNotifications').innerHTML = 
+                        '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No job updates</p></div>';
+                    return;
+                }
+
+                document.getElementById('jobsNotifications').innerHTML = data.jobStatusUpdates
+                    .map(job => `
+                        <div class="notification-card">
+                            <div class="notification-header">
+                                <div class="notification-title">${job.icon} ${job.title}</div>
+                                <span class="notification-badge-status ${job.status.toLowerCase()}">
+                                    ${job.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="notification-body">
+                                <p>Client: <strong>${job.clientName}</strong></p>
+                                <p>Budget: <strong>$${job.budget?.toFixed(2) || 'N/A'}</strong></p>
+                                <p>Category: <strong>${job.category || 'N/A'}</strong></p>
+                                <p>Total Applicants: <strong>${job.totalApplicants}</strong></p>
+                            </div>
+                            <div class="notification-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Posted:</span>
+                                    <span class="meta-value">${new Date(job.createdDate).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `)
+                    .join('');
+
+            } catch (error) {
+                loading.classList.remove('active');
+                document.getElementById('jobsNotifications').innerHTML = 
+                    `<div class="no-data-message">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadPaymentNotifications() {
+            if (!freelancerId) {
+                document.getElementById('paymentsNotifications').innerHTML = 
+                    '<div class="no-data-message">Please enter your Freelancer ID</div>';
+                return;
+            }
+
+            const loading = document.getElementById('paymentsLoading');
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch(`${API_URL}/freelancer/${freelancerId}/payments`);
+                const data = await response.json();
+
+                loading.classList.remove('active');
+
+                if (!response.ok) {
+                    document.getElementById('paymentsNotifications').innerHTML = 
+                        `<div class="no-data-message">Error: ${data.error}</div>`;
+                    return;
+                }
+
+                if (data.payments.length === 0) {
+                    document.getElementById('paymentsNotifications').innerHTML = 
+                        '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No payment notifications</p></div>';
+                    return;
+                }
+
+                document.getElementById('paymentsNotifications').innerHTML = data.payments
+                    .map(payment => `
+                        <div class="notification-card ${payment.status.toLowerCase()}">
+                            <div class="notification-header">
+                                <div class="notification-title">${payment.icon} ${payment.jobTitle}</div>
+                                <span class="notification-badge-status ${payment.status.toLowerCase()}">
+                                    ${payment.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="notification-body">
+                                <p>Amount: <strong>$${payment.amount?.toFixed(2) || 'N/A'}</strong></p>
+                                <p>Payment Type: <strong>${payment.type.replace('_', ' ').toUpperCase()}</strong></p>
+                                ${payment.transactionId ? `<p>Transaction ID: <strong>${payment.transactionId}</strong></p>` : ''}
+                                ${payment.errorMessage ? `<p style="color: #dc3545;">Error: ${payment.errorMessage}</p>` : ''}
+                            </div>
+                            <div class="notification-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Date:</span>
+                                    <span class="meta-value">${new Date(payment.createdDate).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `)
+                    .join('');
+
+            } catch (error) {
+                loading.classList.remove('active');
+                document.getElementById('paymentsNotifications').innerHTML = 
+                    `<div class="no-data-message">Error: ${error.message}</div>`;
+            }
+        }
+
+        function createNotificationCard(notification) {
+            return `
+                <div class="notification-card">
+                    <div class="notification-header">
+                        <div class="notification-title">${notification.icon} ${notification.jobTitle}</div>
+                    </div>
+                    <div class="notification-body">
+                        <p>${notification.message}</p>
+                    </div>
+                    <div class="notification-time">
+                        ${new Date(notification.timestamp).toLocaleString()}
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>

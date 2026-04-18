@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("submitSignUpFreelancer").addEventListener("click", () => signup("freelancer"));
     document.getElementById("submitSignUpClient").addEventListener("click", () => signup("client"));
+    document.getElementById("submitSignUpAdmin").addEventListener("click", () => signup("admin"));
 
     async function signup(role) {
         const firstName = document.getElementById("firstName").value.trim();
@@ -57,7 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             alert(data.message || 'Registered successfully!');
 
-            if (role === 'freelancer') {
+            if (role === 'admin') {
+                window.location.href = '/htmlfiles/adminDashboard.html';
+            } else if (role === 'freelancer') {
                 window.location.href = '/htmlfiles/freelancerDashboard.html';
             } else {
                 window.location.href = '/htmlfiles/clientDashboard.html';

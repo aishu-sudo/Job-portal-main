@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Job - Job Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        body.embedded {
+            min-height: 0;
+            padding: 0;
+            background: transparent;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        body.embedded .container {
+            max-width: none;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #333;
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        
+        .job-details {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .job-details p {
+            margin: 8px 0;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .job-details strong {
+            color: #333;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            .card {
+                padding: 20px;
+            }
+        }
+        
+        .nav-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .nav-link:hover {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+        
+        .nav-link.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        body.embedded .nav-bar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="adminDashboard.html" class="nav-link">🎛️ Dashboard</a>
+            <a href="jobBrowse.html" class="nav-link">📋 Browse</a>
+            <a href="updateJob.html" class="nav-link active">✏️ Update</a>
+            <a href="viewProvenance.html" class="nav-link">🔍 Provenance</a>
+            <a href="freelancerNotifications.html" class="nav-link">🔔 Notifications</a>
+        </div>
+
+        <header>
+            <h1>📋 Update Job</h1>
+            <p>Update job status or budget with automatic audit tracking</p>
+        </header>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="content">
+            <!-- Update Status Card -->
+            <div class="card">
+                <h2>🔄 Update Job Status</h2>
+
+                <div class="info-box">
+                    ℹ️ Change the job status and it will be automatically tracked in the audit logs.
+                </div>
+
+                <div id="jobDetailsStatus" class="job-details" style="display:none;">
+                    <p><strong>Job ID:</strong> <span id="jobIdStatus"></span></p>
+                    <p><strong>Title:</strong> <span id="jobTitleStatus"></span></p>
+                    <p><strong>Current Status:</strong> <span id="jobCurrentStatus" style="color: #667eea; font-weight: bold;"></span></p>
+                    <p><strong>Budget:</strong> $<span id="jobBudgetStatus"></span></p>
+                </div>
+
+                <form id="statusForm">
+                    <div class="form-group">
+                        <label for="jobIdInput">Job ID</label>
+                        <input type="number" id="jobIdInput" placeholder="Enter Job ID" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="statusSelect">New Status</label>
+                        <select id="statusSelect" required>
+                            <option value="">-- Select Status --</option>
+                            <option value="open">Open</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="statusReason">Reason for Change</label>
+                        <textarea id="statusReason" placeholder="Explain why you're changing the status..."></textarea>
+                    </div>
+
+                    <button type="submit">💾 Update Status</button>
+                </form>
+
+                <div id="statusLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Updating status...</p>
+                </div>
+            </div>
+
+            <!-- Update Budget Card -->
+            <div class="card">
+                <h2>💰 Update Job Budget</h2>
+
+                <div class="info-box">
+                    ℹ️ Modify the budget and it will be logged in the audit trail with a timestamp.
+                </div>
+
+                <div id="jobDetailsBudget" class="job-details" style="display:none;">
+                    <p><strong>Job ID:</strong> <span id="jobIdBudget"></span></p>
+                    <p><strong>Title:</strong> <span id="jobTitleBudget"></span></p>
+                    <p><strong>Current Budget:</strong> $<span id="jobCurrentBudget"></span></p>
+                    <p><strong>Status:</strong> <span id="jobStatusBudget" style="color: #667eea; font-weight: bold;"></span></p>
+                </div>
+
+                <form id="budgetForm">
+                    <div class="form-group">
+                        <label for="jobIdBudgetInput">Job ID</label>
+                        <input type="number" id="jobIdBudgetInput" placeholder="Enter Job ID" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budgetInput">New Budget ($)</label>
+                        <input type="number" id="budgetInput" placeholder="Enter new budget amount" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budgetReason">Reason for Budget Change</label>
+                        <textarea id="budgetReason" placeholder="Explain why you're changing the budget..."></textarea>
+                    </div>
+
+                    <button type="submit">💾 Update Budget</button>
+                </form>
+
+                <div id="budgetLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Updating budget...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (globalThis.self !== globalThis.top) {
+            document.body.classList.add('embedded');
+        }
+
+        const API_URL = 'http://localhost:5000/api/jobs';
+        const loggedInUser = localStorage.getItem('userName') || 'SYSTEM';
+        const loggedInRole = (localStorage.getItem('userRole') || 'system').toUpperCase();
+        const changedByLabel = `${loggedInUser} (${loggedInRole})`;
+
+        // Update Status Form
+        document.getElementById('statusForm').addEventListener('submit', async(e) => {
+            e.preventDefault();
+            const jobId = document.getElementById('jobIdInput').value;
+            const status = document.getElementById('statusSelect').value;
+            const reason = document.getElementById('statusReason').value;
+
+            await updateJobStatus(jobId, status, reason);
+        });
+
+        // Update Budget Form
+        document.getElementById('budgetForm').addEventListener('submit', async(e) => {
+            e.preventDefault();
+            const jobId = document.getElementById('jobIdBudgetInput').value;
+            const budget = document.getElementById('budgetInput').value;
+            const reason = document.getElementById('budgetReason').value;
+
+            await updateJobBudget(jobId, budget, reason);
+        });
+
+        // View Audit Form
+        document.getElementById('auditForm').addEventListener('submit', async(e) => {
+            e.preventDefault();
+            const jobId = document.getElementById('jobIdAudit').value;
+            await viewAuditTrail(jobId);
+        });
+
+        async function updateJobStatus(jobId, status, reason) {
+            const loading = document.getElementById('statusLoading');
+            const message = document.getElementById('statusMessage');
+
+            loading.classList.add('active');
+            message.className = 'status-message';
+
+            try {
+                const response = await fetch(`${API_URL}/${jobId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status,
+                        reason,
+                        changedBy: changedByLabel
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    message.className = 'status-message success';
+                    message.textContent = '✅ ' + data.message;
+                    document.getElementById('statusForm').reset();
+                    document.getElementById('jobDetailsStatus').style.display = 'none';
+                } else {
+                    message.className = 'status-message error';
+                    message.textContent = '❌ ' + (data.error || 'Failed to update status');
+                }
+            } catch (error) {
+                message.className = 'status-message error';
+                message.textContent = '❌ Error: ' + error.message;
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        async function updateJobBudget(jobId, budget, reason) {
+            const loading = document.getElementById('budgetLoading');
+            const message = document.getElementById('statusMessage');
+
+            loading.classList.add('active');
+            message.className = 'status-message';
+
+            try {
+                const response = await fetch(`${API_URL}/${jobId}/budget`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        budget: Number(budget),
+                        reason,
+                        changedBy: changedByLabel
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    message.className = 'status-message success';
+                    message.textContent = '✅ ' + data.message;
+                    document.getElementById('budgetForm').reset();
+                    document.getElementById('jobDetailsBudget').style.display = 'none';
+                } else {
+                    message.className = 'status-message error';
+                    message.textContent = '❌ ' + (data.error || 'Failed to update budget');
+                }
+            } catch (error) {
+                message.className = 'status-message error';
+                message.textContent = '❌ Error: ' + error.message;
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        async function viewAuditTrail(jobId) {
+            const loading = document.getElementById('auditLoading');
+            const results = document.getElementById('auditResults');
+            const tableBody = document.getElementById('auditTableBody');
+            const message = document.getElementById('statusMessage');
+
+            loading.classList.add('active');
+            results.style.display = 'none';
+            message.className = 'status-message';
+
+            try {
+                const response = await fetch(`${API_URL}/${jobId}/audit/complete`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const auditTrail = data.completeAuditTrail || [];
+
+                    if (auditTrail.length === 0) {
+                        message.className = 'status-message info';
+                        message.textContent = 'ℹ️ No audit records found for this job';
+                        return;
+                    }
+
+                    tableBody.innerHTML = '';
+                    auditTrail.forEach(record => {
+                        const row = document.createElement('tr');
+                        row.style.borderBottom = '1px solid #eee';
+
+                        let oldValue = 'N/A';
+                        let newValue = 'N/A';
+
+                        if (record.OLD_STATUS || record.NEW_STATUS) {
+                            oldValue = record.OLD_STATUS || '-';
+                            newValue = record.NEW_STATUS || '-';
+                        } else if (record.OLD_BUDGET || record.NEW_BUDGET) {
+                            oldValue = record.OLD_BUDGET ? '$' + record.OLD_BUDGET : '-';
+                            newValue = record.NEW_BUDGET ? '$' + record.NEW_BUDGET : '-';
+                        }
+
+                        row.innerHTML = `
+                            <td style="padding: 10px;">${new Date(record.TIMESTAMP).toLocaleString()}</td>
+                            <td style="padding: 10px;"><strong>${record.OPERATION_TYPE}</strong></td>
+                            <td style="padding: 10px;">${oldValue}</td>
+                            <td style="padding: 10px; color: #667eea; font-weight: bold;">${newValue}</td>
+                            <td style="padding: 10px;">${record.CHANGED_BY || 'System'}</td>
+                            <td style="padding: 10px;">${record.CHANGE_REASON || '-'}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+
+                    results.style.display = 'block';
+                    message.className = 'status-message success';
+                    message.textContent = `✅ Found ${auditTrail.length} audit records`;
+                } else {
+                    message.className = 'status-message error';
+                    message.textContent = '❌ ' + (data.error || 'Failed to fetch audit trail');
+                }
+            } catch (error) {
+                message.className = 'status-message error';
+                message.textContent = '❌ Error: ' + error.message;
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Load job details when job ID is entered
+        document.getElementById('jobIdInput').addEventListener('change', async function() {
+            const jobId = this.value;
+            if (jobId) {
+                await loadJobDetails(jobId, 'status');
+            }
+        });
+
+        document.getElementById('jobIdBudgetInput').addEventListener('change', async function() {
+            const jobId = this.value;
+            if (jobId) {
+                await loadJobDetails(jobId, 'budget');
+            }
+        });
+
+        async function loadJobDetails(jobId, type) {
+            try {
+                const response = await fetch(`${API_URL}/${jobId}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (type === 'status') {
+                        document.getElementById('jobIdStatus').textContent = data.jobId;
+                        document.getElementById('jobTitleStatus').textContent = data.title;
+                        document.getElementById('jobCurrentStatus').textContent = data.status;
+                        document.getElementById('jobBudgetStatus').textContent = data.budget.toFixed(2);
+                        document.getElementById('jobDetailsStatus').style.display = 'block';
+                    } else if (type === 'budget') {
+                        document.getElementById('jobIdBudget').textContent = data.jobId;
+                        document.getElementById('jobTitleBudget').textContent = data.title;
+                        document.getElementById('jobCurrentBudget').textContent = data.budget.toFixed(2);
+                        document.getElementById('jobStatusBudget').textContent = data.status;
+                        document.getElementById('jobDetailsBudget').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading job details:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>

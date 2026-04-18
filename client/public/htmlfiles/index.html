@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Job Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            padding-top: 30px;
+        }
+        
+        .logo {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        
+        header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        header p {
+            font-size: 20px;
+            opacity: 0.95;
+        }
+        
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .role-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .role-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        }
+        
+        .role-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .role-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .role-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            min-height: 120px;
+        }
+        
+        .role-features {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .role-features h4 {
+            color: #667eea;
+            font-size: 13px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .role-features ul {
+            list-style: none;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .role-features li {
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .role-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .role-features li:before {
+            content: '✓ ';
+            color: #28a745;
+            font-weight: 700;
+        }
+        
+        .demo-credentials {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #333;
+            margin-top: 15px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .demo-credentials strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        
+        .info-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-card {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .info-card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .roles-grid {
+                grid-template-columns: 1fr;
+            }
+            header h1 {
+                font-size: 32px;
+            }
+            header p {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">🏢</div>
+            <h1>Welcome to Job Portal</h1>
+            <p>A Provenance-Enabled RDBMS System with Role-Based Access Control</p>
+        </header>
+
+        <!-- Role Cards -->
+        <div class="roles-grid">
+            <!-- Admin Card -->
+            <div class="role-card" onclick="selectRole('admin')">
+                <div class="role-icon">🔑</div>
+                <div class="role-title">Admin</div>
+                <div class="role-description">
+                    Full system access. Manage all jobs, view complete audit trails, monitor database, and oversee the entire platform.
+                </div>
+                <div class="role-features">
+                    <h4>Features:</h4>
+                    <ul>
+                        <li>View all jobs & applications</li>
+                        <li>Update job status & budget</li>
+                        <li>View complete provenance</li>
+                        <li>Access database system</li>
+                        <li>Generate reports</li>
+                    </ul>
+                </div>
+                <div class="demo-credentials">
+                    <strong>Demo Account:</strong> admin@jobportal.com
+                    <br> admin123
+                </div>
+                <button class="login-btn" onclick="goToLogin('admin')">Login as Admin</button>
+            </div>
+
+            <!-- Client Card -->
+            <div class="role-card" onclick="selectRole('client')">
+                <div class="role-icon">👔</div>
+                <div class="role-title">Client</div>
+                <div class="role-description">
+                    Post and manage your job listings. Review applications from freelancers, track project progress, and manage payments.
+                </div>
+                <div class="role-features">
+                    <h4>Features:</h4>
+                    <ul>
+                        <li>Post new jobs</li>
+                        <li>Manage your jobs</li>
+                        <li>Review applications</li>
+                        <li>Update job status</li>
+                        <li>Track payments</li>
+                    </ul>
+                </div>
+                <div class="demo-credentials">
+                    <strong>Demo Account:</strong> client@jobportal.com
+                    <br> client123
+                </div>
+                <button class="login-btn" onclick="goToLogin('client')">Login as Client</button>
+            </div>
+
+            <!-- Freelancer Card -->
+            <div class="role-card" onclick="selectRole('freelancer')">
+                <div class="role-icon">💼</div>
+                <div class="role-title">Freelancer</div>
+                <div class="role-description">
+                    Browse available jobs, submit proposals, track application status, and manage your payments and notifications.
+                </div>
+                <div class="role-features">
+                    <h4>Features:</h4>
+                    <ul>
+                        <li>Browse available jobs</li>
+                        <li>Apply for jobs</li>
+                        <li>Track applications</li>
+                        <li>View notifications</li>
+                        <li>Manage payments</li>
+                    </ul>
+                </div>
+                <div class="demo-credentials">
+                    <strong>Demo Account:</strong> freelancer@jobportal.com
+                    <br> freelancer123
+                </div>
+                <button class="login-btn" onclick="goToLogin('freelancer')">Login as Freelancer</button>
+            </div>
+        </div>
+
+        <!-- System Information -->
+        <div class="info-section">
+            <h2>🎯 System Features</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>📊 Provenance System</h3>
+                    <p>Complete audit trail tracking WHO changed WHAT, WHEN, and WHY. Full data lineage and accountability.</p>
+                </div>
+                <div class="info-card">
+                    <h3>🔐 Role-Based Access</h3>
+                    <p>Three distinct user roles with customized dashboards, features, and permissions tailored to each role.</p>
+                </div>
+                <div class="info-card">
+                    <h3>💾 Database Management</h3>
+                    <p>Advanced RDBMS with automatic triggers, stored procedures, and complete audit logging.</p>
+                </div>
+                <div class="info-card">
+                    <h3>📱 Responsive Design</h3>
+                    <p>Beautiful, modern interface that works on all devices - desktop, tablet, and mobile.</p>
+                </div>
+                <div class="info-card">
+                    <h3>🔔 Notifications</h3>
+                    <p>Real-time notifications for application updates, job changes, and payment status.</p>
+                </div>
+                <div class="info-card">
+                    <h3>📈 Analytics</h3>
+                    <p>Comprehensive statistics and reports for system monitoring and decision making.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="info-section">
+            <h2>🚀 Quick Start</h2>
+            <p style="color: #666; margin-bottom: 15px;">
+                Choose a role above to login. We provide demo accounts for each role to explore all features:
+            </p>
+            <div style="color: #667eea; font-weight: 600; margin-bottom: 10px;">
+                <strong>Demo Accounts (Click the buttons above or use the credentials shown):</strong>
+            </div>
+            <ul style="color: #666; margin-left: 20px; line-height: 1.8;">
+                <li>🔑 <strong>Admin:</strong> admin@jobportal.com / admin123 - Full platform control</li>
+                <li>👔 <strong>Client:</strong> client@jobportal.com / client123 - Post and manage jobs</li>
+                <li>💼 <strong>Freelancer:</strong> freelancer@jobportal.com / freelancer123 - Browse and apply</li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🏢 Job Portal | Provenance-Enabled RDBMS | CSE464 Term Project | April 2026</p>
+        </div>
+    </div>
+
+    <script src="scripts/roleManager.js"></script>
+    <script>
+        function selectRole(role) {
+            localStorage.setItem('selectedRole', role);
+        }
+
+        function goToLogin(role) {
+            localStorage.setItem('selectedRole', role);
+            window.location.href = 'login.html';
+        }
+
+        // Auto-redirect if already logged in
+        window.addEventListener('DOMContentLoaded', () => {
+            if (roleManager.isAuthenticated()) {
+                window.location.href = 'adminDashboard.html';
+            }
+        });
+    </script>
+</body>
+
+</html>

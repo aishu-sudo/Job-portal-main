@@ -9,7 +9,7 @@ const getConnection = require('../models/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'jobportal_secret_2024';
 const dataDir = path.join(__dirname, '..', 'data');
-const roleFileMap = { client: 'clients.json', freelancer: 'freelancers.json' };
+const roleFileMap = { client: 'clients.json', freelancer: 'freelancers.json', admin: 'admins.json' };
 
 async function readRoleFile(role) {
     const filePath = path.join(dataDir, roleFileMap[role] || 'users.json');
@@ -60,12 +60,12 @@ async function verifyPassword(plain, stored) {
 }
 
 // POST /api/auth/signup
-router.post('/signup', async (req, res) => {
+router.post('/signup', async(req, res) => {
     const { name, email, role, password } = req.body;
     if (!name || !email || !role || !password) {
         return res.status(400).json({ error: 'All fields are required' });
     }
-    if (!['client', 'freelancer'].includes(role)) {
+    if (!['client', 'freelancer', 'admin'].includes(role)) {
         return res.status(400).json({ error: 'Invalid role' });
     }
 
@@ -77,14 +77,10 @@ router.post('/signup', async (req, res) => {
     try {
         conn = await getConnection();
         await conn.execute(
-            `BEGIN insert_user_p(:name, :email, :role, :password); END;`,
-            { name, email, role, password: passwordHash },
-            { autoCommit: true }
+            `BEGIN insert_user_p(:name, :email, :role, :password); END;`, { name, email, role, password: passwordHash }, { autoCommit: true }
         );
         const result = await conn.execute(
-            `SELECT user_id FROM Users WHERE email = :email`,
-            { email },
-            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            `SELECT user_id FROM Users WHERE email = :email`, { email }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
         if (result.rows && result.rows.length > 0) {
             dbUserId = result.rows[0].USER_ID;
@@ -118,7 +114,7 @@ router.post('/signup', async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', async(req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
@@ -130,9 +126,7 @@ router.post('/login', async (req, res) => {
     try {
         conn = await getConnection();
         const result = await conn.execute(
-            `SELECT user_id, name, email, role, password FROM Users WHERE email = :email`,
-            { email },
-            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            `SELECT user_id, name, email, role, password FROM Users WHERE email = :email`, { email }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
         if (result.rows && result.rows.length > 0) dbUser = result.rows[0];
     } catch (err) {
@@ -144,10 +138,8 @@ router.post('/login', async (req, res) => {
     if (dbUser) {
         const match = await verifyPassword(password, dbUser.PASSWORD);
         if (!match) return res.status(401).json({ error: 'Invalid email or password' });
-        const token = jwt.sign(
-            { userId: dbUser.USER_ID, name: dbUser.NAME, email: dbUser.EMAIL, role: dbUser.ROLE },
-            JWT_SECRET,
-            { expiresIn: '7d' }
+        const token = jwt.sign({ userId: dbUser.USER_ID, name: dbUser.NAME, email: dbUser.EMAIL, role: dbUser.ROLE },
+            JWT_SECRET, { expiresIn: '7d' }
         );
         return res.json({ token, user: { id: dbUser.USER_ID, name: dbUser.NAME, email: dbUser.EMAIL, role: dbUser.ROLE } });
     }
@@ -159,10 +151,8 @@ router.post('/login', async (req, res) => {
     const match = await verifyPassword(password, fileUser.password);
     if (!match) return res.status(401).json({ error: 'Invalid email or password' });
 
-    const token = jwt.sign(
-        { userId: fileUser.id, name: fileUser.name, email: fileUser.email, role: fileUser.role },
-        JWT_SECRET,
-        { expiresIn: '7d' }
+    const token = jwt.sign({ userId: fileUser.id, name: fileUser.name, email: fileUser.email, role: fileUser.role },
+        JWT_SECRET, { expiresIn: '7d' }
     );
     res.json({ token, user: { id: fileUser.id, name: fileUser.name, email: fileUser.email, role: fileUser.role } });
 });

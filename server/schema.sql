@@ -289,9 +289,8 @@ BEGIN
 END update_payment_status_p;
 /
 
--- ============================================================================
 -- TRIGGERS FOR AUTOMATIC PROVENANCE LOGGING
--- ============================================================================
+
 
 -- Trigger for automatic INSERT audit logging on Jobs
 CREATE OR REPLACE TRIGGER trg_job_insert

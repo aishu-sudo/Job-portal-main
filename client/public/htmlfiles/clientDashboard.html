@@ -63,16 +63,18 @@
         #mainContent {
             flex: 1;
             padding: 30px;
+            overflow: hidden;
         }
         
         .content-frame {
             width: 100%;
-            height: 600px;
+            height: calc(100vh - 120px);
             border: none;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             background: white;
             display: none;
+            overflow: hidden;
         }
         
         .welcome-message {
@@ -238,13 +240,14 @@
         <h2><i class="fas fa-building"></i> Client</h2>
         <button onclick="loadSection('dashboard')" id="dashboardBtn" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
         <button onclick="loadSection('myProjects')" id="myProjectsBtn"><i class="fas fa-briefcase"></i> My Projects</button>
+        <button onclick="loadSection('updateJob')" id="updateJobBtn"><i class="fas fa-edit"></i> Update Job</button>
         <button onclick="loadSection('post-project')" id="post-projectBtn"><i class="fas fa-plus-circle"></i> Post Project</button>
         <button onclick="loadSection('applicants')" id="applicantsBtn"><i class="fas fa-users"></i> Applicants</button>
         <button onclick="loadSection('clientprofile')" id="clientprofileBtn"><i class="fas fa-user-circle"></i> My Profile</button>
         <button onclick="loadSection('ratingsReviews')" id="ratingsReviewsBtn"><i class="fas fa-star"></i> Ratings & Reviews</button>
         <button onclick="loadSection('freelanceroptions')" id="freelanceroptionsBtn"><i class="fas fa-user"></i> Hire Freelancers</button>
-        <button onclick="loadSection('messages')" id="messagesBtn"><i class="fas fa-envelope"></i> Messages</button>
         <button onclick="loadSection('clientpayment')" id="clientpaymentBtn"><i class="fas fa-credit-card"></i> Payment Options</button>
+        <button onclick="loadSection('viewProvenance')" id="viewProvenanceBtn"><i class="fas fa-search"></i> Provenance Viewer</button>
         <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
 
@@ -308,7 +311,7 @@
             </div>
         </div>
 
-        <iframe id="contentFrame" class="content-frame"></iframe>
+        <iframe id="contentFrame" class="content-frame" title="Dashboard content"></iframe>
     </div>
 
     <script>
@@ -339,7 +342,33 @@
             const dashboardBtn = document.getElementById('dashboardBtn');
             if (dashboardBtn) dashboardBtn.classList.add('active');
             loadNotifications();
+
+            const frame = document.getElementById('contentFrame');
+            if (frame) {
+                frame.addEventListener('load', resizeContentFrame);
+            }
         });
+
+        function resizeContentFrame() {
+            const frame = document.getElementById('contentFrame');
+            if (!frame) return;
+
+            try {
+                const frameBody = frame.contentWindow.document.body;
+                const frameDoc = frame.contentWindow.document.documentElement;
+                const contentHeight = Math.max(
+                    frameBody.scrollHeight,
+                    frameBody.offsetHeight,
+                    frameDoc.clientHeight,
+                    frameDoc.scrollHeight,
+                    frameDoc.offsetHeight
+                );
+
+                frame.style.height = `${contentHeight}px`;
+            } catch {
+                frame.style.height = '600px';
+            }
+        }
 
         function loadSection(section, event) {
             document.getElementById('dashboardContent').style.display = 'none';
@@ -358,9 +387,18 @@
                 case 'dashboard':
                     document.getElementById('dashboardContent').style.display = 'block';
                     frame.style.display = 'none';
+                    frame.style.height = '600px';
                     break;
                 case 'post-project':
                     frame.src = 'post-project.html';
+                    frame.style.display = 'block';
+                    break;
+                case 'updateJob':
+                    frame.src = 'updateJob.html';
+                    frame.style.display = 'block';
+                    break;
+                case 'viewProvenance':
+                    frame.src = 'viewProvenance.html';
                     frame.style.display = 'block';
                     break;
                 case 'applicants':
@@ -373,10 +411,6 @@
                     break;
                 case 'clientpayment':
                     frame.src = 'clientpayment.html';
-                    frame.style.display = 'block';
-                    break;
-                case 'messages':
-                    frame.src = 'Message.html';
                     frame.style.display = 'block';
                     break;
                 default:
@@ -440,7 +474,9 @@
 
         function markAllAsRead() {
             const notifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
-            const updated = notifications.map(n => ({ ...n, read: true }));
+            const updated = notifications.map(n => ({...n,
+                read: true
+            }));
             localStorage.setItem('clientNotifications', JSON.stringify(updated));
             loadNotifications();
         }
@@ -478,146 +514,10 @@
         }
 
         function viewApplicationDetails(notification) {
-            if (notification.type === 'new_application') {
-                const modal = document.createElement('div');
-                modal.className = 'modal';
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.5);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 1000;
-                `;
-
-                const applicationData = notification.applicationData;
-                modal.innerHTML = `
-                    <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; max-width: 800px; width: 90%;">
-                        <span class="close" style="float: right; cursor: pointer; font-size: 24px;">&times;</span>
-                        <h2>Application Details</h2>
-                        <div style="margin-top: 20px;">
-                            <h3>${applicationData.freelancerName}</h3>
-                            <p><strong>Project:</strong> ${applicationData.projectTitle}</p>
-                            <p><strong>Email:</strong> ${applicationData.email}</p>
-                            <p><strong>Phone:</strong> ${applicationData.phone || 'Not provided'}</p>
-                            <p><strong>Resume:</strong> ${applicationData.resume}</p>
-                            ${applicationData.portfolio ? `<p><strong>Portfolio:</strong> <a href="${applicationData.portfolio}" target="_blank">${applicationData.portfolio}</a></p>` : ''}
-                            ${applicationData.coverLetter ? `
-                                <div style="margin-top: 15px;">
-                                    <strong>Cover Letter:</strong>
-                                    <p style="margin-top: 5px; white-space: pre-wrap;">${applicationData.coverLetter}</p>
-                                </div>
-                            ` : ''}
-                        </div>
-                        <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
-                            <button onclick="rejectApplication('${applicationData.projectId}', '${applicationData.freelancerId}')" 
-                                    style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
-                                Reject
-                            </button>
-                            <button onclick="acceptApplication('${applicationData.projectId}', '${applicationData.freelancerId}')" 
-                                    style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
-                                Accept
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                document.body.appendChild(modal);
-                modal.querySelector('.close').onclick = () => document.body.removeChild(modal);
-                modal.onclick = (e) => {
-                    if (e.target === modal) document.body.removeChild(modal);
-                };
-            }
-        }
-
-        function acceptApplication(projectId, freelancerId) {
-            try {
-                // Update application status
-                const applications = JSON.parse(localStorage.getItem('projectApplications')) || [];
-                const application = applications.find(app => 
-                    app.projectId === projectId && app.freelancerId === freelancerId
-                );
-                
-                if (application) {
-                    application.status = 'accepted';
-                    localStorage.setItem('projectApplications', JSON.stringify(applications));
-
-                    // Create notification for freelancer
-                    const freelancerNotifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
-                    const newNotification = {
-                        id: Date.now().toString(),
-                        type: 'application_accepted',
-                        title: 'Application Accepted',
-                        message: `Your application for "${application.projectTitle}" has been accepted!`,
-                        time: new Date().toISOString(),
-                        read: false,
-                        projectData: {
-                            projectId: projectId,
-                            title: application.projectTitle
-                        }
-                    };
-                    freelancerNotifications.unshift(newNotification);
-                    localStorage.setItem('freelancerNotifications', JSON.stringify(freelancerNotifications));
-
-                    // Close modal
-                    const modal = document.querySelector('.modal');
-                    if (modal) {
-                        document.body.removeChild(modal);
-                    }
-
-                    alert('Application accepted successfully!');
-                }
-            } catch (error) {
-                console.error('Error accepting application:', error);
-                alert('Error accepting application. Please try again.');
-            }
-        }
-
-        function rejectApplication(projectId, freelancerId) {
-            try {
-                // Update application status
-                const applications = JSON.parse(localStorage.getItem('projectApplications')) || [];
-                const application = applications.find(app => 
-                    app.projectId === projectId && app.freelancerId === freelancerId
-                );
-                
-                if (application) {
-                    application.status = 'rejected';
-                    localStorage.setItem('projectApplications', JSON.stringify(applications));
-
-                    // Create notification for freelancer
-                    const freelancerNotifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
-                    const newNotification = {
-                        id: Date.now().toString(),
-                        type: 'application_rejected',
-                        title: 'Application Status Update',
-                        message: `Your application for "${application.projectTitle}" has been rejected.`,
-                        time: new Date().toISOString(),
-                        read: false,
-                        projectData: {
-                            projectId: projectId,
-                            title: application.projectTitle
-                        }
-                    };
-                    freelancerNotifications.unshift(newNotification);
-                    localStorage.setItem('freelancerNotifications', JSON.stringify(freelancerNotifications));
-
-                    // Close modal
-                    const modal = document.querySelector('.modal');
-                    if (modal) {
-                        document.body.removeChild(modal);
-                    }
-
-                    alert('Application rejected.');
-                }
-            } catch (error) {
-                console.error('Error rejecting application:', error);
-                alert('Error rejecting application. Please try again.');
-            }
+            // Navigate to Applicants page
+            loadSection('applicants');
+            // Close notifications dropdown
+            document.getElementById('notificationDropdown').classList.remove('show');
         }
     </script>
 

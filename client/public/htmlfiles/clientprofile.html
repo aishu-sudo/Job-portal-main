@@ -332,19 +332,38 @@
     </div>
 
     <script>
-        // Client data - could be loaded from an API in a real application
+        // Load actual logged-in user data
+        const userName = localStorage.getItem('userName') || 'Client';
+        const userEmail = localStorage.getItem('userEmail') || 'client@example.com';
+        const userId = localStorage.getItem('userId') || '';
+
         const clientData = {
-            companyName: "Digital Design Co.",
-            companyIndustry: "Creative Design Agency",
-            contactPerson: "Alexandra Park",
-            contactTitle: "Design Director",
-            contactEmail: "design@digitaldesign.com",
-            contactPhone: "(555) 555-1234",
-            activeProjects: 12,
-            completedProjects: 47,
-            yearsWorking: 5,
-            clientSince: "2018"
+            companyName: userName,
+            companyIndustry: "Client",
+            contactPerson: userName,
+            contactTitle: "Client",
+            contactEmail: userEmail,
+            contactPhone: "",
+            activeProjects: 0,
+            completedProjects: 0,
+            yearsWorking: 0,
+            clientSince: new Date().getFullYear().toString()
         };
+
+        // Fetch real stats from API
+        async function loadClientStats() {
+            try {
+                const resp = await fetch('http://localhost:5000/api/jobs/browse');
+                const jobs = await resp.json();
+                const myJobs = jobs.filter(j => String(j.clientId) === String(userId));
+                clientData.activeProjects = myJobs.filter(j => j.status === 'open' || j.status === 'in-progress').length;
+                clientData.completedProjects = myJobs.filter(j => j.status === 'completed').length;
+                document.getElementById("activeProjects").textContent = clientData.activeProjects;
+                document.getElementById("completedProjects").textContent = clientData.completedProjects;
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        }
 
         // Initialize the profile with data
         function initProfile() {
@@ -352,16 +371,17 @@
             document.getElementById("companyIndustry").textContent = clientData.companyIndustry;
             document.getElementById("contactPerson").textContent = clientData.contactPerson;
             document.getElementById("contactEmail").textContent = clientData.contactEmail;
-            document.getElementById("contactPhone").textContent = clientData.contactPhone;
+            document.getElementById("contactPhone").textContent = clientData.contactPhone || 'Not set';
             document.getElementById("activeProjects").textContent = clientData.activeProjects;
             document.getElementById("completedProjects").textContent = clientData.completedProjects;
             document.getElementById("yearsWorking").textContent = clientData.yearsWorking;
             document.getElementById("clientSince").textContent = clientData.clientSince;
 
-            // Set company logo initials
-            const companyName = clientData.companyName;
-            const initials = companyName.split(' ').map(word => word[0]).join('');
+            // Set logo initials
+            const initials = clientData.companyName.split(' ').map(word => word[0]).join('').toUpperCase();
             document.querySelector(".company-logo").textContent = initials;
+
+            loadClientStats();
         }
 
         // Edit client profile

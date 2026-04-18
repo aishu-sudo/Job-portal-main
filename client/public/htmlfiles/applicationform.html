@@ -97,43 +97,6 @@
             }
         }
         
-        .client-info {
-            background-color: white;
-            border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            height: fit-content;
-        }
-        
-        .client-info h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #2d3748;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        
-        .client-detail {
-            margin-bottom: 15px;
-        }
-        
-        .client-detail strong {
-            display: block;
-            margin-bottom: 5px;
-            color: #4a5568;
-        }
-        
-        .client-detail span {
-            color: #718096;
-        }
-        
-        .client-rating {
-            display: flex;
-            align-items: center;
-            color: #f59e0b;
-            margin-bottom: 15px;
-        }
-        
         .application-form {
             background-color: white;
             border-radius: 8px;
@@ -333,44 +296,6 @@
         </div>
 
         <div class="application-container">
-            <div class="client-info">
-                <h3>Client Information</h3>
-
-                <div class="client-detail">
-                    <strong>Name</strong>
-                    <span>DataSystems HR</span>
-                </div>
-
-                <div class="client-detail">
-                    <strong>Email</strong>
-                    <span>hr@datasystems.com</span>
-                </div>
-
-                <div class="client-rating">
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star-half-alt"></i>
-                    <span style="color: #4a5568; margin-left: 5px;">4.6 (32 reviews)</span>
-                </div>
-
-                <div class="client-detail">
-                    <strong>Location</strong>
-                    <span>Austin, TX</span>
-                </div>
-
-                <div class="client-detail">
-                    <strong>Member Since</strong>
-                    <span>March 2018</span>
-                </div>
-
-                <div class="client-detail">
-                    <strong>About</strong>
-                    <span>DataSystems Corp provides cutting-edge data solutions for businesses worldwide. We specialize in enterprise data management, analytics platforms, and cloud data services.</span>
-                </div>
-            </div>
-
             <div class="application-form">
                 <h3>Application Form</h3>
 
@@ -443,7 +368,7 @@
         });
 
         // Form submission
-        document.getElementById('jobApplicationForm').addEventListener('submit', function(e) {
+        document.getElementById('jobApplicationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             // Basic validation
@@ -489,6 +414,25 @@
                 const applications = JSON.parse(localStorage.getItem('projectApplications')) || [];
                 applications.push(applicationData);
                 localStorage.setItem('projectApplications', JSON.stringify(applications));
+
+                // Also save to DB via API
+                const API_BASE = localStorage.getItem('apiBase') || 'http://localhost:5000/api';
+                const freelancerId = localStorage.getItem('userId');
+                if (freelancerId && projectId) {
+                    try {
+                        await fetch(`${API_BASE}/jobs/${projectId}/apply`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                freelancerId: Number(freelancerId)
+                            })
+                        });
+                    } catch (apiErr) {
+                        console.log('Could not save application to DB:', apiErr);
+                    }
+                }
 
                 // Create notification for client
                 const clientNotifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
@@ -556,9 +500,6 @@
                     skillsContainer.innerHTML = project.skills.map(skill =>
                         `<span class="skill-tag">${skill}</span>`
                     ).join('');
-
-                    // Update client information
-                    document.querySelector('.client-info .client-detail:nth-child(1) span').textContent = project.company;
 
                     // Clear the selected project ID
                     localStorage.removeItem('selectedProjectId');

@@ -10,5 +10,13 @@
     "email": "aishoozaman012@gmail.com",
     "role": "client",
     "createdAt": "2026-04-16T19:11:33.865Z"
+  },
+  {
+    "id": 1776487312996,
+    "name": "Rahim khan",
+    "email": "rahim@test.com",
+    "role": "client",
+    "password": "$2b$10$yPZLplbBZogr4FvuSeAu9eKuFT4zKyoMi1yscTEVdv8BQyDQEeDu6",
+    "createdAt": "2026-04-18T04:41:52.996Z"
   }
 ]

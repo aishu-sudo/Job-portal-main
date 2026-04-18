@@ -17,7 +17,7 @@ function mapJobRow(row) {
 }
 
 // POST / - Create a new job
-router.post('/', async (req, res) => {
+router.post('/', async(req, res) => {
     const { title, description, budget, category, clientId } = req.body;
     if (!title || !budget || !clientId) {
         return res.status(400).json({ error: 'title, budget, and clientId are required' });
@@ -26,21 +26,17 @@ router.post('/', async (req, res) => {
     try {
         conn = await getConnection();
         await conn.execute(
-            `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`,
-            {
+            `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`, {
                 title,
                 description: description || '',
                 budget: Number(budget),
                 category: category || 'general',
                 clientId: Number(clientId)
-            },
-            { autoCommit: true }
+            }, { autoCommit: true }
         );
         const result = await conn.execute(
             `SELECT job_id, title, description, budget, category, status, client_id, created_at
-             FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC`,
-            { clientId: Number(clientId) },
-            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+             FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
         res.status(201).json(mapJobRow(result.rows[0]));
     } catch (error) {
@@ -88,6 +84,102 @@ router.post('/:jobId/apply', async(req, res) => {
         res.status(201).json({ message: 'Application submitted successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to apply for job', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// Get applications for a client's jobs
+router.get('/applications/client/:clientId', async(req, res) => {
+    const { clientId } = req.params;
+    let conn;
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT a.app_id, a.job_id, a.freelancer_id, a.status, a.proposal, a.bid_amount, a.created_at,
+                    j.title AS job_title, j.budget AS job_budget, j.status AS job_status,
+                    u.name AS freelancer_name, u.email AS freelancer_email
+             FROM Applications a
+             JOIN Jobs j ON a.job_id = j.job_id
+             JOIN Users u ON a.freelancer_id = u.user_id
+             WHERE j.client_id = :clientId
+             ORDER BY a.created_at DESC`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        res.json(result.rows.map(r => ({
+            appId: r.APP_ID,
+            jobId: r.JOB_ID,
+            freelancerId: r.FREELANCER_ID,
+            status: r.STATUS,
+            proposal: r.PROPOSAL,
+            bidAmount: r.BID_AMOUNT,
+            createdAt: r.CREATED_AT,
+            jobTitle: r.JOB_TITLE,
+            jobBudget: r.JOB_BUDGET,
+            jobStatus: r.JOB_STATUS,
+            freelancerName: r.FREELANCER_NAME,
+            freelancerEmail: r.FREELANCER_EMAIL
+        })));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch applications', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// Accept or Reject an application
+router.put('/applications/:appId/respond', async(req, res) => {
+    const { appId } = req.params;
+    const { status, changedBy } = req.body;
+    if (!status || !['accepted', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: 'status must be accepted or rejected' });
+    }
+    let conn;
+    try {
+        conn = await getConnection();
+        // Update application status via stored procedure (creates audit record)
+        await conn.execute(
+            `BEGIN update_application_status_p(:appId, :status, :changedBy, :reason); END;`, {
+                appId: Number(appId),
+                status,
+                changedBy: changedBy || 'CLIENT',
+                reason: status === 'accepted' ? 'Client accepted application' : 'Client rejected application'
+            }, { autoCommit: true }
+        );
+
+        // If accepted, update job status + create payment record
+        if (status === 'accepted') {
+            const appResult = await conn.execute(
+                `SELECT a.job_id, a.freelancer_id, a.bid_amount, j.budget, j.client_id
+                 FROM Applications a JOIN Jobs j ON a.job_id = j.job_id
+                 WHERE a.app_id = :appId`, { appId: Number(appId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            );
+            if (appResult.rows.length > 0) {
+                const row = appResult.rows[0];
+                const jobId = row.JOB_ID;
+                const amount = row.BID_AMOUNT || row.BUDGET;
+                const clientId = row.CLIENT_ID;
+                const freelancerId = row.FREELANCER_ID;
+
+                // Update job status to 'in-progress' via stored procedure (audit record)
+                await conn.execute(
+                    `BEGIN update_job_status_p(:jobId, :status, :changedBy, :reason); END;`, {
+                        jobId,
+                        status: 'in-progress',
+                        changedBy: changedBy || 'CLIENT',
+                        reason: 'Application accepted - job now in progress'
+                    }, { autoCommit: true }
+                );
+
+                // Create payment record (client_payment)
+                await conn.execute(
+                    `INSERT INTO Payments (payment_id, job_id, amount, type, status, client_id, freelancer_id)
+                     VALUES (payment_seq.NEXTVAL, :jobId, :amount, 'client_payment', 'pending', :clientId, :freelancerId)`, { jobId, amount, clientId, freelancerId }, { autoCommit: true }
+                );
+            }
+        }
+        res.json({ message: `Application ${status}`, appId: Number(appId) });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update application', details: error.message });
     } finally {
         if (conn) await conn.close();
     }
@@ -161,7 +253,214 @@ router.get('/top-rated', async(req, res) => {
     }
 });
 
-// 6️ Job Details (Optional)
+// ========================================
+// 🔄 UPDATE ENDPOINTS (PROVENANCE TRACKING)
+// ========================================
+
+// 7️ Update Job Status (with Audit Trail)
+router.put('/:jobId/status', async(req, res) => {
+    const { jobId } = req.params;
+    const { status, reason, changedBy } = req.body;
+
+    if (!status) {
+        return res.status(400).json({ error: 'status is required' });
+    }
+
+    const validStatuses = ['open', 'in-progress', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status. Must be one of: ' + validStatuses.join(', ') });
+    }
+
+    let conn;
+    try {
+        conn = await getConnection();
+        await conn.execute(
+            `BEGIN update_job_status_p(:jobId, :status, :changedBy, :reason); END;`, {
+                jobId: Number(jobId),
+                status,
+                changedBy: changedBy || 'SYSTEM',
+                reason: reason || 'Status updated'
+            }, { autoCommit: true }
+        );
+
+        res.json({ message: 'Job status updated successfully', jobId, newStatus: status });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update job status', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// 8️ Update Job Budget (with Audit Trail)
+router.put('/:jobId/budget', async(req, res) => {
+    const { jobId } = req.params;
+    const { budget, reason, changedBy } = req.body;
+
+    if (!budget) {
+        return res.status(400).json({ error: 'budget is required' });
+    }
+
+    let conn;
+    try {
+        conn = await getConnection();
+        await conn.execute(
+            `BEGIN update_job_budget_p(:jobId, :budget, :changedBy, :reason); END;`, {
+                jobId: Number(jobId),
+                budget: Number(budget),
+                changedBy: changedBy || 'SYSTEM',
+                reason: reason || 'Budget updated'
+            }, { autoCommit: true }
+        );
+
+        res.json({ message: 'Job budget updated successfully', jobId, newBudget: budget });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update job budget', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// ========================================
+// 🔍 PROVENANCE/AUDIT ENDPOINTS
+// ========================================
+
+// 9️ Get Job Status Transitions (HOW-PROVENANCE)
+router.get('/:jobId/audit/status-history', async(req, res) => {
+    const { jobId } = req.params;
+    let conn;
+
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT 
+                audit_id, job_id, old_status, new_status, 
+                operation_type, timestamp, changed_by, change_reason
+             FROM Audit_Jobs 
+             WHERE job_id = :jobId AND (old_status IS NOT NULL OR new_status IS NOT NULL)
+             ORDER BY timestamp DESC`, { jobId: Number(jobId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json({
+            jobId: Number(jobId),
+            statusHistory: result.rows || []
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch status history', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// 10️ Get Job Budget History (WHY-PROVENANCE)
+router.get('/:jobId/audit/budget-history', async(req, res) => {
+    const { jobId } = req.params;
+    let conn;
+
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT 
+                audit_id, job_id, old_budget, new_budget, 
+                operation_type, timestamp, changed_by, change_reason
+             FROM Audit_Jobs 
+             WHERE job_id = :jobId AND (old_budget IS NOT NULL OR new_budget IS NOT NULL)
+             ORDER BY timestamp DESC`, { jobId: Number(jobId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json({
+            jobId: Number(jobId),
+            budgetHistory: result.rows || []
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch budget history', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// 11️ Get Complete Job Audit Trail (WHERE-PROVENANCE)
+router.get('/:jobId/audit/complete', async(req, res) => {
+    const { jobId } = req.params;
+    let conn;
+
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT 
+                audit_id, job_id, old_status, new_status, old_budget, new_budget,
+                operation_type, timestamp, changed_by, change_reason
+             FROM Audit_Jobs 
+             WHERE job_id = :jobId
+             ORDER BY timestamp DESC`, { jobId: Number(jobId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json({
+            jobId: Number(jobId),
+            completeAuditTrail: result.rows || []
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch audit trail', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// 12️ Get All Jobs Audit Logs (Global View)
+router.get('/audit/all-jobs', async(req, res) => {
+    let conn;
+
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT 
+                aj.audit_id, aj.job_id, j.title AS job_title, 
+                aj.old_status, aj.new_status, aj.old_budget, aj.new_budget,
+                aj.operation_type, aj.timestamp, aj.changed_by, aj.change_reason
+             FROM Audit_Jobs aj
+             JOIN Jobs j ON aj.job_id = j.job_id
+             ORDER BY aj.timestamp DESC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json({
+            totalRecords: result.rows.length,
+            auditLogs: result.rows || []
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch audit logs', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// 13️ Get Job Action Summary (Who did what)
+router.get('/:jobId/audit/actions-summary', async(req, res) => {
+    const { jobId } = req.params;
+    let conn;
+
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT 
+                changed_by, COUNT(*) as total_actions, 
+                MAX(timestamp) as last_action_time
+             FROM Audit_Jobs 
+             WHERE job_id = :jobId
+             GROUP BY changed_by
+             ORDER BY total_actions DESC`, { jobId: Number(jobId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json({
+            jobId: Number(jobId),
+            actionsSummary: result.rows || []
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch actions summary', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// 6️ Job Details (MUST be last - catches /:jobId pattern)
 router.get('/:jobId', async(req, res) => {
     const { jobId } = req.params;
     let conn;

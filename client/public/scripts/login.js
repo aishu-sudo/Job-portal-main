@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('login-form');
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async(e) => {
         e.preventDefault();
 
         const email = document.getElementById('login-email').value.trim();
@@ -36,7 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('userEmail', data.user.email);
             localStorage.setItem('userRole', data.user.role);
 
-            if (data.user.role === 'freelancer') {
+            if (data.user.role === 'admin') {
+                window.location.href = '/htmlfiles/adminDashboard.html';
+            } else if (data.user.role === 'freelancer') {
                 window.location.href = '/htmlfiles/freelancerDashboard.html';
             } else {
                 window.location.href = '/htmlfiles/clientDashboard.html';

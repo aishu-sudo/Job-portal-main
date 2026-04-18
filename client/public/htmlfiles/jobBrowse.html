@@ -466,12 +466,14 @@
             <div class="logo">JobPortal</div>
             <nav>
                 <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#" class="active">Browse Jobs</a></li>
-                    <li><a href="#">Companies</a></li>
-                    <li><a href="#">Dashboard</a></li>
-                    <li><a href="#" id="saved-jobs-link">Saved Jobs <span id="saved-jobs-count" class="saved-jobs-count">0</span></a></li>
-                    <li><a href="#">Login/Register</a></li>
+                    <li id="admin-nav" style="display: none;"><a href="adminDashboard.html">🎛️ Admin</a></li>
+                    <li><a href="jobBrowse.html" class="active">📋 Browse</a></li>
+                    <li id="post-nav" style="display: none;"><a href="post-project.html">➕ Post Job</a></li>
+                    <li id="update-nav" style="display: none;"><a href="updateJob.html">✏️ Update</a></li>
+                    <li id="provenance-nav" style="display: none;"><a href="viewProvenance.html">🔍 Provenance</a></li>
+                    <li id="notifications-nav" style="display: none;"><a href="freelancerNotifications.html">🔔 Notifications</a></li>
+                    <li><a href="#" id="saved-jobs-link">⭐ Saved <span id="saved-jobs-count" class="saved-jobs-count">0</span></a></li>
+                    <li id="user-info-nav" style="margin-left: auto; color: #3498db;"></li>
                 </ul>
             </nav>
         </div>
@@ -573,32 +575,6 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Apply for <span id="modal-job-title"></span></h2>
-            <p>at <span id="modal-company-name"></span></p>
-
-            <!-- Client Information Section -->
-            <div class="client-info-section">
-                <div class="client-info-title">Hiring Information</div>
-                <div class="client-info-item">
-                    <span class="client-info-label">Contact Person:</span>
-                    <span class="client-info-value" id="client-contact-person"></span>
-                </div>
-                <div class="client-info-item">
-                    <span class="client-info-label">Contact Email:</span>
-                    <span class="client-info-value" id="client-email"></span>
-                </div>
-                <div class="client-info-item">
-                    <span class="client-info-label">Contact Phone:</span>
-                    <span class="client-info-value" id="client-phone"></span>
-                </div>
-                <div class="client-info-item">
-                    <span class="client-info-label">Application Deadline:</span>
-                    <span class="client-info-value" id="application-deadline"></span>
-                </div>
-                <div class="client-info-item">
-                    <span class="client-info-label">Special Instructions:</span>
-                    <span class="client-info-value" id="client-notes"></span>
-                </div>
-            </div>
 
             <div style="text-align: center; margin: 20px 0;">
                 <a href="#" id="continue-to-application" class="apply-button" style="padding: 12px 30px; font-size: 16px;">Continue to Application</a>
@@ -606,6 +582,32 @@
         </div>
     </div>
 
+    <script src="scripts/roleManager.js"></script>
+    <script>
+        // Setup role-based navigation
+        function setupRoleNav() {
+            // Show/hide links based on role
+            if (roleManager.isAdmin()) {
+                document.getElementById('admin-nav').style.display = 'block';
+                document.getElementById('update-nav').style.display = 'block';
+                document.getElementById('provenance-nav').style.display = 'block';
+                document.getElementById('notifications-nav').style.display = 'block';
+                document.getElementById('post-nav').style.display = 'block';
+            } else if (roleManager.isClient()) {
+                document.getElementById('post-nav').style.display = 'block';
+                document.getElementById('update-nav').style.display = 'block';
+                document.getElementById('notifications-nav').style.display = 'block';
+            } else if (roleManager.isFreelancer()) {
+                document.getElementById('notifications-nav').style.display = 'block';
+            }
+
+            // Show user info
+            const user = roleManager.getUserDisplay();
+            document.getElementById('user-info-nav').innerHTML = `${user.icon} ${user.name}`;
+        }
+
+        setupRoleNav();
+    </script>
     <script>
         // Job data with client information
         const jobs = [{
@@ -1042,16 +1044,10 @@
         const savedJobsLink = document.getElementById('saved-jobs-link');
         const applicationModal = document.getElementById('application-modal');
         const modalJobTitle = document.getElementById('modal-job-title');
-        const modalCompanyName = document.getElementById('modal-company-name');
         const continueToApplication = document.getElementById('continue-to-application');
         const closeModalBtn = document.querySelector('.close');
 
-        // Client info elements
-        const clientContactPerson = document.getElementById('client-contact-person');
-        const clientEmail = document.getElementById('client-email');
-        const clientPhone = document.getElementById('client-phone');
-        const applicationDeadline = document.getElementById('application-deadline');
-        const clientNotes = document.getElementById('client-notes');
+
 
         // State
         let currentPage = 1;
@@ -1061,10 +1057,58 @@
         let filteredJobs = [...jobs];
         let currentJobApplying = null;
 
+        // Fetch DB jobs and merge with hardcoded ones
+        async function loadDBJobs() {
+            try {
+                const API_BASE = localStorage.getItem('apiBase') || 'http://localhost:5000/api';
+                const res = await fetch(`${API_BASE}/jobs/browse`);
+                if (res.ok) {
+                    const dbJobs = await res.json();
+                    const maxId = Math.max(...jobs.map(j => j.id), 0);
+                    dbJobs.forEach((dj, i) => {
+                        // Skip if already in hardcoded list by title match
+                        if (jobs.some(j => j.title === dj.title)) return;
+                        jobs.push({
+                            id: dj.jobId,
+                            dbJobId: dj.jobId,
+                            title: dj.title,
+                            company: 'Job Portal',
+                            location: 'Remote',
+                            salary: dj.budget ? `$${Number(dj.budget).toLocaleString()}` : 'Negotiable',
+                            type: 'contract',
+                            description: dj.description || dj.title,
+                            posted: formatPostedDate(dj.createdAt),
+                            postedDate: new Date(dj.createdAt),
+                            salaryMin: dj.budget || 0,
+                            salaryMax: dj.budget || 0,
+                            applications: 0,
+                            clientInfo: {},
+                            skills: dj.category ? [dj.category] : ['General']
+                        });
+                    });
+                    filteredJobs = [...jobs];
+                    renderJobListings();
+                    renderPagination();
+                }
+            } catch (e) {
+                console.log('Could not load DB jobs:', e);
+            }
+        }
+
+        function formatPostedDate(dateStr) {
+            if (!dateStr) return 'Recently';
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            if (days === 0) return 'Today';
+            if (days === 1) return '1 day ago';
+            return `${days} days ago`;
+        }
+
         // Initialize
         updateSavedJobsCount();
         renderJobListings();
         renderPagination();
+        loadDBJobs();
 
         // Event listeners
         jobSearchForm.addEventListener('submit', function(e) {
@@ -1175,7 +1219,6 @@
                 jobCard.className = 'job-card';
                 jobCard.innerHTML = `
                 <h3 class="job-title">${job.title}</h3>
-                <p class="job-company">${job.company}</p>
                 <p class="job-location">
                     <i class="fas fa-map-marker-alt"></i> ${job.location}
                 </p>
@@ -1210,23 +1253,6 @@
                     if (job) {
                         currentJobApplying = jobId;
                         modalJobTitle.textContent = job.title;
-                        modalCompanyName.textContent = job.company;
-
-                        // Set client information in the modal
-                        if (job.clientInfo) {
-                            clientContactPerson.textContent = job.clientInfo.contactPerson;
-                            clientEmail.textContent = job.clientInfo.email;
-                            clientPhone.textContent = job.clientInfo.phone;
-                            applicationDeadline.textContent = job.clientInfo.deadline;
-                            clientNotes.textContent = job.clientInfo.notes;
-                        } else {
-                            // Default values if no client info is provided
-                            clientContactPerson.textContent = "Not specified";
-                            clientEmail.textContent = "Not specified";
-                            clientPhone.textContent = "Not specified";
-                            applicationDeadline.textContent = "Not specified";
-                            clientNotes.textContent = "None";
-                        }
 
                         applicationModal.style.display = 'block';
                     }
@@ -1309,7 +1335,6 @@
 
                 <div class="job-header" style="background-color: white; border-radius: 8px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
                     <h1 class="job-title" style="font-size: 28px; margin-bottom: 5px; color: #2d3748;">${job.title}</h1>
-                    <p class="job-company" style="font-size: 18px; color: #4f46e5; margin-bottom: 15px; font-weight: 500;">${job.company}</p>
 
                     <div class="job-meta" style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
                         <div class="meta-item" style="display: flex; align-items: center; color: #4a5568;">
@@ -1447,7 +1472,7 @@
         });
 
         // Form submission handler
-        document.getElementById('jobApplicationForm').addEventListener('submit', function(e) {
+        document.getElementById('jobApplicationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             // Basic validation
@@ -1460,21 +1485,27 @@
                 return;
             }
 
-            // In a real application, you would send this data to your server
-            const formData = {
-                jobId: job.id,
-                jobTitle: job.title,
-                company: job.company,
-                fullName: fullName,
-                email: email,
-                phone: document.getElementById('phone').value.trim(),
-                resume: document.getElementById('resume').files[0].name,
-                portfolio: document.getElementById('portfolio').value.trim(),
-                coverLetter: document.getElementById('coverLetter').value.trim(),
-                appliedDate: new Date().toISOString()
-            };
+            // Call DB API to create application record (only for DB jobs)
+            const API_BASE = localStorage.getItem('apiBase') || 'http://localhost:5000/api';
+            const freelancerId = localStorage.getItem('userId');
 
-            console.log('Application submitted:', formData);
+            if (freelancerId && job.dbJobId) {
+                try {
+                    const apiRes = await fetch(`${API_BASE}/jobs/${job.dbJobId}/apply`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ freelancerId: Number(freelancerId) })
+                    });
+                    if (!apiRes.ok) {
+                        const err = await apiRes.json();
+                        console.log('API apply error:', err);
+                    }
+                } catch (apiErr) {
+                    console.log('Could not save application to DB:', apiErr);
+                }
+            }
+
+            console.log('Application submitted for job:', job.title);
 
             // Add to applied jobs
             if (!appliedJobs.includes(job.id)) {

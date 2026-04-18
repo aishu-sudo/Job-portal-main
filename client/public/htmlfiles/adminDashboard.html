@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background: #f4f7fc;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #0c2333, #081c30);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+        
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 22px;
+            font-weight: 500;
+        }
+        
+        .sidebar button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 16px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .sidebar button:hover,
+        .sidebar button.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar .logout {
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        #mainContent {
+            flex: 1;
+            padding: 30px;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .dashboard-header h1 {
+            color: #0c2333;
+            font-size: 34px;
+            margin-bottom: 8px;
+        }
+        
+        .dashboard-header p {
+            color: #5c6b7a;
+            font-size: 15px;
+        }
+        
+        .notification-container {
+            position: relative;
+        }
+        
+        .notification-bell {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: white;
+            color: #0c2333;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -3px;
+            right: -2px;
+            background-color: #c7461b;
+            color: white;
+            border-radius: 999px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 56px;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+            z-index: 100;
+            display: none;
+            max-height: 460px;
+            overflow-y: auto;
+        }
+        
+        .notification-dropdown.show {
+            display: block;
+        }
+        
+        .notification-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid #edf1f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+        }
+        
+        .notification-header h3 {
+            color: #0c2333;
+            font-size: 18px;
+        }
+        
+        .mark-all-read {
+            background: none;
+            border: none;
+            color: #1976d2;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .notification-list {
+            padding: 0;
+        }
+        
+        .notification-item {
+            padding: 16px 18px;
+            border-bottom: 1px solid #edf1f5;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .notification-item:hover {
+            background: #f7faff;
+        }
+        
+        .notification-item.unread {
+            background: #f0f7ff;
+        }
+        
+        .notification-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            color: #0c2333;
+        }
+        
+        .notification-role {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: #e8f1fb;
+            color: #0c5aa6;
+        }
+        
+        .notification-message {
+            color: #44515e;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .notification-time {
+            color: #8a96a3;
+            font-size: 12px;
+            text-align: right;
+        }
+        
+        .notification-empty {
+            padding: 30px 20px;
+            text-align: center;
+            color: #6a7683;
+            font-size: 14px;
+        }
+        
+        .welcome-message {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+        }
+        
+        .welcome-message h2 {
+            color: #0c2333;
+            margin-bottom: 12px;
+        }
+        
+        .welcome-message p {
+            color: #556270;
+            line-height: 1.6;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+            margin-top: 26px;
+        }
+        
+        .stat-card {
+            background: #f8fbff;
+            border: 1px solid #e6edf5;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .stat-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #0c2333;
+            margin-bottom: 14px;
+            font-size: 16px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0c2333;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 20px;
+        }
+        
+        .dashboard-grid-spaced {
+            margin-top: 20px;
+        }
+        
+        .panel {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
+        }
+        
+        .panel h3 {
+            color: #0c2333;
+            margin-bottom: 18px;
+            font-size: 18px;
+        }
+        
+        .action-grid,
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+        
+        .action-card,
+        .overview-card {
+            border: 1px solid #e7edf5;
+            border-radius: 10px;
+            padding: 18px;
+            background: #fbfdff;
+        }
+        
+        .action-card i,
+        .overview-card i {
+            color: #1976d2;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        
+        .action-card h4,
+        .overview-card h4 {
+            color: #0c2333;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .action-card p,
+        .overview-card p {
+            color: #5d6a77;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+        
+        .action-card button {
+            border: none;
+            border-radius: 8px;
+            background: #1976d2;
+            color: white;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .overview-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0c2333;
+        }
+        
+        .content-frame {
+            width: 100%;
+            min-height: 650px;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+            background: white;
+            display: none;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 1100px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+            }
+            #mainContent {
+                padding: 20px;
+            }
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .notification-dropdown {
+                width: min(380px, calc(100vw - 40px));
+                right: auto;
+                left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2><i class="fas fa-user-shield"></i> Admin</h2>
+        <button onclick="loadSection('dashboard', event)" id="dashboardBtn" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
+        <button onclick="loadSection('browseJobs', event)" id="browseJobsBtn"><i class="fas fa-briefcase"></i> Browse Jobs</button>
+        <button onclick="loadSection('postJob', event)" id="postJobBtn"><i class="fas fa-plus-circle"></i> Post Project</button>
+        <button onclick="loadSection('updateJob', event)" id="updateJobBtn"><i class="fas fa-edit"></i> Update Job</button>
+        <button onclick="loadSection('provenance', event)" id="provenanceBtn"><i class="fas fa-history"></i> Provenance</button>
+        <button onclick="loadSection('freelancerProfile', event)" id="freelancerProfileBtn"><i class="fas fa-user"></i> Freelancer Profile</button>
+        <button onclick="downloadSystemReport()" id="systemReportBtn"><i class="fas fa-download"></i> System Report</button>
+        <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+
+    <div id="mainContent">
+        <div class="dashboard-header">
+            <div>
+                <h1 id="dashboardTitle">Admin Dashboard</h1>
+                <p>Control jobs, audit activity, user activity, and system visibility from one place.</p>
+            </div>
+            <div class="notification-container">
+                <button class="notification-bell" onclick="toggleNotifications()" aria-label="Open notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </button>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-header">
+                        <h3>Notifications</h3>
+                        <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
+                    </div>
+                    <div class="notification-list" id="notificationList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="welcome-message" id="dashboardContent">
+            <h2>Admin control center</h2>
+            <p>The admin UI now uses the same simpler dashboard shell as the client and freelancer views. Admin actions stay available here, while notifications are handled directly from the header bell instead of a separate page.</p>
+
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3><i class="fas fa-briefcase"></i> Total Jobs</h3>
+                    <div class="stat-value" id="jobCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-file-alt"></i> Applications</h3>
+                    <div class="stat-value" id="appCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-users"></i> Freelancers</h3>
+                    <div class="stat-value" id="freelancerCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-wallet"></i> Payment Events</h3>
+                    <div class="stat-value" id="paymentCount">0</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid dashboard-grid-spaced">
+                <div class="panel">
+                    <h3>Admin Actions</h3>
+                    <div class="action-grid">
+                        <div class="action-card">
+                            <i class="fas fa-search"></i>
+                            <h4>Browse Jobs</h4>
+                            <p>Inspect posted jobs and review platform listings.</p>
+                            <button onclick="openFramePage('jobBrowse.html', 'browseJobsBtn')">Open</button>
+                        </div>
+                        <div class="action-card">
+                            <i class="fas fa-plus"></i>
+                            <h4>Create Job</h4>
+                            <p>Post a new project directly from the admin area.</p>
+                            <button onclick="openFramePage('post-project.html', 'postJobBtn')">Create</button>
+                        </div>
+                        <div class="action-card">
+                            <i class="fas fa-pen-to-square"></i>
+                            <h4>Update Job</h4>
+                            <p>Change budget or status and keep provenance intact.</p>
+                            <button onclick="openFramePage('updateJob.html', 'updateJobBtn')">Manage</button>
+                        </div>
+                        <div class="action-card">
+                            <i class="fas fa-clock-rotate-left"></i>
+                            <h4>View Provenance</h4>
+                            <p>Track who changed what and when across admin actions.</p>
+                            <button onclick="openFramePage('viewProvenance.html', 'provenanceBtn')">Review</button>
+                        </div>
+                        <div class="action-card">
+                            <i class="fas fa-id-card"></i>
+                            <h4>Freelancer Profile</h4>
+                            <p>Open freelancer details and verify public information.</p>
+                            <button onclick="openFramePage('freelancerprofile.html', 'freelancerProfileBtn')">View</button>
+                        </div>
+                        <div class="action-card">
+                            <i class="fas fa-download"></i>
+                            <h4>System Report</h4>
+                            <p>Download a text report with current admin system details.</p>
+                            <button onclick="downloadSystemReport()">Download</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>System Overview</h3>
+                    <div class="overview-grid">
+                        <div class="overview-card">
+                            <i class="fas fa-database"></i>
+                            <h4>Projects Store</h4>
+                            <div class="overview-value" id="projectStoreCount">0</div>
+                            <p>Projects currently saved in local storage.</p>
+                        </div>
+                        <div class="overview-card">
+                            <i class="fas fa-bell"></i>
+                            <h4>Unread Alerts</h4>
+                            <div class="overview-value" id="unreadCount">0</div>
+                            <p>Combined unread items across admin, client, and freelancer feeds.</p>
+                        </div>
+                        <div class="overview-card">
+                            <i class="fas fa-list-check"></i>
+                            <h4>Audit Visibility</h4>
+                            <div class="overview-value">Full</div>
+                            <p>Use provenance and update pages to inspect tracked changes.</p>
+                        </div>
+                        <div class="overview-card">
+                            <i class="fas fa-shield-halved"></i>
+                            <h4>Admin Access</h4>
+                            <div class="overview-value">Live</div>
+                            <p>Admin-only actions remain available in this simplified layout.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <iframe id="contentFrame" class="content-frame" title="Admin dashboard content"></iframe>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        const NOTIFICATION_SOURCES = [{
+            key: 'adminNotifications',
+            label: 'Admin'
+        }, {
+            key: 'clientNotifications',
+            label: 'Client'
+        }, {
+            key: 'freelancerNotifications',
+            label: 'Freelancer'
+        }];
+
+        (function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('userRole');
+
+            if (!token) {
+                globalThis.location.href = 'login.html';
+                return;
+            }
+
+            if (userRole !== 'admin') {
+                globalThis.location.href = 'login.html';
+            }
+        })();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const userName = localStorage.getItem('userName') || 'Admin';
+            document.getElementById('dashboardTitle').textContent = `Welcome, ${userName}`;
+
+            const frame = document.getElementById('contentFrame');
+            if (frame) {
+                frame.addEventListener('load', resizeContentFrame);
+            }
+
+            loadStats();
+            loadNotifications();
+            setInterval(loadNotifications, 30000);
+        });
+
+        function logout() {
+            ['token', 'userId', 'userName', 'userEmail', 'userRole'].forEach(key => localStorage.removeItem(key));
+            globalThis.location.href = 'login.html';
+        }
+
+        function setActiveButton(buttonId) {
+            document.querySelectorAll('.sidebar button').forEach(button => button.classList.remove('active'));
+            const targetButton = document.getElementById(buttonId);
+            if (targetButton) {
+                targetButton.classList.add('active');
+            }
+        }
+
+        function openFramePage(page, buttonId) {
+            const dashboardContent = document.getElementById('dashboardContent');
+            const frame = document.getElementById('contentFrame');
+
+            dashboardContent.style.display = 'none';
+            frame.style.display = 'block';
+            frame.src = page;
+            setActiveButton(buttonId);
+        }
+
+        function loadSection(section, event) {
+            if (event && event.currentTarget && event.currentTarget.id) {
+                setActiveButton(event.currentTarget.id);
+            }
+
+            const dashboardContent = document.getElementById('dashboardContent');
+            const frame = document.getElementById('contentFrame');
+
+            switch (section) {
+                case 'dashboard':
+                    dashboardContent.style.display = 'block';
+                    frame.style.display = 'none';
+                    frame.src = 'about:blank';
+                    frame.style.height = '650px';
+                    break;
+                case 'browseJobs':
+                    openFramePage('jobBrowse.html', 'browseJobsBtn');
+                    break;
+                case 'postJob':
+                    openFramePage('post-project.html', 'postJobBtn');
+                    break;
+                case 'updateJob':
+                    openFramePage('updateJob.html', 'updateJobBtn');
+                    break;
+                case 'provenance':
+                    openFramePage('viewProvenance.html', 'provenanceBtn');
+                    break;
+                case 'freelancerProfile':
+                    openFramePage('freelancerprofile.html', 'freelancerProfileBtn');
+                    break;
+                default:
+                    dashboardContent.style.display = 'block';
+                    frame.style.display = 'none';
+                    setActiveButton('dashboardBtn');
+                    break;
+            }
+        }
+
+        function resizeContentFrame() {
+            const frame = document.getElementById('contentFrame');
+            if (!frame || frame.style.display === 'none') {
+                return;
+            }
+
+            try {
+                const frameBody = frame.contentWindow.document.body;
+                const frameDoc = frame.contentWindow.document.documentElement;
+                const contentHeight = Math.max(
+                    frameBody.scrollHeight,
+                    frameBody.offsetHeight,
+                    frameDoc.clientHeight,
+                    frameDoc.scrollHeight,
+                    frameDoc.offsetHeight
+                );
+
+                frame.style.height = `${contentHeight}px`;
+            } catch {
+                frame.style.height = '650px';
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const applications = JSON.parse(localStorage.getItem('projectApplications')) || [];
+                const projects = JSON.parse(localStorage.getItem('projects')) || [];
+                const clientNotifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+                const freelancerNotifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
+                const paymentEvents = clientNotifications.filter(notification => String(notification.type || '').includes('payment')).length +
+                    freelancerNotifications.filter(notification => String(notification.type || '').includes('payment')).length;
+
+                document.getElementById('appCount').textContent = applications.length;
+                document.getElementById('projectStoreCount').textContent = projects.length;
+                document.getElementById('paymentCount').textContent = paymentEvents;
+
+                const [jobsResult, freelancersResult] = await Promise.allSettled([
+                    fetch(`${API_URL}/jobs/browse`),
+                    fetch(`${API_URL}/freelancers/browse`)
+                ]);
+
+                if (jobsResult.status === 'fulfilled') {
+                    const jobs = await jobsResult.value.json();
+                    document.getElementById('jobCount').textContent = Array.isArray(jobs) ? jobs.length : 0;
+                } else {
+                    document.getElementById('jobCount').textContent = projects.length;
+                }
+
+                if (freelancersResult.status === 'fulfilled') {
+                    const freelancers = await freelancersResult.value.json();
+                    document.getElementById('freelancerCount').textContent = Array.isArray(freelancers) ? freelancers.length : 0;
+                } else {
+                    document.getElementById('freelancerCount').textContent = '0';
+                }
+            } catch (error) {
+                console.error('Error loading admin stats:', error);
+                document.getElementById('jobCount').textContent = '0';
+                document.getElementById('freelancerCount').textContent = '0';
+                document.getElementById('appCount').textContent = '0';
+                document.getElementById('paymentCount').textContent = '0';
+            }
+        }
+
+        function getAdminNotifications() {
+            return NOTIFICATION_SOURCES.flatMap(source => {
+                const notifications = JSON.parse(localStorage.getItem(source.key)) || [];
+
+                return notifications.map(notification => ({
+                    ...notification,
+                    sourceKey: source.key,
+                    sourceLabel: source.label,
+                    time: notification.time || new Date().toISOString()
+                }));
+            }).sort((left, right) => new Date(right.time) - new Date(left.time));
+        }
+
+        function loadNotifications() {
+            const notifications = getAdminNotifications();
+            const notificationList = document.getElementById('notificationList');
+            const unreadCount = notifications.filter(notification => !notification.read).length;
+            const badge = document.getElementById('notificationBadge');
+
+            document.getElementById('unreadCount').textContent = unreadCount;
+            badge.textContent = unreadCount;
+            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+
+            if (!notifications.length) {
+                notificationList.innerHTML = '<div class="notification-empty">No notifications yet.</div>';
+                return;
+            }
+
+            notificationList.innerHTML = notifications.map(notification => `
+                <div class="notification-item ${notification.read ? '' : 'unread'}" onclick="markNotificationAsRead('${notification.sourceKey}', '${notification.id || ''}')">
+                    <div class="notification-topline">
+                        <div class="notification-title">${escapeHtml(notification.title || 'Notification')}</div>
+                        <span class="notification-role">${escapeHtml(notification.sourceLabel)}</span>
+                    </div>
+                    <div class="notification-message">${escapeHtml(notification.message || 'No details available.')}</div>
+                    <div class="notification-time">${formatTimeAgo(new Date(notification.time))}</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+            if (dropdown.classList.contains('show')) {
+                loadNotifications();
+            }
+        }
+
+        function markAllAsRead() {
+            NOTIFICATION_SOURCES.forEach(source => {
+                const notifications = JSON.parse(localStorage.getItem(source.key)) || [];
+                const updatedNotifications = notifications.map(notification => ({
+                    ...notification,
+                    read: true
+                }));
+                localStorage.setItem(source.key, JSON.stringify(updatedNotifications));
+            });
+
+            loadNotifications();
+        }
+
+        function markNotificationAsRead(sourceKey, notificationId) {
+            if (!sourceKey || !notificationId) {
+                return;
+            }
+
+            const notifications = JSON.parse(localStorage.getItem(sourceKey)) || [];
+            const updatedNotifications = notifications.map(notification => {
+                if (String(notification.id) === String(notificationId)) {
+                    return {
+                        ...notification,
+                        read: true
+                    };
+                }
+
+                return notification;
+            });
+
+            localStorage.setItem(sourceKey, JSON.stringify(updatedNotifications));
+            loadNotifications();
+        }
+
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+            if (seconds < 60) return `${seconds} seconds ago`;
+
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} minutes ago`;
+
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} hours ago`;
+
+            const days = Math.floor(hours / 24);
+            if (days < 30) return `${days} days ago`;
+
+            const months = Math.floor(days / 30);
+            if (months < 12) return `${months} months ago`;
+
+            const years = Math.floor(months / 12);
+            return `${years} years ago`;
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function downloadSystemReport() {
+            const report = `JOB PORTAL ADMIN REPORT
+======================
+Generated: ${new Date().toLocaleString()}
+
+System Status: ACTIVE
+Database: CONNECTED
+Provenance System: ENABLED
+
+FEATURES AVAILABLE:
+- Browse Jobs
+- Post New Job
+- Update Job Status and Budget
+- View Complete Audit Trail
+- Header Notification Feed
+- Freelancer Management
+
+STORES TRACKED:
+- projects
+- projectApplications
+- clientNotifications
+- freelancerNotifications
+- adminNotifications
+`;
+
+            const blob = new Blob([report], {
+                type: 'text/plain'
+            });
+            const url = globalThis.URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `job-portal-report-${new Date().toISOString().slice(0, 10)}.txt`;
+            anchor.click();
+            globalThis.URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const bell = document.querySelector('.notification-bell');
+
+            if (!dropdown || !bell) {
+                return;
+            }
+
+            if (!bell.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+
+</html>

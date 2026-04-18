@@ -230,28 +230,8 @@
         <h1>Applicants</h1>
     </div>
 
-    <div class="applicants-list">
-        <!-- Applicant 1 -->
-        <div class="applicant-card">
-            <div class="applicant-info">
-                <div class="applicant-name">
-                    <span class="status-indicator"></span> John Doe
-                </div>
-                <div class="applicant-proposal">Proposal: "$500, 2 weeks"</div>
-            </div>
-            <button class="view-btn" data-applicant-id="1">View</button>
-        </div>
-
-        <!-- Applicant 2 -->
-        <div class="applicant-card">
-            <div class="applicant-info">
-                <div class="applicant-name">
-                    <span class="status-indicator"></span> Jane Smith
-                </div>
-                <div class="applicant-proposal">Proposal: "$450, 10 days"</div>
-            </div>
-            <button class="view-btn" data-applicant-id="2">View</button>
-        </div>
+    <div class="applicants-list" id="applicants-list">
+        <div style="padding:40px;text-align:center;color:var(--text-light);">Loading applicants...</div>
     </div>
 
     <!-- Freelancer Profile Modal -->
@@ -299,98 +279,204 @@
                 <p><strong>Cover Letter:</strong></p>
                 <p id="proposal-letter">I'll build your e-commerce site using React and Node.js with a MongoDB backend. I've completed similar projects and can deliver high-quality results within your timeframe.</p>
             </div>
+
+            <div id="action-buttons" style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;">
+                <button id="rejectBtn" style="background:#dc3545;color:white;border:none;padding:12px 30px;border-radius:6px;cursor:pointer;font-size:15px;font-weight:600;transition:background 0.3s;">✗ Reject</button>
+                <button id="acceptBtn" style="background:#28a745;color:white;border:none;padding:12px 30px;border-radius:6px;cursor:pointer;font-size:15px;font-weight:600;transition:background 0.3s;">✓ Accept</button>
+            </div>
+            <div id="action-status" style="display:none;margin-top:20px;padding:15px;border-radius:8px;text-align:center;font-weight:600;"></div>
         </div>
     </div>
 
     <script>
-        // Sample freelancer data (would come from backend in real app)
-        const freelancers = {
-            1: {
-                name: "John Doe",
-                avatarText: "JD",
-                location: "New York, USA",
-                rating: "4.9 (128 reviews)",
-                about: "Full-stack developer with 5+ years of experience building web applications. Specialized in React, Node.js, and MongoDB. Passionate about creating efficient, scalable solutions.",
-                skills: ["React", "Node.js", "MongoDB", "JavaScript", "HTML/CSS"],
-                portfolio: "www.johndoeportfolio.com",
-                proposal: {
-                    bid: "$500",
-                    time: "2 weeks",
-                    letter: "I'll build your e-commerce site using React and Node.js with a MongoDB backend. I've completed similar projects and can deliver high-quality results within your timeframe."
-                }
-            },
-            2: {
-                name: "Jane Smith",
-                avatarText: "JS",
-                location: "London, UK",
-                rating: "4.8 (92 reviews)",
-                about: "UI/UX designer with 4 years of experience creating beautiful, functional interfaces. Expert in Figma, Adobe XD, and user research methodologies.",
-                skills: ["Figma", "UI Design", "UX Research", "Prototyping", "Adobe XD"],
-                portfolio: "www.janesmithdesigns.com",
-                proposal: {
-                    bid: "$450",
-                    time: "10 days",
-                    letter: "I'll design a modern, user-friendly interface for your fitness app, including wireframes and high-fidelity prototypes based on user research."
-                }
-            }
-        };
-
-        // DOM Elements
+        const API_BASE = 'http://localhost:5000/api';
         const modal = document.getElementById('profile-modal');
         const closeBtn = document.querySelector('.close-modal');
+        let applicants = [];
+        let currentApp = null;
 
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add click handlers to view buttons
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const applicantId = this.getAttribute('data-applicant-id');
-                    showFreelancerProfile(applicantId);
-                });
-            });
+        document.addEventListener('DOMContentLoaded', loadApplicants);
 
-            // Close modal when X is clicked
-            closeBtn.addEventListener('click', closeModal);
+        async function loadApplicants() {
+            const clientId = localStorage.getItem('userId');
+            if (!clientId) {
+                document.getElementById('applicants-list').innerHTML =
+                    '<div style="padding:40px;text-align:center;color:var(--text-light);">Please log in to view applicants.</div>';
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/jobs/applications/client/${clientId}`);
+                applicants = await res.json();
+            } catch (err) {
+                applicants = [];
+            }
 
-            // Close modal when clicking outside
-            window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    closeModal();
+            // Also load from localStorage notifications as fallback
+            if (!applicants.length) {
+                const notifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+                const appNotifications = notifications.filter(n => n.type === 'new_application');
+                if (appNotifications.length) {
+                    applicants = appNotifications.map((n, i) => {
+                        const msgMatch = n.message ? n.message.match(/"([^"]+)"/) : null;
+                        const jobName = msgMatch ? msgMatch[1] : 'N/A';
+                        const appInfo = n.applicantInfo || {};
+                        const appData = n.applicationData || {};
+                        const nameFromMsg = n.message ? n.message.split(' has applied')[0] : 'Unknown';
+                        return {
+                            appId: n.id || i,
+                            jobTitle: jobName,
+                            freelancerName: appInfo.name || appData.freelancerName || nameFromMsg,
+                            freelancerEmail: appInfo.email || appData.email || '',
+                            proposal: appInfo.coverLetter || appData.coverLetter || '',
+                            bidAmount: null,
+                            jobBudget: null,
+                            status: appData.status || 'pending',
+                            isLocalOnly: true
+                        };
+                    });
                 }
-            });
-        });
+            }
 
-        function showFreelancerProfile(applicantId) {
-            const freelancer = freelancers[applicantId];
+            renderApplicants();
+        }
 
-            if (!freelancer) return;
+        function renderApplicants() {
+            const list = document.getElementById('applicants-list');
+            if (!applicants.length) {
+                list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-light);">No applicants yet.</div>';
+                return;
+            }
+            list.innerHTML = applicants.map(app => {
+                const statusColor = app.status === 'accepted' ? '#28a745' : app.status === 'rejected' ? '#dc3545' : '#ffc107';
+                const statusLabel = app.status !== 'pending' ?
+                    `<span style="margin-left:8px;font-size:13px;font-weight:600;color:${statusColor};">${app.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}</span>` :
+                    '';
+                return `<div class="applicant-card">
+                    <div class="applicant-info">
+                        <div class="applicant-name">
+                            <span class="status-indicator" style="background:${statusColor};"></span> ${app.freelancerName}
+                        </div>
+                        <div class="applicant-proposal">Job: ${app.jobTitle} | Bid: $${app.bidAmount || app.jobBudget || 'N/A'}</div>
+                    </div>
+                    <div>
+                        <button class="view-btn" onclick="showProfile(${app.appId})">View</button>
+                        ${statusLabel}
+                    </div>
+                </div>`;
+            }).join('');
+        }
 
-            // Update modal content
-            document.getElementById('profile-avatar').textContent = freelancer.avatarText;
-            document.getElementById('profile-name').textContent = freelancer.name;
-            document.getElementById('profile-location').textContent = freelancer.location;
-            document.getElementById('profile-about').textContent = freelancer.about;
-            document.getElementById('profile-portfolio').textContent = freelancer.portfolio;
-            document.getElementById('proposal-bid').textContent = freelancer.proposal.bid;
-            document.getElementById('proposal-time').textContent = freelancer.proposal.time;
-            document.getElementById('proposal-letter').textContent = freelancer.proposal.letter;
+        function showProfile(appId) {
+            currentApp = applicants.find(a => a.appId === appId);
+            if (!currentApp) return;
 
-            // Update skills
-            const skillsContainer = document.getElementById('profile-skills');
-            skillsContainer.innerHTML = '';
-            freelancer.skills.forEach(skill => {
-                const span = document.createElement('span');
-                span.className = 'skill-tag';
-                span.textContent = skill;
-                skillsContainer.appendChild(span);
-            });
+            const initials = currentApp.freelancerName.split(' ').map(w => w[0]).join('').toUpperCase();
+            document.getElementById('profile-avatar').textContent = initials;
+            document.getElementById('profile-name').textContent = currentApp.freelancerName;
+            document.getElementById('profile-location').textContent = currentApp.freelancerEmail || 'N/A';
+            document.getElementById('profile-about').textContent = currentApp.proposal || 'No proposal provided.';
+            document.getElementById('profile-skills').innerHTML = '';
+            document.getElementById('profile-portfolio').textContent = 'N/A';
+            document.getElementById('proposal-bid').textContent = '$' + (currentApp.bidAmount || currentApp.jobBudget || 'N/A');
+            document.getElementById('proposal-time').textContent = 'N/A';
+            document.getElementById('proposal-letter').textContent = currentApp.proposal || 'No cover letter.';
 
-            // Show modal
+            const actionBtns = document.getElementById('action-buttons');
+            const actionStatus = document.getElementById('action-status');
+            if (currentApp.status === 'accepted') {
+                actionBtns.style.display = 'none';
+                actionStatus.style.display = 'block';
+                actionStatus.style.background = '#d4edda';
+                actionStatus.style.color = '#155724';
+                actionStatus.textContent = '✓ Accepted';
+            } else if (currentApp.status === 'rejected') {
+                actionBtns.style.display = 'none';
+                actionStatus.style.display = 'block';
+                actionStatus.style.background = '#f8d7da';
+                actionStatus.style.color = '#721c24';
+                actionStatus.textContent = '✗ Rejected';
+            } else {
+                actionBtns.style.display = 'flex';
+                actionStatus.style.display = 'none';
+            }
+
             modal.style.display = 'flex';
         }
 
         function closeModal() {
             modal.style.display = 'none';
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
+        });
+
+        document.getElementById('acceptBtn').addEventListener('click', () => handleResponse('accepted'));
+        document.getElementById('rejectBtn').addEventListener('click', () => handleResponse('rejected'));
+
+        async function handleResponse(status) {
+            if (!currentApp) return;
+            const clientId = localStorage.getItem('userId') || 'CLIENT';
+            const actionBtns = document.getElementById('action-buttons');
+            const actionStatus = document.getElementById('action-status');
+
+            // Disable buttons while processing
+            document.getElementById('acceptBtn').disabled = true;
+            document.getElementById('rejectBtn').disabled = true;
+
+            try {
+                if (currentApp.isLocalOnly) {
+                    // localStorage-only application — update locally and persist
+                    currentApp.status = status;
+
+                    // Update the notification in localStorage to persist the status
+                    const notifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+                    const notif = notifications.find(n => n.id == currentApp.appId);
+                    if (notif) {
+                        if (!notif.applicationData) notif.applicationData = {};
+                        notif.applicationData.status = status;
+                        localStorage.setItem('clientNotifications', JSON.stringify(notifications));
+                    }
+                } else {
+                    const res = await fetch(`${API_BASE}/jobs/applications/${currentApp.appId}/respond`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            status,
+                            changedBy: clientId
+                        })
+                    });
+
+                    if (!res.ok) throw new Error('Failed');
+
+                    // Update local data
+                    currentApp.status = status;
+                }
+
+                // Update UI
+                actionBtns.style.display = 'none';
+                actionStatus.style.display = 'block';
+                if (status === 'accepted') {
+                    actionStatus.style.background = '#d4edda';
+                    actionStatus.style.color = '#155724';
+                    actionStatus.textContent = '✓ Accepted — Stored procedure fired, audit trail created!';
+                } else {
+                    actionStatus.style.background = '#f8d7da';
+                    actionStatus.style.color = '#721c24';
+                    actionStatus.textContent = '✗ Rejected — Audit trail updated.';
+                }
+
+                // Re-render cards to show updated status
+                renderApplicants();
+            } catch (err) {
+                alert('Failed to update application status. Please try again.');
+            } finally {
+                document.getElementById('acceptBtn').disabled = false;
+                document.getElementById('rejectBtn').disabled = false;
+            }
         }
     </script>
 </body>

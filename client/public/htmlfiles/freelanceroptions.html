@@ -530,6 +530,23 @@
     </div>
 
     <script>
+        // Hired status persistence
+        function getHiredList() {
+            return JSON.parse(localStorage.getItem('hiredFreelancers') || '[]');
+        }
+
+        function isHired(id) {
+            return getHiredList().includes(Number(id));
+        }
+
+        function saveHired(id) {
+            const list = getHiredList();
+            if (!list.includes(Number(id))) {
+                list.push(Number(id));
+                localStorage.setItem('hiredFreelancers', JSON.stringify(list));
+            }
+        }
+
         // Enhanced sample data for freelancers with more details
         const freelancers = [
             // Graphic Designers
@@ -1527,7 +1544,7 @@
                             </div>
                             <div>
                                 <button class="view-profile-btn" data-id="${freelancer.id}">Profile</button>
-                                <button class="hire-btn" data-from-index="${fromIndex}">Hire</button>
+                                <button class="hire-btn" data-id="${freelancer.id}" data-from-index="${fromIndex}">${isHired(freelancer.id) ? 'Hired' : 'Hire'}</button>
                             </div>
                         </div>
                     </div>
@@ -1544,6 +1561,13 @@
             
             // Add click event to hire buttons
             document.querySelectorAll('.hire-btn').forEach(btn => {
+                const fId = btn.getAttribute('data-id');
+                if (isHired(fId)) {
+                    btn.classList.add('hired');
+                    btn.style.backgroundColor = '#28a745';
+                    btn.style.cursor = 'default';
+                    btn.disabled = true;
+                }
                 btn.addEventListener('click', function() {
                     const fromIndex = this.getAttribute('data-from-index') === 'true';
                     if (fromIndex) {
@@ -1552,11 +1576,9 @@
                     }
                     
                     if (!this.classList.contains('hired')) {
-                        this.textContent = 'Hired';
-                        this.classList.add('hired');
-                        this.style.backgroundColor = '#28a745';
-                        this.style.cursor = 'default';
-                        this.disabled = true;
+                        const freelancerId = this.getAttribute('data-id');
+                        const freelancer = freelancers.find(f => f.id === Number(freelancerId));
+                        hireFreelancerFlow(freelancer, this);
                     }
                 });
             });
@@ -1580,7 +1602,7 @@
                         </p>
                         <p><strong>Hourly Rate:</strong> ${freelancer.rate}</p>
                         <div class="profile-actions">
-                            <button class="hire-btn" data-from-index="${fromIndex}">Hire ${freelancer.name}</button>
+                            <button class="hire-btn" data-id="${freelancer.id}" data-from-index="${fromIndex}">${isHired(freelancer.id) ? 'Hired' : 'Hire ' + freelancer.name}</button>
                         </div>
                     </div>
                 </div>
@@ -1620,7 +1642,15 @@
             `;
             
             // Add click event to hire button in modal
-            profileContent.querySelector('.hire-btn').addEventListener('click', function() {
+            const modalHireBtn = profileContent.querySelector('.hire-btn');
+            if (isHired(freelancer.id)) {
+                modalHireBtn.textContent = 'Hired';
+                modalHireBtn.classList.add('hired');
+                modalHireBtn.style.backgroundColor = '#28a745';
+                modalHireBtn.style.cursor = 'default';
+                modalHireBtn.disabled = true;
+            }
+            modalHireBtn.addEventListener('click', function() {
                 const fromIndex = this.getAttribute('data-from-index') === 'true';
                 if (fromIndex) {
                     window.location.href = 'login.html';
@@ -1628,21 +1658,7 @@
                 }
                 
                 if (!this.classList.contains('hired')) {
-                    this.textContent = 'Hired';
-                    this.classList.add('hired');
-                    this.style.backgroundColor = '#28a745';
-                    this.style.cursor = 'default';
-                    this.disabled = true;
-                    
-                    // Also update the hire button in the grid if it exists
-                    const gridHireBtn = document.querySelector(`.freelancer-card[data-id="${freelancer.id}"] .hire-btn`);
-                    if (gridHireBtn) {
-                        gridHireBtn.textContent = 'Hired';
-                        gridHireBtn.classList.add('hired');
-                        gridHireBtn.style.backgroundColor = '#28a745';
-                        gridHireBtn.style.cursor = 'default';
-                        gridHireBtn.disabled = true;
-                    }
+                    hireFreelancerFlow(freelancer, this);
                 }
             });
             
@@ -1712,6 +1728,134 @@
         
         // Initialize the page when DOM is loaded
         document.addEventListener('DOMContentLoaded', initPage);
+
+        // ==========================================
+        // HIRE WORKFLOW — Job selection + API + Notification
+        // ==========================================
+        async function hireFreelancerFlow(freelancer, btnElement) {
+            const clientId = localStorage.getItem('userId');
+            const clientName = localStorage.getItem('userName') || 'Client';
+
+            // Fetch client's jobs from API
+            let jobs = [];
+            try {
+                const resp = await fetch('http://localhost:5000/api/jobs/browse');
+                const allJobs = await resp.json();
+                jobs = allJobs.filter(j => String(j.clientId) === String(clientId) && j.status === 'open');
+            } catch (e) {
+                console.error('Failed to fetch jobs:', e);
+            }
+
+            if (jobs.length === 0) {
+                alert('You have no open jobs. Please post a project first.');
+                return;
+            }
+
+            // Show job selection modal
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:10000;';
+            modal.innerHTML = `
+                <div style="background:white;padding:30px;border-radius:12px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h2 style="margin:0;color:#1d2939;">Select a Job for ${freelancer.name}</h2>
+                        <span class="close-modal" style="cursor:pointer;font-size:24px;color:#666;">&times;</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        ${jobs.map(j => `
+                            <div class="job-option" data-job-id="${j.jobId}" style="border:2px solid #e0e0e0;padding:15px;border-radius:8px;cursor:pointer;transition:all 0.2s;">
+                                <h3 style="margin:0 0 5px 0;color:#333;">${j.title}</h3>
+                                <p style="margin:0;color:#666;font-size:0.9rem;">${j.description || 'No description'}</p>
+                                <p style="margin:5px 0 0 0;color:#29b2ff;font-weight:bold;">Budget: $${j.budget}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('.close-modal').onclick = () => document.body.removeChild(modal);
+            modal.onclick = (e) => { if (e.target === modal) document.body.removeChild(modal); };
+
+            // Hover effect
+            modal.querySelectorAll('.job-option').forEach(opt => {
+                opt.addEventListener('mouseenter', () => opt.style.borderColor = '#29b2ff');
+                opt.addEventListener('mouseleave', () => opt.style.borderColor = '#e0e0e0');
+            });
+
+            // Job click handler
+            modal.querySelectorAll('.job-option').forEach(opt => {
+                opt.addEventListener('click', async () => {
+                    const jobId = opt.getAttribute('data-job-id');
+                    const jobTitle = opt.querySelector('h3').textContent;
+                    const jobBudget = opt.querySelector('p:last-child').textContent;
+                    document.body.removeChild(modal);
+
+                    try {
+                        // Call API to create hire request in DB
+                        const resp = await fetch('http://localhost:5000/api/freelancers/hire', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jobId: Number(jobId),
+                                freelancerId: Number(freelancer.id),
+                                clientId: Number(clientId),
+                                changedBy: clientName
+                            })
+                        });
+                        const data = await resp.json();
+
+                        if (resp.ok) {
+                            // Push notification to freelancerNotifications
+                            const notifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
+                            notifications.unshift({
+                                id: Date.now(),
+                                type: 'hire_request',
+                                title: 'New Hire Request',
+                                message: `${clientName} wants to hire you for "${jobTitle}" (${jobBudget})`,
+                                time: new Date().toISOString(),
+                                read: false,
+                                hireData: {
+                                    appId: data.appId,
+                                    jobId: Number(jobId),
+                                    jobTitle,
+                                    freelancerId: freelancer.id,
+                                    freelancerName: freelancer.name,
+                                    clientId: Number(clientId),
+                                    clientName,
+                                    budget: jobBudget
+                                }
+                            });
+                            localStorage.setItem('freelancerNotifications', JSON.stringify(notifications));
+
+                            // Mark as hired in UI
+                            btnElement.textContent = 'Hired';
+                            btnElement.classList.add('hired');
+                            btnElement.style.backgroundColor = '#28a745';
+                            btnElement.style.cursor = 'default';
+                            btnElement.disabled = true;
+                            saveHired(freelancer.id);
+
+                            // Update grid button too
+                            const gridBtn = document.querySelector(`.freelancer-card[data-id="${freelancer.id}"] .hire-btn`);
+                            if (gridBtn && gridBtn !== btnElement) {
+                                gridBtn.textContent = 'Hired';
+                                gridBtn.classList.add('hired');
+                                gridBtn.style.backgroundColor = '#28a745';
+                                gridBtn.style.cursor = 'default';
+                                gridBtn.disabled = true;
+                            }
+
+                            alert(`Hire request sent to ${freelancer.name} for "${jobTitle}"! They will be notified.`);
+                        } else {
+                            alert('Failed to send hire request: ' + (data.error || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        console.error('Hire error:', error);
+                        alert('Error sending hire request: ' + error.message);
+                    }
+                });
+            });
+        }
     </script>
 </body>
 
