@@ -45,7 +45,6 @@
             padding: 30px;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
-            text-align: center;
             transition: transform 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -85,49 +84,31 @@
             transform: scale(1.05);
         }
         
+        .freelancer-name {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 26px;
+            font-weight: 700;
+        }
+        
+        .freelancer-role {
+            text-align: center;
+            color: #757575;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
         h2 {
             color: var(--primary-color);
-            margin-bottom: 5px;
-            font-size: 28px;
-        }
-        
-        .location {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            color: #6c757d;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-        
-        .rating {
-            background-color: rgba(75, 181, 67, 0.1);
-            color: var(--success-color);
-            padding: 8px 15px;
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 25px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .rating i {
-            color: var(--warning-color);
-        }
-        
-        h3 {
-            color: var(--primary-color);
-            margin: 20px 0 15px;
-            text-align: left;
+            margin: 25px 0 15px;
             font-size: 18px;
             position: relative;
-            padding-bottom: 5px;
+            padding-bottom: 8px;
         }
         
-        h3::after {
+        h2::after {
             content: '';
             position: absolute;
             left: 0;
@@ -138,11 +119,59 @@
             border-radius: 3px;
         }
         
-        .about {
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .contact-icon {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .contact-item:hover .contact-icon {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .contact-details {
+            flex: 1;
+        }
+        
+        .contact-label {
+            font-size: 12px;
+            color: #757575;
+            margin-bottom: 2px;
+        }
+        
+        .contact-value {
+            font-weight: 500;
+            color: var(--dark-color);
+            word-break: break-all;
+        }
+        
+        .about-text {
             text-align: left;
             color: #495057;
-            margin-bottom: 10px;
-            font-size: 15px;
+            font-size: 14px;
+            line-height: 1.7;
         }
         
         .skills-container {
@@ -201,25 +230,46 @@
             border-color: var(--primary-color);
         }
         
-        .portfolio-link {
-            display: inline-block;
+        .add-skill-btn {
+            padding: 10px 20px;
+            flex: 0;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
             color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-            margin: 10px 0;
-            transition: color 0.3s ease;
-            word-break: break-all;
-            text-align: left;
-            width: 100%;
+            margin-bottom: 5px;
         }
         
-        .portfolio-link:hover {
-            color: var(--secondary-color);
-            text-decoration: underline;
+        .stat-label {
+            font-size: 12px;
+            color: #757575;
         }
         
-        .portfolio-link i {
-            margin-right: 5px;
+        .member-since {
+            background: rgba(75, 181, 67, 0.1);
+            color: var(--success-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 20px;
+            font-weight: 600;
+            font-size: 14px;
         }
         
         .buttons {
@@ -289,72 +339,101 @@
             .buttons {
                 flex-direction: column;
             }
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="profile-card">
-        <div class="avatar">JD</div>
-        <h2 id="name">John Doe</h2>
-        <p class="location">
-            <i class="fas fa-map-marker-alt"></i>
-            <span id="location">New York, USA</span>
-        </p>
-        <div class="rating">
-            <i class="fas fa-star"></i>
-            <span id="rating">4.9</span>
-            <span>(128 Reviews)</span>
+        <div class="avatar" id="avatar">OJ</div>
+        <h1 class="freelancer-name" id="freelancerName">Freelancer</h1>
+        <p class="freelancer-role" id="freelancerRole">Freelancer</p>
+
+        <h2>Contact Info</h2>
+        <div class="contact-info">
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-label">Full Name</div>
+                    <div class="contact-value" id="contactName">-</div>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-label">Email</div>
+                    <div class="contact-value" id="contactEmail">-</div>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-label">Phone</div>
+                    <div class="contact-value" id="contactPhone">Not set</div>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-label">Location</div>
+                    <div class="contact-value" id="contactLocation">Not set</div>
+                </div>
+            </div>
         </div>
 
-        <h3>About Me</h3>
-        <p class="about" id="about">Full-stack developer with 5+ years of experience in React, Node.js, and MongoDB. I specialize in building scalable web applications with clean, efficient code and intuitive user interfaces.</p>
+        <h2>About Me</h2>
+        <p class="about-text" id="aboutMe">No bio added yet. Click Edit Profile to add one.</p>
 
-        <h3>Skills</h3>
-        <div class="skills-container" id="skills">
-            <div class="skill">
-                <span>React</span>
-                <i class="fas fa-times remove-skill"></i>
-            </div>
-            <div class="skill">
-                <span>Node.js</span>
-                <i class="fas fa-times remove-skill"></i>
-            </div>
-            <div class="skill">
-                <span>MongoDB</span>
-                <i class="fas fa-times remove-skill"></i>
-            </div>
-            <div class="skill">
-                <span>JavaScript</span>
-                <i class="fas fa-times remove-skill"></i>
-            </div>
-            <div class="skill">
-                <span>HTML/CSS</span>
-                <i class="fas fa-times remove-skill"></i>
-            </div>
-        </div>
-
+        <h2>Skills</h2>
+        <div class="skills-container" id="skills"></div>
         <div class="add-skill">
             <input type="text" id="newSkill" placeholder="Add a skill (e.g., TypeScript)">
-            <button class="edit-btn" onclick="addSkill()">
+            <button class="edit-btn add-skill-btn" onclick="addSkill()">
                 <i class="fas fa-plus"></i>
             </button>
         </div>
 
-        <h3>Portfolio</h3>
-        <a class="portfolio-link" href="https://www.johndoeportfolio.com" target="_blank" id="portfolio">
-            <i class="fas fa-globe"></i>
-            <span>www.johndoeportfolio.com</span>
-        </a>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="appliedJobs">0</div>
+                <div class="stat-label">Applied Jobs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="activeProjects">0</div>
+                <div class="stat-label">Active Projects</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completedProjects">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+
+        <div class="member-since">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Member since: </span>
+            <span id="memberSince">2025</span>
+        </div>
 
         <div class="buttons">
             <button class="edit-btn" onclick="editProfile()">
                 <i class="fas fa-edit"></i>
                 <span>Edit Profile</span>
             </button>
-            <button class="contact-btn" onclick="contactFreelancer()">
+            <button class="contact-btn" onclick="sendMessage()">
                 <i class="fas fa-paper-plane"></i>
-                <span>Contact</span>
+                <span>Send Message</span>
             </button>
         </div>
 
@@ -366,52 +445,142 @@
         </div>
     </div>
 
+    <script src="../scripts/config.js"></script>
     <script>
+        // Load logged-in user data
+        const userName = localStorage.getItem('userName') || 'Freelancer';
+        const userEmail = localStorage.getItem('userEmail') || 'freelancer@example.com';
+        const userId = localStorage.getItem('userId') || '';
+
+        const profileData = {
+            name: userName,
+            role: "Freelancer",
+            email: userEmail,
+            phone: localStorage.getItem('freelancerPhone') || '',
+            location: localStorage.getItem('freelancerLocation') || '',
+            about: localStorage.getItem('freelancerAbout') || '',
+            skills: JSON.parse(localStorage.getItem('freelancerSkills') || '[]'),
+            appliedJobs: 0,
+            activeProjects: 0,
+            completedProjects: 0,
+            memberSince: new Date().getFullYear().toString()
+        };
+
+        // Fetch real stats from API
+        async function loadFreelancerStats() {
+            try {
+                const API_BASE = (window.API_BASE || 'http://localhost:5000') + '/api';
+
+                // Fetch freelancer info from DB
+                const resp = await fetch(`${API_BASE}/freelancers/${userId}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.name) {
+                        profileData.name = data.name;
+                        document.getElementById("freelancerName").textContent = data.name;
+                        document.getElementById("contactName").textContent = data.name;
+                        const initials = data.name.split(' ').map(w => w[0]).join('').toUpperCase();
+                        document.getElementById("avatar").textContent = initials;
+                    }
+                    if (data.email) {
+                        profileData.email = data.email;
+                        document.getElementById("contactEmail").textContent = data.email;
+                    }
+                }
+
+                // Fetch application stats
+                const appsResp = await fetch(`${API_BASE}/jobs/applications/freelancer/${userId}`);
+                if (appsResp.ok) {
+                    const apps = await appsResp.json();
+                    profileData.appliedJobs = apps.length;
+                    profileData.activeProjects = apps.filter(a => a.status === 'accepted' || a.status === 'in-progress').length;
+                    profileData.completedProjects = apps.filter(a => a.status === 'completed').length;
+                    document.getElementById("appliedJobs").textContent = profileData.appliedJobs;
+                    document.getElementById("activeProjects").textContent = profileData.activeProjects;
+                    document.getElementById("completedProjects").textContent = profileData.completedProjects;
+                }
+            } catch (e) {
+                console.log('Could not load freelancer stats:', e);
+            }
+        }
+
+        function initProfile() {
+            // Name
+            document.getElementById("freelancerName").textContent = profileData.name;
+            document.getElementById("freelancerRole").textContent = profileData.role;
+            document.getElementById("contactName").textContent = profileData.name;
+            document.getElementById("contactEmail").textContent = profileData.email;
+            document.getElementById("contactPhone").textContent = profileData.phone || 'Not set';
+            document.getElementById("contactLocation").textContent = profileData.location || 'Not set';
+            document.getElementById("aboutMe").textContent = profileData.about || 'No bio added yet. Click Edit Profile to add one.';
+            document.getElementById("memberSince").textContent = profileData.memberSince;
+
+            // Avatar initials
+            const initials = profileData.name.split(' ').map(w => w[0]).join('').toUpperCase();
+            document.getElementById("avatar").textContent = initials;
+
+            // Skills
+            renderSkills();
+
+            // Load stats from API
+            loadFreelancerStats();
+        }
+
+        function renderSkills() {
+            const skillsContainer = document.getElementById("skills");
+            skillsContainer.innerHTML = '';
+            profileData.skills.forEach(skill => {
+                const skillEl = document.createElement("div");
+                skillEl.className = "skill";
+                skillEl.innerHTML = `<span>${skill}</span><i class="fas fa-times remove-skill" onclick="removeSkill(this)"></i>`;
+                skillsContainer.appendChild(skillEl);
+            });
+        }
+
+        function saveSkillsToStorage() {
+            profileData.skills = Array.from(document.querySelectorAll("#skills .skill span")).map(s => s.innerText);
+            localStorage.setItem('freelancerSkills', JSON.stringify(profileData.skills));
+        }
+
         function editProfile() {
-            const currentName = document.getElementById("name").innerText;
-            const currentLocation = document.getElementById("location").innerText;
-            const currentAbout = document.getElementById("about").innerText;
-            const currentPortfolio = document.getElementById("portfolio").innerText;
+            const newName = prompt("Enter your name:", profileData.name);
+            const newPhone = prompt("Enter your phone:", profileData.phone);
+            const newLocation = prompt("Enter your location:", profileData.location);
+            const newAbout = prompt("Tell us about yourself:", profileData.about);
 
-            const newName = prompt("Enter your name:", currentName);
-            const newLocation = prompt("Enter your location:", currentLocation);
-            const newAbout = prompt("Tell us about yourself:", currentAbout);
-            const newPortfolio = prompt("Enter your portfolio URL:", currentPortfolio);
-
-            if (newName) document.getElementById("name").innerText = newName;
-            if (newLocation) document.getElementById("location").innerText = newLocation;
-            if (newAbout) document.getElementById("about").innerText = newAbout;
-            if (newPortfolio) {
-                document.getElementById("portfolio").href = newPortfolio.includes('http') ? newPortfolio : `https://${newPortfolio}`;
-                document.querySelector("#portfolio span").innerText = newPortfolio.replace(/^https?:\/\//, '');
+            if (newName) {
+                profileData.name = newName;
+                document.getElementById("freelancerName").textContent = newName;
+                document.getElementById("contactName").textContent = newName;
+                const initials = newName.split(' ').map(w => w[0]).join('').toUpperCase();
+                document.getElementById("avatar").textContent = initials;
+                localStorage.setItem('userName', newName);
+            }
+            if (newPhone !== null) {
+                profileData.phone = newPhone;
+                document.getElementById("contactPhone").textContent = newPhone || 'Not set';
+                localStorage.setItem('freelancerPhone', newPhone);
+            }
+            if (newLocation !== null) {
+                profileData.location = newLocation;
+                document.getElementById("contactLocation").textContent = newLocation || 'Not set';
+                localStorage.setItem('freelancerLocation', newLocation);
+            }
+            if (newAbout !== null) {
+                profileData.about = newAbout;
+                document.getElementById("aboutMe").textContent = newAbout || 'No bio added yet. Click Edit Profile to add one.';
+                localStorage.setItem('freelancerAbout', newAbout);
             }
         }
 
         function addSkill() {
             const newSkillInput = document.getElementById("newSkill");
             const newSkill = newSkillInput.value.trim();
-
             if (newSkill) {
-                const skillsContainer = document.getElementById("skills");
-                const skillElement = document.createElement("div");
-                skillElement.className = "skill";
-
-                skillElement.innerHTML = `
-                    <span>${newSkill}</span>
-                    <i class="fas fa-times remove-skill" onclick="removeSkill(this)"></i>
-                `;
-
-                skillsContainer.appendChild(skillElement);
+                profileData.skills.push(newSkill);
+                saveSkillsToStorage();
+                renderSkills();
                 newSkillInput.value = "";
-
-                // Animate the new skill
-                skillElement.style.opacity = "0";
-                skillElement.style.transform = "translateY(10px)";
-                setTimeout(() => {
-                    skillElement.style.transition = "all 0.3s ease";
-                    skillElement.style.opacity = "1";
-                    skillElement.style.transform = "translateY(0)";
-                }, 10);
             }
         }
 
@@ -419,29 +588,25 @@
             const skillElement = element.parentElement;
             skillElement.style.transform = "scale(0.8)";
             skillElement.style.opacity = "0";
-
             setTimeout(() => {
                 skillElement.remove();
+                saveSkillsToStorage();
             }, 300);
         }
 
-        function contactFreelancer() {
-            alert("Contact form would open here!\n\nEmail: john.doe@example.com\nPhone: (123) 456-7890");
+        function sendMessage() {
+            const subject = encodeURIComponent("Regarding freelance work");
+            const body = encodeURIComponent(`Hi ${profileData.name},\n\n`);
+            window.location.href = `mailto:${profileData.email}?subject=${subject}&body=${body}`;
         }
 
-        // Add event listener for Enter key in skill input
+        // Enter key for skill input
         document.getElementById("newSkill").addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                addSkill();
-            }
+            if (e.key === "Enter") addSkill();
         });
 
-        // Add click listeners for existing remove buttons
-        document.querySelectorAll(".remove-skill").forEach(button => {
-            button.addEventListener("click", function() {
-                removeSkill(this);
-            });
-        });
+        // Initialize on load
+        window.onload = initProfile;
     </script>
 </body>
 

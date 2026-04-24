@@ -80,7 +80,7 @@ router.post('/projects', async(req, res) => {
     // Get clientId from request body or header
     let clientId = req.body.clientId || req.headers['client-id'];
 
-    console.log('📝 Project posting request:', { description: description ? .substring(0, 50), clientId, title, budget, category });
+    console.log('📝 Project posting request received', { clientId, title, budget, category });
 
     if (!description || !clientId) {
         console.error('❌ Missing description or clientId:', { hasDescription: !!description, hasClientId: !!clientId });
@@ -154,11 +154,11 @@ router.get('/browse', async(req, res) => {
         );
         console.log('📋 Browse: Returning', result.rows.length, 'jobs');
         if (result.rows.length > 0) {
-            console.log('🔝 Latest job:', { jobId: result.rows[0].JOB_ID, title: result.rows[0].TITLE, created_at: result.rows[0].CREATED_AT });
+            console.log(' Latest job:', { jobId: result.rows[0].JOB_ID, title: result.rows[0].TITLE, created_at: result.rows[0].CREATED_AT });
         }
         res.json(result.rows.map(mapJobRow));
     } catch (error) {
-        console.error('❌ Browse error:', error.message);
+        console.error(' Browse error:', error.message);
         res.status(500).json({ error: 'Failed to fetch jobs', details: error.message });
     } finally {
         if (conn) await conn.close();
@@ -596,6 +596,28 @@ router.get('/client/:clientId/my-projects', async(req, res) => {
         res.json(result.rows.map(mapJobRow));
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch my projects', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+// Get All Jobs For A Client
+router.get('/client/:clientId/jobs', async(req, res) => {
+    const { clientId } = req.params;
+    let conn;
+
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT job_id, title, description, budget, category, status, client_id, created_at
+             FROM Jobs
+             WHERE client_id = :clientId
+             ORDER BY created_at DESC, job_id DESC`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        res.json(result.rows.map(mapJobRow));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch client jobs', details: error.message });
     } finally {
         if (conn) await conn.close();
     }

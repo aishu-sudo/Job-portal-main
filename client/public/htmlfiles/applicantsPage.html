@@ -297,6 +297,130 @@
 
         document.addEventListener('DOMContentLoaded', loadApplicants);
 
+        function getNotificationApplicants() {
+            const notifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+            const appNotifications = notifications.filter(n => n.type === 'new_application');
+
+            return appNotifications.map((n, i) => {
+                const msgMatch = n.message ? n.message.match(/"([^"]+)"/) : null;
+                const jobName = msgMatch ? msgMatch[1] : 'N/A';
+                const appInfo = n.applicantInfo || {};
+                const appData = n.applicationData || {};
+                const nameFromMsg = n.message ? n.message.split(' has applied')[0] : 'Unknown';
+
+                return {
+                    appId: n.id || `local-${i}`,
+                    jobId: n.jobId || appData.jobId || appData.projectId || null,
+                    jobTitle: appData.projectTitle || jobName,
+                    freelancerName: appInfo.name || appData.freelancerName || nameFromMsg,
+                    freelancerEmail: appInfo.email || appData.email || '',
+                    proposal: appInfo.coverLetter || appData.coverLetter || '',
+                    bidAmount: appData.bidAmount || null,
+                    jobBudget: appData.jobBudget || null,
+                    status: appData.status || 'pending',
+                    createdAt: appData.appliedAt || n.time || null,
+                    isLocalOnly: true
+                };
+            });
+        }
+
+        function mergeApplicants(dbApplicants, notificationApplicants) {
+            const merged = [...dbApplicants];
+            const seen = new Set(
+                dbApplicants.map(app => `${String(app.freelancerName || '').toLowerCase()}|${String(app.freelancerEmail || '').toLowerCase()}|${String(app.jobTitle || '').toLowerCase()}`)
+            );
+
+            notificationApplicants.forEach(app => {
+                const key = `${String(app.freelancerName || '').toLowerCase()}|${String(app.freelancerEmail || '').toLowerCase()}|${String(app.jobTitle || '').toLowerCase()}`;
+                if (!seen.has(key)) {
+                    merged.push(app);
+                    seen.add(key);
+                }
+            });
+
+            merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+            return merged;
+        }
+
+        async function syncAcceptedLocalApplicants(clientId) {
+            const acceptedLocalApplicants = applicants.filter(app => app.isLocalOnly && app.status === 'accepted');
+
+            for (const applicant of acceptedLocalApplicants) {
+                let jobId = await resolveApplicantJobId(clientId, applicant);
+
+                // Try updating status directly
+                let statusUpdated = false;
+                if (jobId) {
+                    try {
+                        const res = await fetch(`${API_BASE}/jobs/${jobId}/status`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                status: 'in-progress',
+                                changedBy: clientId,
+                                reason: 'Synced accepted applicant from Applicants page'
+                            })
+                        });
+                        statusUpdated = res.ok;
+                    } catch (error) {
+                        console.error('Sync status update failed:', error);
+                    }
+                }
+
+                // If job doesn't exist in DB, create it then update status
+                if (!statusUpdated) {
+                    try {
+                        const createRes = await fetch(`${API_BASE}/jobs`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                title: applicant.jobTitle || 'Untitled Job',
+                                description: applicant.proposal || '',
+                                budget: Number(applicant.jobBudget || applicant.bidAmount || 0),
+                                category: 'general',
+                                clientId: Number(clientId)
+                            })
+                        });
+
+                        if (createRes.ok) {
+                            const created = await createRes.json();
+                            jobId = created.jobId;
+                            console.log('Sync: Created job in DB with ID:', jobId);
+
+                            await fetch(`${API_BASE}/jobs/${jobId}/status`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    status: 'in-progress',
+                                    changedBy: clientId,
+                                    reason: 'Synced accepted applicant from Applicants page'
+                                })
+                            });
+                        }
+                    } catch (createErr) {
+                        console.error('Sync: Failed to create job in DB:', createErr);
+                    }
+                }
+
+                applicant.jobId = jobId;
+
+                const notifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+                const notif = notifications.find(n => n.id == applicant.appId);
+                if (notif) {
+                    notif.jobId = jobId;
+                    if (!notif.applicationData) notif.applicationData = {};
+                    notif.applicationData.jobId = jobId;
+                    localStorage.setItem('clientNotifications', JSON.stringify(notifications));
+                }
+            }
+        }
+
         async function loadApplicants() {
             const clientId = localStorage.getItem('userId');
             if (!clientId) {
@@ -304,38 +428,19 @@
                     '<div style="padding:40px;text-align:center;color:var(--text-light);">Please log in to view applicants.</div>';
                 return;
             }
+
+            let dbApplicants = [];
             try {
                 const res = await fetch(`${API_BASE}/jobs/applications/client/${clientId}`);
-                applicants = await res.json();
+                const data = await res.json();
+                dbApplicants = Array.isArray(data) ? data : Array.isArray(data.applications) ? data.applications : [];
             } catch (err) {
-                applicants = [];
+                dbApplicants = [];
             }
 
-            // Also load from localStorage notifications as fallback
-            if (!applicants.length) {
-                const notifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
-                const appNotifications = notifications.filter(n => n.type === 'new_application');
-                if (appNotifications.length) {
-                    applicants = appNotifications.map((n, i) => {
-                        const msgMatch = n.message ? n.message.match(/"([^"]+)"/) : null;
-                        const jobName = msgMatch ? msgMatch[1] : 'N/A';
-                        const appInfo = n.applicantInfo || {};
-                        const appData = n.applicationData || {};
-                        const nameFromMsg = n.message ? n.message.split(' has applied')[0] : 'Unknown';
-                        return {
-                            appId: n.id || i,
-                            jobTitle: jobName,
-                            freelancerName: appInfo.name || appData.freelancerName || nameFromMsg,
-                            freelancerEmail: appInfo.email || appData.email || '',
-                            proposal: appInfo.coverLetter || appData.coverLetter || '',
-                            bidAmount: null,
-                            jobBudget: null,
-                            status: appData.status || 'pending',
-                            isLocalOnly: true
-                        };
-                    });
-                }
-            }
+            const notificationApplicants = getNotificationApplicants();
+            applicants = mergeApplicants(dbApplicants, notificationApplicants);
+            await syncAcceptedLocalApplicants(clientId);
 
             renderApplicants();
         }
@@ -359,7 +464,7 @@
                         <div class="applicant-proposal">Job: ${app.jobTitle} | Bid: $${app.bidAmount || app.jobBudget || 'N/A'}</div>
                     </div>
                     <div>
-                        <button class="view-btn" onclick="showProfile(${app.appId})">View</button>
+                        <button class="view-btn" onclick="showProfile('${app.appId}')">View</button>
                         ${statusLabel}
                     </div>
                 </div>`;
@@ -367,7 +472,7 @@
         }
 
         function showProfile(appId) {
-            currentApp = applicants.find(a => a.appId === appId);
+            currentApp = applicants.find(a => String(a.appId) === String(appId));
             if (!currentApp) return;
 
             const initials = currentApp.freelancerName.split(' ').map(w => w[0]).join('').toUpperCase();
@@ -407,6 +512,29 @@
             modal.style.display = 'none';
         }
 
+        async function resolveApplicantJobId(clientId, applicant) {
+            if (applicant.jobId) {
+                return applicant.jobId;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/jobs/client/${clientId}/jobs`);
+                if (!res.ok) {
+                    return null;
+                }
+
+                const jobs = await res.json();
+                const matchedJob = jobs.find(job =>
+                    String(job.title || '').trim().toLowerCase() === String(applicant.jobTitle || '').trim().toLowerCase()
+                );
+
+                return matchedJob ? matchedJob.jobId : null;
+            } catch (error) {
+                console.error('Failed to resolve applicant job id:', error);
+                return null;
+            }
+        }
+
         closeBtn.addEventListener('click', closeModal);
         window.addEventListener('click', function(e) {
             if (e.target === modal) closeModal();
@@ -429,6 +557,7 @@
                 if (currentApp.isLocalOnly) {
                     // localStorage-only application — update locally and persist
                     currentApp.status = status;
+                    currentApp.jobId = await resolveApplicantJobId(clientId, currentApp);
 
                     // Update the notification in localStorage to persist the status
                     const notifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
@@ -436,7 +565,88 @@
                     if (notif) {
                         if (!notif.applicationData) notif.applicationData = {};
                         notif.applicationData.status = status;
+                        if (currentApp.jobId) {
+                            notif.jobId = currentApp.jobId;
+                            notif.applicationData.jobId = currentApp.jobId;
+                        }
                         localStorage.setItem('clientNotifications', JSON.stringify(notifications));
+                    }
+
+                    if (status === 'accepted') {
+                        let jobId = currentApp.jobId;
+                        let statusUpdated = false;
+
+                        // Try updating status directly if we have a jobId
+                        if (jobId) {
+                            const jobStatusRes = await fetch(`${API_BASE}/jobs/${jobId}/status`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    status: 'in-progress',
+                                    changedBy: clientId,
+                                    reason: 'Applicant accepted from Applicants page'
+                                })
+                            });
+                            statusUpdated = jobStatusRes.ok;
+                            console.log('Direct job status update:', statusUpdated ? 'SUCCESS' : 'FAILED (job may not exist in DB)');
+                        }
+
+                        // If job doesn't exist in DB, create it first then update status
+                        if (!statusUpdated) {
+                            console.log('Creating job in DB for accepted applicant...');
+                            try {
+                                const createRes = await fetch(`${API_BASE}/jobs`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        title: currentApp.jobTitle || 'Untitled Job',
+                                        description: currentApp.proposal || '',
+                                        budget: Number(currentApp.jobBudget || currentApp.bidAmount || 0),
+                                        category: 'general',
+                                        clientId: Number(clientId)
+                                    })
+                                });
+
+                                if (createRes.ok) {
+                                    const created = await createRes.json();
+                                    jobId = created.jobId;
+                                    currentApp.jobId = jobId;
+                                    console.log('Job created in DB with ID:', jobId);
+
+                                    // Update notification with new DB job ID
+                                    const notifs = JSON.parse(localStorage.getItem('clientNotifications')) || [];
+                                    const n = notifs.find(x => x.id == currentApp.appId);
+                                    if (n) {
+                                        n.jobId = jobId;
+                                        if (!n.applicationData) n.applicationData = {};
+                                        n.applicationData.jobId = jobId;
+                                        localStorage.setItem('clientNotifications', JSON.stringify(notifs));
+                                    }
+
+                                    // Now update the newly created job's status
+                                    await fetch(`${API_BASE}/jobs/${jobId}/status`, {
+                                        method: 'PUT',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            status: 'in-progress',
+                                            changedBy: clientId,
+                                            reason: 'Applicant accepted from Applicants page'
+                                        })
+                                    });
+                                    console.log('Job status updated to in-progress for new DB job:', jobId);
+                                } else {
+                                    console.error('Failed to create job in DB:', await createRes.text());
+                                }
+                            } catch (createErr) {
+                                console.error('Failed to create job in DB:', createErr);
+                            }
+                        }
                     }
                 } else {
                     const res = await fetch(`${API_BASE}/jobs/applications/${currentApp.appId}/respond`, {

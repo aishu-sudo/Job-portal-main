@@ -345,6 +345,56 @@
 
     <script src="../scripts/config.js"></script>
     <script>
+        function getSelectedJob() {
+            const storedJob = localStorage.getItem('selectedJobApplication');
+            if (storedJob) {
+                try {
+                    return JSON.parse(storedJob);
+                } catch (error) {
+                    console.error('Failed to parse selected job:', error);
+                }
+            }
+
+            const projectId = localStorage.getItem('selectedProjectId');
+            const projects = JSON.parse(localStorage.getItem('projects')) || [];
+            return projects.find(p => String(p.projectId) === String(projectId)) || null;
+        }
+
+        function populateJobDetails(job) {
+            if (!job) {
+                return;
+            }
+
+            const jobTypeText = (job.type || job.jobType || 'Contract').toString().replace('-', ' ');
+            const salaryText = job.salary || ((job.salaryMin || job.salaryMax) ? `$${job.salaryMin || 0} - $${job.salaryMax || 0}` : 'Negotiable');
+            const companyText = job.company || 'Job Portal Client';
+            const locationText = job.location || 'Remote';
+            const postedText = job.posted ? `Posted ${job.posted}` : 'Recently posted';
+            const descriptionText = job.description || 'No description available.';
+            const skills = Array.isArray(job.skills) && job.skills.length ? job.skills : ['General'];
+
+            document.title = `Apply for ${job.title || 'Job'} | JobPortal`;
+            document.querySelector('.job-title').textContent = job.title || 'Job Application';
+            document.querySelector('.job-company').textContent = companyText;
+
+            const metaItems = document.querySelectorAll('.meta-item span');
+            if (metaItems[0]) metaItems[0].textContent = locationText;
+            if (metaItems[1]) metaItems[1].textContent = salaryText;
+            if (metaItems[2]) metaItems[2].textContent = jobTypeText.charAt(0).toUpperCase() + jobTypeText.slice(1);
+            if (metaItems[3]) metaItems[3].textContent = postedText;
+
+            document.querySelector('.job-description').innerHTML = `<p>${descriptionText}</p>`;
+            document.querySelector('.skills-tags').innerHTML = skills.map(skill => `<span class="skill-tag">${skill}</span>`).join('');
+        }
+
+        document.querySelector('.back-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'jobBrowse.html';
+        });
+
+        const selectedJob = getSelectedJob();
+        populateJobDetails(selectedJob);
+
         // Handle file input display
         document.getElementById('resume').addEventListener('change', function(e) {
             const fileName = e.target.files.length > 0 ? e.target.files[0].name : 'No file selected';
@@ -383,9 +433,9 @@
             }
 
             try {
-                // Get the selected project ID
                 const projectId = localStorage.getItem('selectedProjectId');
                 const userId = localStorage.getItem('userId');
+                const currentJob = getSelectedJob();
 
                 console.log('Debug:', {
                     projectId,
@@ -400,17 +450,14 @@
                     throw new Error('User ID not found. Please log in again.');
                 }
 
-                // Get project details
-                const projects = JSON.parse(localStorage.getItem('projects')) || [];
-                const project = projects.find(p => p.projectId === projectId);
-                if (!project) {
-                    throw new Error('Project not found in local storage');
+                if (!currentJob) {
+                    throw new Error('Selected job not found. Please go back and select a job again.');
                 }
 
                 // Create application data
                 const applicationData = {
                     projectId: projectId,
-                    projectTitle: project.title,
+                    projectTitle: currentJob.title,
                     appliedAt: new Date().toISOString(),
                     status: 'pending',
                     freelancerId: userId,
@@ -429,17 +476,18 @@
 
                 // Also add to appliedJobs list for job listing pages
                 const appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
-                if (!appliedJobs.includes(projectId)) {
-                    appliedJobs.push(projectId);
+                const appliedJobId = currentJob.dbJobId || currentJob.id || projectId;
+                if (!appliedJobs.includes(appliedJobId)) {
+                    appliedJobs.push(appliedJobId);
                     localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
                 }
 
                 // Also save to DB via API
                 const API_BASE = window.API_BASE || 'http://localhost:5000';
-                if (userId && projectId) {
+                if (userId && currentJob && currentJob.dbJobId) {
                     try {
-                        console.log('Submitting to:', `${API_BASE}/api/jobs/${projectId}/apply`);
-                        const response = await fetch(`${API_BASE}/api/jobs/${projectId}/apply`, {
+                        console.log('Submitting to:', `${API_BASE}/api/jobs/${currentJob.dbJobId}/apply`);
+                        const response = await fetch(`${API_BASE}/api/jobs/${currentJob.dbJobId}/apply`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -469,9 +517,10 @@
                     id: Date.now().toString(),
                     type: 'new_application',
                     title: 'New Application Received',
-                    message: `${fullName} has applied to your project "${project.title}"`,
+                    message: `${fullName} has applied to your project "${currentJob.title}"`,
                     time: new Date().toISOString(),
                     read: false,
+                    jobId: currentJob.dbJobId || currentJob.id || projectId,
                     applicationData: applicationData
                 };
                 clientNotifications.unshift(newNotification);
@@ -479,6 +528,7 @@
 
                 // Clear the selected project ID
                 localStorage.removeItem('selectedProjectId');
+                localStorage.removeItem('selectedJobApplication');
 
                 // Show success message
                 alert('Your application has been submitted successfully!');
@@ -487,35 +537,11 @@
                 this.reset();
                 document.getElementById('resumeFileName').textContent = 'No file selected';
 
-                // Redirect back to freelancer dashboard
-                window.location.href = 'freelancerDashboard.html';
+                // Redirect back to job browsing
+                window.location.href = 'jobBrowse.html';
             } catch (error) {
                 console.error('Error submitting application:', error);
                 alert('Error submitting application: ' + error.message);
-
-                if (project) {
-                    // Update job details in the header
-                    document.querySelector('.job-title').textContent = project.title;
-                    document.querySelector('.job-company').textContent = project.company;
-
-                    // Update job meta information
-                    const metaItems = document.querySelectorAll('.meta-item');
-                    metaItems[0].querySelector('span').textContent = project.location;
-                    metaItems[1].querySelector('span').textContent = `$${project.salaryMin} - $${project.salaryMax}`;
-                    metaItems[2].querySelector('span').textContent = project.jobType;
-
-                    // Update job description
-                    document.querySelector('.job-description').innerHTML = `<p>${project.description}</p>`;
-
-                    // Update skills
-                    const skillsContainer = document.querySelector('.skills-tags');
-                    skillsContainer.innerHTML = project.skills.map(skill =>
-                        `<span class="skill-tag">${skill}</span>`
-                    ).join('');
-
-                    // Clear the selected project ID
-                    localStorage.removeItem('selectedProjectId');
-                }
             }
         });
     </script>

@@ -63,6 +63,26 @@ router.get('/freelancer/:freelancerId', async(req, res) => {
              ORDER BY p.created_at DESC`, { freelancerId: Number(freelancerId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
 
+        // Get new job postings notifications
+        const newJobsResult = await conn.execute(
+            `SELECT 
+                'New Job Posting' AS notification_type,
+                j.job_id AS related_id,
+                j.title AS job_title,
+                j.budget,
+                j.category,
+                j.created_at AS created_at
+             FROM Jobs j
+             WHERE j.status = 'open'
+             AND j.created_at >= TRUNC(SYSDATE - 7)
+             AND j.job_id NOT IN (
+                SELECT DISTINCT job_id 
+                FROM Applications 
+                WHERE freelancer_id = :freelancerId
+             )
+             ORDER BY j.created_at DESC`, { freelancerId: Number(freelancerId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
         const notifications = [
             ...applicationsResult.rows.map(n => ({
                 type: 'Application',
@@ -87,6 +107,14 @@ router.get('/freelancer/:freelancerId', async(req, res) => {
                 message: `Payment ${n.STATUS}`,
                 timestamp: n.CREATED_AT,
                 icon: '💰'
+            })),
+            ...newJobsResult.rows.map(n => ({
+                type: 'New Job',
+                relatedId: n.RELATED_ID,
+                jobTitle: n.JOB_TITLE,
+                message: `New ${n.CATEGORY} job posted - $${n.BUDGET}`,
+                timestamp: n.CREATED_AT,
+                icon: '🆕'
             }))
         ];
 
@@ -311,6 +339,73 @@ router.get('/freelancer/:freelancerId/jobs-status', async(req, res) => {
     } catch (error) {
         res.status(500).json({
             error: 'Failed to fetch job status updates',
+            details: error.message
+        });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+/**
+ * GET /api/notifications/freelancer/:freelancerId/new-jobs
+ * Get new job postings as notifications (jobs posted in last 7 days that user hasn't applied to)
+ */
+router.get('/freelancer/:freelancerId/new-jobs', async(req, res) => {
+    const { freelancerId } = req.params;
+    let conn;
+
+    try {
+        console.log(`📥 Fetching new jobs for freelancer: ${freelancerId}`);
+        conn = await getConnection();
+
+        // Get new jobs posted in last 7 days that freelancer hasn't applied to
+        const result = await conn.execute(
+            `SELECT 
+                j.job_id,
+                j.title,
+                j.description,
+                j.budget,
+                j.category,
+                j.status,
+                c.name as client_name,
+                j.created_at
+             FROM Jobs j
+             JOIN Users c ON j.client_id = c.user_id
+             WHERE j.status = 'open'
+             AND j.created_at >= TRUNC(SYSDATE - 7)
+             AND j.job_id NOT IN (
+                SELECT DISTINCT job_id 
+                FROM Applications 
+                WHERE freelancer_id = :freelancerId
+             )
+             ORDER BY j.created_at DESC`, { freelancerId: Number(freelancerId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        const newJobs = result.rows.map(job => ({
+            jobId: job.JOB_ID,
+            title: job.TITLE,
+            description: job.DESCRIPTION,
+            budget: job.BUDGET,
+            category: job.CATEGORY,
+            status: job.STATUS,
+            clientName: job.CLIENT_NAME,
+            postedDate: job.CREATED_AT,
+            message: `New ${job.CATEGORY} job: "${job.TITLE}" by ${job.CLIENT_NAME} - $${job.BUDGET}`,
+            icon: '🆕'
+        }));
+
+        console.log(`✅ Found ${newJobs.length} new jobs for freelancer ${freelancerId}`);
+
+        res.json({
+            freelancerId: Number(freelancerId),
+            totalNewJobs: newJobs.length,
+            newJobs: newJobs.slice(0, 10) // Last 10 new jobs
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching new job notifications:', error.message);
+        res.status(500).json({
+            error: 'Failed to fetch new job notifications',
             details: error.message
         });
     } finally {

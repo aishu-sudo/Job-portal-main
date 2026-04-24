@@ -518,6 +518,34 @@
             </div>
         </section>
 
+        <!-- New Job Notifications Section -->
+        <section id="new-job-notifications-section" style="margin: 30px 0; background: #fff3e0; padding: 20px; border-radius: 8px; border-left: 4px solid #ff5722; display: none;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="font-size: 20px;">🆕</span>
+                <h3 style="margin: 0; color: #e65100;">New Job Alerts</h3>
+                <span id="new-job-badge" style="background: #ff5722; color: white; border-radius: 50%; padding: 4px 8px; font-size: 12px; font-weight: bold;"></span>
+            </div>
+            <div id="new-job-notifications-list" style="display: grid; gap: 10px;"></div>
+        </section>
+
+        <!-- Saved Jobs Section -->
+        <section id="saved-jobs-section" style="margin: 30px 0; background: #fce4ec; padding: 20px; border-radius: 8px; border-left: 4px solid #e74c3c;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-heart" style="font-size: 20px; color: #e74c3c;"></i>
+                    <h3 style="margin: 0; color: #c62828;">Saved Jobs</h3>
+                    <span id="saved-jobs-count" style="background: #e74c3c; color: white; border-radius: 50%; padding: 4px 10px; font-size: 12px; font-weight: bold;">0</span>
+                </div>
+                <button id="saved-jobs-link" onclick="toggleSavedJobsView()" style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">
+                    <i class="fas fa-eye"></i> Show Saved Jobs
+                </button>
+            </div>
+            <div id="saved-jobs-container" style="display: none;">
+                <div id="saved-jobs-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;"></div>
+            </div>
+            <p id="no-saved-jobs-msg" style="text-align: center; color: #999; padding: 10px; display: none;">No saved jobs yet. Click the <i class="fas fa-heart"></i> icon on any job to save it.</p>
+        </section>
+
         <h2 style="margin-top: 40px; margin-bottom: 20px;">All Available Jobs</h2>
         <div class="filter-group">
             <span class="filter-label">Filter by:</span>
@@ -554,17 +582,18 @@
     <!-- Application Form Modal -->
     <div id="application-modal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <span class="close" onclick="document.getElementById('application-modal').style.display='none'">&times;</span>
             <h2>Apply for <span id="modal-job-title"></span></h2>
 
             <div style="text-align: center; margin: 20px 0;">
-                <a href="#" id="continue-to-application" class="apply-button" style="padding: 12px 30px; font-size: 16px;">Continue to Application</a>
+                <a href="applicationform.html" id="continue-to-application" class="apply-button" style="padding: 12px 30px; font-size: 16px;">Continue to Application</a>
             </div>
         </div>
     </div>
 
     <script src="../scripts/config.js"></script>
     <script src="../scripts/roleManager.js"></script>
+    <script src="../scripts/notifications.js"></script>
     <script>
         // Setup role-based navigation
         function setupRoleNav() {
@@ -1040,6 +1069,17 @@
         let currentJobApplying = null;
         let clientPostedJobs = []; // Store jobs posted by clients
 
+        function persistSelectedJob(job) {
+            if (!job) {
+                return;
+            }
+
+            currentJobApplying = job.id;
+            localStorage.setItem('selectedProjectId', String(job.dbJobId || job.id));
+            localStorage.setItem('selectedJobApplication', JSON.stringify(job));
+            continueToApplication.href = 'applicationform.html';
+        }
+
         // Fetch DB jobs and merge with hardcoded ones
         async function loadDBJobs() {
             try {
@@ -1061,7 +1101,7 @@
                         addedCount++;
 
                         const jobObj = {
-                            id: dj.jobId,
+                            id: maxId + addedCount,
                             dbJobId: dj.jobId,
                             title: dj.title,
                             company: 'Job Portal Client',
@@ -1189,7 +1229,7 @@
         function openJobModal(jobId, jobTitle) {
             const job = jobs.find(j => j.dbJobId === jobId || j.id === jobId);
             if (job) {
-                currentJobApplying = job.id;
+                persistSelectedJob(job);
                 modalJobTitle.textContent = jobTitle;
                 applicationModal.style.display = 'block';
             }
@@ -1210,7 +1250,82 @@
 
         function updateSavedJobsCount() {
             const count = savedJobs.length;
-            savedJobsCount.textContent = count;
+            if (savedJobsCount) {
+                savedJobsCount.textContent = count;
+            }
+            // Update saved jobs view if it's open
+            const container = document.getElementById('saved-jobs-container');
+            if (container && container.style.display !== 'none') {
+                renderSavedJobs();
+            }
+            const noMsg = document.getElementById('no-saved-jobs-msg');
+            if (noMsg) {
+                noMsg.style.display = count === 0 ? 'block' : 'none';
+            }
+        }
+
+        function toggleSavedJobsView() {
+            const container = document.getElementById('saved-jobs-container');
+            const btn = document.getElementById('saved-jobs-link');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Saved Jobs';
+                renderSavedJobs();
+            } else {
+                container.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-eye"></i> Show Saved Jobs';
+            }
+        }
+
+        function renderSavedJobs() {
+            const list = document.getElementById('saved-jobs-list');
+            const noMsg = document.getElementById('no-saved-jobs-msg');
+            list.innerHTML = '';
+
+            const savedJobsList = jobs.filter(j => savedJobs.includes(j.id));
+
+            if (savedJobsList.length === 0) {
+                noMsg.style.display = 'block';
+                return;
+            }
+            noMsg.style.display = 'none';
+
+            savedJobsList.forEach(job => {
+                const isApplied = appliedJobs.includes(job.dbJobId || job.id);
+                const card = document.createElement('div');
+                card.style.cssText = 'background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 3px solid #e74c3c; transition: transform 0.2s;';
+                card.onmouseover = () => card.style.transform = 'translateY(-3px)';
+                card.onmouseout = () => card.style.transform = 'translateY(0)';
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <h4 style="margin: 0; color: #0c2333; font-size: 15px; flex: 1;">${job.title}</h4>
+                        <button onclick="removeSavedJob(${job.id})" title="Remove from saved" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px;"><i class="fas fa-heart"></i></button>
+                    </div>
+                    <p style="margin: 0 0 6px; color: #666; font-size: 13px;"><i class="fas fa-building" style="color: #1976d2; margin-right: 5px;"></i>${job.company || 'Job Portal Client'}</p>
+                    <p style="margin: 0 0 6px; color: #666; font-size: 13px;"><i class="fas fa-map-marker-alt" style="color: #1976d2; margin-right: 5px;"></i>${job.location}</p>
+                    <p style="margin: 0 0 8px; color: #0c2333; font-weight: 600; font-size: 14px;"><i class="fas fa-dollar-sign" style="color: #27ae60; margin-right: 5px;"></i>${job.salary}</p>
+                    <p style="margin: 0 0 10px; color: #555; font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${job.description}</p>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="openJobModal(${job.dbJobId || job.id}, '${job.title.replace(/'/g, "\\\\'")}')"
+                                style="flex: 1; background: #1976d2; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; ${isApplied ? 'opacity:0.5; cursor:not-allowed;' : ''}">
+                            ${isApplied ? '✓ Applied' : 'Apply Now'}
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function removeSavedJob(jobId) {
+            const index = savedJobs.indexOf(jobId);
+            if (index !== -1) {
+                savedJobs.splice(index, 1);
+                localStorage.setItem('savedJobs', JSON.stringify(savedJobs));
+                updateSavedJobsCount();
+                renderSavedJobs();
+                renderJobListings();
+                displayClientPostings();
+            }
         }
 
         // Initialize
@@ -1247,10 +1362,7 @@
             }
         });
 
-        savedJobsLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('Saved jobs feature would be implemented here');
-        });
+        // Saved jobs view toggle is handled by toggleSavedJobsView()
 
         // Modal close buttons
         closeModalBtn.addEventListener('click', function() {
@@ -1266,13 +1378,12 @@
 
         // Continue to application form
         continueToApplication.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (currentJobApplying) {
-                const job = jobs.find(j => j.id === currentJobApplying);
-                if (job) {
-                    generateApplicationForm(job);
-                }
+            const job = jobs.find(j => j.id === currentJobApplying || j.id == currentJobApplying || j.dbJobId === currentJobApplying || j.dbJobId == currentJobApplying);
+            if (job) {
+                persistSelectedJob(job);
             }
+
+            applicationModal.style.display = 'none';
         });
 
         // Functions
@@ -1360,7 +1471,7 @@
                     const jobId = parseInt(this.getAttribute('data-job-id'));
                     const job = jobs.find(j => j.id === jobId);
                     if (job) {
-                        currentJobApplying = jobId;
+                        persistSelectedJob(job);
                         modalJobTitle.textContent = job.title;
 
                         applicationModal.style.display = 'block';
@@ -1423,6 +1534,17 @@
             // Hide the modal
             applicationModal.style.display = 'none';
 
+            // Ensure clientInfo has all needed fields with defaults
+            const clientInfo = job.clientInfo || {};
+            const safeClientInfo = {
+                contactPerson: clientInfo.contactPerson || 'Not provided',
+                email: clientInfo.email || 'Not provided',
+                phone: clientInfo.phone || 'Not provided',
+                deadline: clientInfo.deadline || 'Open',
+                notes: clientInfo.notes || 'None',
+                status: clientInfo.status || 'Active'
+            };
+
             // Create a new div for the application form
             const applicationFormDiv = document.createElement('div');
             applicationFormDiv.id = 'application-form-page';
@@ -1471,7 +1593,7 @@
                     <div class="skills-section" style="margin-top: 25px;">
                         <h4 style="margin-bottom: 15px; color: #4a5568;">Required Skills:</h4>
                         <div class="skills-tags" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                            ${job.skills.map(skill => `<span class="skill-tag" style="background-color: #e0e7ff; color: #4f46e5; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 500;">${skill}</span>`).join('')}
+                            ${(job.skills || []).map(skill => `<span class="skill-tag" style="background-color: #e0e7ff; color: #4f46e5; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 500;">${skill}</span>`).join('')}
                         </div>
                     </div>
                 </div>
@@ -1482,27 +1604,27 @@
 
                         <div class="client-detail" style="margin-bottom: 15px;">
                             <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Contact Person</strong>
-                            <span style="color: #718096;">${job.clientInfo.contactPerson}</span>
+                            <span style="color: #718096;">${safeClientInfo.contactPerson}</span>
                         </div>
 
                         <div class="client-detail" style="margin-bottom: 15px;">
                             <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Email</strong>
-                            <span style="color: #718096;">${job.clientInfo.email}</span>
+                            <span style="color: #718096;">${safeClientInfo.email}</span>
                         </div>
 
                         <div class="client-detail" style="margin-bottom: 15px;">
                             <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Phone</strong>
-                            <span style="color: #718096;">${job.clientInfo.phone}</span>
+                            <span style="color: #718096;">${safeClientInfo.phone}</span>
                         </div>
 
                         <div class="client-detail" style="margin-bottom: 15px;">
                             <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Application Deadline</strong>
-                            <span style="color: #718096;">${job.clientInfo.deadline}</span>
+                            <span style="color: #718096;">${safeClientInfo.deadline}</span>
                         </div>
 
                         <div class="client-detail" style="margin-bottom: 15px;">
                             <strong style="display: block; margin-bottom: 5px; color: #4a5568;">Special Instructions</strong>
-                            <span style="color: #718096;">${job.clientInfo.notes}</span>
+                            <span style="color: #718096;">${safeClientInfo.notes}</span>
                         </div>
                     </div>
 
@@ -1622,6 +1744,11 @@
                 localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
             }
 
+            // Notify parent dashboard to remove this job from New Job Postings
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'job_applied', jobId: job.dbJobId || job.id }, '*');
+            }
+
             // Store application notification for client
             const clientNotifications = JSON.parse(localStorage.getItem('clientNotifications')) || [];
             const newNotification = {
@@ -1678,6 +1805,23 @@
                         searchForm.dispatchEvent(new Event('submit'));
                     }
                 }
+            }
+            
+            // Initialize notification manager for freelancers
+            const userRole = localStorage.getItem('userRole');
+            const freelancerId = localStorage.getItem('userId');
+            if (userRole === 'freelancer' && freelancerId) {
+                const notificationManager = new NotificationManager(freelancerId);
+                window.notificationManager = notificationManager;
+                
+                // Fetch and display new job notifications
+                notificationManager.fetchAllNotifications().then(() => {
+                    // Update notification badge if element exists
+                    const newJobCount = notificationManager.getNewJobNotifications().length;
+                    if (newJobCount > 0) {
+                        console.log(`📢 ${newJobCount} new job notifications available`);
+                    }
+                });
             }
         });
     }

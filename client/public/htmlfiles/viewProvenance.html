@@ -570,7 +570,7 @@
         // Load all jobs on page load
         window.addEventListener('DOMContentLoaded', loadAvailableJobs);
 
-        // Load available jobs for dropdown (only accepted jobs for this client)
+        // Load available jobs for dropdown (all jobs for this client)
         async function loadAvailableJobs() {
             try {
                 // Get client ID from localStorage
@@ -583,15 +583,15 @@
                     return;
                 }
 
-                // Fetch only the client's accepted projects
-                const response = await fetch(`${API_URL}/client/${clientId}/my-projects`);
+                // Fetch all the client's jobs
+                const response = await fetch(`${API_URL}/client/${clientId}/jobs`);
                 const jobs = await response.json();
 
                 const dropdown = document.getElementById('jobsDropdown');
                 dropdown.innerHTML = '<option value="">-- Select a Job --</option>';
 
                 if (jobs.length === 0) {
-                    dropdown.innerHTML = '<option value="">No accepted projects yet</option>';
+                    dropdown.innerHTML = '<option value="">No jobs found</option>';
                     return;
                 }
 

@@ -75,20 +75,15 @@ class RoleManager {
      */
     hasPermission(feature) {
         const permissions = {
-            // Admin only
             'view-all-jobs': [this.roles.ADMIN],
             'update-job': [this.roles.ADMIN, this.roles.CLIENT],
             'view-provenance': [this.roles.ADMIN],
             'view-database': [this.roles.ADMIN],
             'view-all-applications': [this.roles.ADMIN],
             'system-reports': [this.roles.ADMIN],
-
-            // Client features
             'post-job': [this.roles.CLIENT],
             'manage-jobs': [this.roles.CLIENT],
             'view-own-applications': [this.roles.CLIENT],
-
-            // Freelancer features
             'browse-jobs': [this.roles.FREELANCER, this.roles.CLIENT, this.roles.GUEST],
             'apply-job': [this.roles.FREELANCER],
             'view-notifications': [this.roles.FREELANCER],
@@ -115,7 +110,7 @@ class RoleManager {
      */
     requireRole(requiredRole) {
         if (this.currentRole !== requiredRole && this.currentRole !== this.roles.ADMIN) {
-            alert(`❌ Access Denied! This page requires ${requiredRole} role.`);
+            alert(`Access Denied! This page requires ${requiredRole} role.`);
             window.location.href = 'adminDashboard.html';
             return false;
         }
@@ -153,10 +148,6 @@ class RoleManager {
      * Get navigation for role
      */
     getNavigation() {
-        const baseNav = [
-            { label: '🏠 Home', href: 'adminDashboard.html', roles: ['admin', 'client', 'freelancer'] },
-        ];
-
         const roleNav = {
             admin: [
                 { label: '🎛️ Dashboard', href: 'adminDashboard.html' },
@@ -204,7 +195,7 @@ class RoleManager {
         html += `<span style="color: white; font-weight: 600;">${user.icon} ${user.name}</span>`;
 
         if (this.isAuthenticated()) {
-            html += `<button class="nav-link" style="background: #dc3545; cursor: pointer;" onclick="roleManager.logout()">🚪 Logout</button>`;
+            html += `<button class="nav-link" style="background: #dc3545; cursor: pointer;" onclick="roleManager.logout()">Logout</button>`;
         }
 
         html += `</div></div>`;
@@ -215,128 +206,3 @@ class RoleManager {
 
 // Global instance
 const roleManager = new RoleManager();
-
-/**
- * Initialize role-based navigation on any page
- */
-function initializeRoleBasedNav() {
-    const existingNav = document.querySelector('.nav-bar');
-    if (existingNav) {
-        existingNav.innerHTML = roleManager.createNavigationHTML().replace('<div class="nav-bar">', '').replace('</div>', '');
-    }
-}
-
-/**
- * Hide admin-only features
- */
-function hideAdminFeatures() {
-    if (!roleManager.isAdmin()) {
-        // Hide admin-only cards
-        const adminOnlyElements = [
-            'feature-update-job',
-            'feature-view-provenance',
-            'stats-grid',
-            'database-section',
-            'admin-only-section'
-        ];
-
-        adminOnlyElements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.style.display = 'none';
-            }
-        });
-
-        // Hide update job page access
-        const updateJobBtn = document.querySelector('[href="updateJob.html"]');
-        if (updateJobBtn) {
-            updateJobBtn.style.display = 'none';
-        }
-
-        const provenanceBtn = document.querySelector('[href="viewProvenance.html"]');
-        if (provenanceBtn) {
-            provenanceBtn.style.display = 'none';
-        }
-    }
-}
-
-/**
- * Show role-specific features
- */
-function showRoleSpecificFeatures() {
-    const user = roleManager.getUserDisplay();
-
-    // Update header with user info
-    const headerElements = document.querySelectorAll('.user-info, .current-user');
-    headerElements.forEach(el => {
-        el.innerHTML = `<strong>${user.icon} ${user.name}</strong> (${user.role})`;
-    });
-
-    if (roleManager.isAdmin()) {
-        // Show all features for admin
-        document.body.classList.add('role-admin');
-    } else if (roleManager.isClient()) {
-        // Show client features
-        document.body.classList.add('role-client');
-        hideElement('feature-view-provenance');
-        hideElement('feature-update-job-advanced');
-    } else if (roleManager.isFreelancer()) {
-        // Show freelancer features
-        document.body.classList.add('role-freelancer');
-        hideElement('feature-post-job');
-        hideElement('feature-view-provenance');
-        hideElement('admin-only-section');
-    } else {
-        // Guest - limited features
-        document.body.classList.add('role-guest');
-        hideElement('feature-post-job');
-        hideElement('feature-update-job');
-        hideElement('feature-view-provenance');
-        hideElement('admin-only-section');
-    }
-}
-
-/**
- * Helper: hide element
- */
-function hideElement(id) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.style.display = 'none';
-    }
-}
-
-/**
- * Helper: show element
- */
-function showElement(id) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.style.display = 'block';
-    }
-}
-
-/**
- * Check access and redirect if needed
- */
-function checkAccess(requiredRole) {
-    if (!roleManager.isAuthenticated()) {
-        alert('❌ Please login first');
-        window.location.href = 'login.html';
-        return false;
-    }
-
-    if (requiredRole && !roleManager.hasPermission(requiredRole)) {
-        alert(`❌ Access Denied! You don't have permission to access this page.`);
-        window.location.href = 'adminDashboard.html';
-        return false;
-    }
-
-    return true;
-}
-
-// Auto-initialize on page load
-window.addEventListener('DOMContentLoaded', () => {
-    initializeRoleBasedNav();
-    showRoleSpecificFeatures();
-});

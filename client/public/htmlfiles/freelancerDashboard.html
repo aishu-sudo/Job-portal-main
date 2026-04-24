@@ -207,7 +207,6 @@
         <h2><i class="fas fa-user-tie"></i> Freelancer</h2>
         <button onclick="loadSection('dashboard')" id="dashboardBtn" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
         <button onclick="loadSection('jobBrowsing')" id="jobBrowsingBtn"><i class="fas fa-briefcase"></i> Browse Jobs</button>
-        <button onclick="loadSection('filterBySkill')" id="filterBySkillBtn"><i class="fas fa-cogs"></i> JobsCategory</button>
 
         <button onclick="loadSection('profile')" id="profileBtn"><i class="fas fa-user"></i> My Profile</button>
         <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -224,7 +223,7 @@
                 <div class="notification-dropdown" id="notificationDropdown">
                     <div class="notification-header">
                         <h3>Notifications</h3>
-                        <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
+                        <button class="mark-all-read" onclick="clearAllDashboardNotifications()">Clear All</button>
                     </div>
                     <div class="notification-item unread">
                         <div class="notification-title">New Job Match</div>
@@ -267,12 +266,23 @@
                     <p style="font-size: 24px; font-weight: bold; margin-top: 10px;">3</p>
                 </div>
             </div>
+
+            <!-- New Job Postings Section -->
+            <div id="new-jobs-section" style="margin-top: 40px; padding: 20px; background: #fff3e0; border-left: 4px solid #ff5722; border-radius: 8px;">
+                <h2 style="color: #e65100; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-fire"></i> New Job Postings
+                </h2>
+                <div id="new-jobs-loading" style="text-align: center; color: #666; padding: 20px;">
+                    <p>Loading new job postings...</p>
+                </div>
+            </div>
         </div>
 
         <iframe id="contentFrame" class="content-frame" style="display: none;"></iframe>
     </div>
 
     <script src="../scripts/config.js"></script>
+    <script src="../scripts/notifications.js"></script>
     <script>
         // Auth check
         (function checkAuth() {
@@ -287,13 +297,51 @@
             }
         })();
 
+        // Initialize notification manager
+        let notificationManager = null;
+
         // Set dashboard as active by default
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('dashboardBtn').classList.add('active');
             const userName = localStorage.getItem('userName');
+            const freelancerId = localStorage.getItem('userId');
             if (userName) document.querySelector('.dashboard-header h1').textContent = `Welcome, ${userName}`;
-            loadNotifications();
+
+            // Initialize new notification system
+            if (freelancerId) {
+                notificationManager = initializeNotifications(freelancerId);
+                refreshDashboardNotifications();
+            } else {
+                updateNotificationBadgeCount(0);
+            }
         });
+
+        function updateNotificationBadgeCount(count) {
+            const badge = document.querySelector('.notification-badge');
+            if (!badge) return;
+            const safeCount = Number(count) || 0;
+            badge.textContent = safeCount;
+            badge.style.display = safeCount > 0 ? 'flex' : 'none';
+        }
+
+        async function refreshDashboardNotifications() {
+            if (!notificationManager) {
+                updateNotificationBadgeCount(0);
+                return;
+            }
+
+            const data = await notificationManager.fetchAllNotifications();
+            const totalCount = typeof data.totalNotifications === 'number'
+                ? data.totalNotifications
+                : notificationManager.notificationsCache.length;
+
+            updateNotificationBadgeCount(totalCount);
+
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown && dropdown.classList.contains('show')) {
+                notificationManager.displayNotificationsDropdown('notificationDropdown');
+            }
+        }
 
         function loadSection(section) {
             // Hide welcome message and show iframe
@@ -322,9 +370,6 @@
                 case 'applyJob':
                     frame.src = 'jobApply.html';
                     break;
-                case 'filterBySkill':
-                    frame.src = 'jobs.html?filter=skill';
-                    break;
                 case 'profile':
                     frame.src = 'freelancerprofile.html';
                     break;
@@ -334,19 +379,28 @@
             }
         }
 
-        function toggleNotifications() {
+        async function toggleNotifications() {
             const dropdown = document.getElementById('notificationDropdown');
             dropdown.classList.toggle('show');
+            if (dropdown.classList.contains('show')) {
+                await refreshDashboardNotifications();
+            }
         }
 
-        function markAllAsRead() {
-            const notifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
-            const updated = notifications.map(n => ({...n,
-                read: true
-            }));
-            localStorage.setItem('freelancerNotifications', JSON.stringify(updated));
-            loadNotifications();
-        }
+        // Remove applied job from New Job Postings section instantly
+        window.addEventListener('message', function(event) {
+            if (!event.data || event.data.type !== 'job_applied') return;
+            const appliedJobId = Number(event.data.jobId);
+            if (!notificationManager || !appliedJobId) return;
+
+            notificationManager.newJobsCache = notificationManager.newJobsCache.filter(j => Number(j.jobId) !== appliedJobId);
+            notificationManager.notificationsCache = notificationManager.notificationsCache.filter(n => Number(n.relatedId) !== appliedJobId);
+
+            notificationManager.displayNewJobsSection('new-jobs-section');
+
+            const totalCount = notificationManager.notificationsCache.length;
+            updateNotificationBadgeCount(totalCount);
+        });
 
         // Close notifications when clicking outside
         document.addEventListener('click', function(event) {
@@ -363,65 +417,6 @@
             window.location.href = 'login.html';
         }
 
-        function loadNotifications() {
-            try {
-                const notifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
-                const notificationContainer = document.querySelector('.notification-dropdown');
-                const notificationItems = notificationContainer.querySelectorAll('.notification-item');
-
-                // Remove existing notification items except the header
-                notificationItems.forEach(item => {
-                    if (!item.classList.contains('notification-header')) {
-                        item.remove();
-                    }
-                });
-
-                // Add new notifications
-                notifications.forEach(notification => {
-                    const notificationItem = document.createElement('div');
-                    notificationItem.className = `notification-item ${notification.read ? '' : 'unread'}`;
-
-                    // Add priority indicator if it's a high priority notification
-                    const priorityIndicator = notification.priority === 'high' ?
-                        '<span style="color: #ff5722; margin-right: 5px;">●</span>' : '';
-
-                    notificationItem.innerHTML = `
-                        <div class="notification-title">${priorityIndicator}${notification.title}</div>
-                        <div class="notification-message">${notification.message}</div>
-                        <div class="notification-time">${formatTimeAgo(new Date(notification.time))}</div>
-                    `;
-
-                    // Add click handler to view notification details
-                    notificationItem.addEventListener('click', () => {
-                        handleNotificationClick(notification);
-                        markNotificationAsRead(notification.id);
-                    });
-
-                    // Insert after the header
-                    notificationContainer.insertBefore(notificationItem, notificationContainer.children[1]);
-                });
-
-                // Update notification badge
-                const unreadCount = notifications.filter(n => !n.read).length;
-                const badge = document.querySelector('.notification-badge');
-                badge.textContent = unreadCount;
-                badge.style.display = unreadCount > 0 ? 'flex' : 'none';
-
-                // Store the updated count
-                localStorage.setItem('freelancerNotificationCount', unreadCount);
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-            }
-        }
-
-        // Add auto-refresh for notifications
-        setInterval(loadNotifications, 30000); // Refresh every 30 seconds
-
-        // Load notifications when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            loadNotifications();
-            // ... existing DOMContentLoaded code ...
-        });
 
         function handleNotificationClick(notification) {
             switch (notification.type) {
@@ -773,7 +768,7 @@
                         </div>`;
                     }
 
-                    loadNotifications();
+                    refreshDashboardNotifications();
 
                     if (status === 'accepted') {
                         // Redirect to jobs page after short delay so user sees the confirmation
@@ -823,7 +818,7 @@
                 return notification;
             });
             localStorage.setItem('freelancerNotifications', JSON.stringify(updatedNotifications));
-            loadNotifications();
+            refreshDashboardNotifications();
         }
 
         function formatTimeAgo(date) {
