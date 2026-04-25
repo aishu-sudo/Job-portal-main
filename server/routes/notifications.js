@@ -414,6 +414,82 @@ router.get('/freelancer/:freelancerId/new-jobs', async(req, res) => {
 });
 
 /**
+ * GET /api/notifications/admin
+ * Admin notification feed: who applied (FREELANCER) + who accepted/rejected (CLIENT)
+ */
+router.get('/admin', async(req, res) => {
+    let conn;
+    try {
+        conn = await getConnection();
+
+        const result = await conn.execute(
+            `SELECT
+                a.app_id,
+                j.title        AS job_title,
+                a.status       AS app_status,
+                f.name         AS freelancer_name,
+                c.name         AS client_name,
+                a.created_at
+             FROM Applications a
+             JOIN Jobs j  ON a.job_id      = j.job_id
+             JOIN Users f ON a.freelancer_id = f.user_id
+             JOIN Users c ON j.client_id   = c.user_id
+             ORDER BY a.created_at DESC
+             FETCH FIRST 100 ROWS ONLY`,
+            [],
+            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+
+        const notifications = [];
+
+        result.rows.forEach(row => {
+            // Every application → FREELANCER notification
+            notifications.push({
+                id: `apply-${row.APP_ID}`,
+                title: 'New Application Received',
+                message: `${row.FREELANCER_NAME} has applied to "${row.JOB_TITLE}"`,
+                badge: 'FREELANCER',
+                time: row.CREATED_AT,
+                appStatus: row.APP_STATUS
+            });
+
+            // Accepted → CLIENT notification
+            if (row.APP_STATUS === 'accepted') {
+                notifications.push({
+                    id: `accept-${row.APP_ID}`,
+                    title: 'Application Accepted',
+                    message: `${row.CLIENT_NAME} accepted ${row.FREELANCER_NAME} for "${row.JOB_TITLE}"`,
+                    badge: 'CLIENT',
+                    time: row.CREATED_AT,
+                    appStatus: row.APP_STATUS
+                });
+            }
+
+            // Rejected → CLIENT notification
+            if (row.APP_STATUS === 'rejected') {
+                notifications.push({
+                    id: `reject-${row.APP_ID}`,
+                    title: 'Application Rejected',
+                    message: `${row.CLIENT_NAME} rejected ${row.FREELANCER_NAME} for "${row.JOB_TITLE}"`,
+                    badge: 'CLIENT',
+                    time: row.CREATED_AT,
+                    appStatus: row.APP_STATUS
+                });
+            }
+        });
+
+        notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        res.json({ totalNotifications: notifications.length, notifications });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch admin notifications', details: error.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
+/**
  * POST /api/notifications/send
  * Send notification (for system use)
  */

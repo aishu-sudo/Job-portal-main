@@ -203,6 +203,17 @@
             letter-spacing: 0.04em;
             background: #e8f1fb;
             color: #0c5aa6;
+            white-space: nowrap;
+        }
+
+        .notification-role.freelancer {
+            background: #e6f4ea;
+            color: #1e7e34;
+        }
+
+        .notification-role.client {
+            background: #e8f1fb;
+            color: #0c5aa6;
         }
         
         .notification-message {
@@ -525,16 +536,8 @@
 
     <script>
         const API_URL = 'http://localhost:5000/api';
-        const NOTIFICATION_SOURCES = [{
-            key: 'adminNotifications',
-            label: 'Admin'
-        }, {
-            key: 'clientNotifications',
-            label: 'Client'
-        }, {
-            key: 'freelancerNotifications',
-            label: 'Freelancer'
-        }];
+        // Track which notification IDs the admin has already read (in-memory per session)
+        const readNotificationIds = new Set();
 
         (function checkAuth() {
             const token = localStorage.getItem('token');
@@ -688,44 +691,45 @@
             }
         }
 
-        function getAdminNotifications() {
-            return NOTIFICATION_SOURCES.flatMap(source => {
-                const notifications = JSON.parse(localStorage.getItem(source.key)) || [];
-
-                return notifications.map(notification => ({
-                    ...notification,
-                    sourceKey: source.key,
-                    sourceLabel: source.label,
-                    time: notification.time || new Date().toISOString()
-                }));
-            }).sort((left, right) => new Date(right.time) - new Date(left.time));
-        }
-
-        function loadNotifications() {
-            const notifications = getAdminNotifications();
+        async function loadNotifications() {
             const notificationList = document.getElementById('notificationList');
-            const unreadCount = notifications.filter(notification => !notification.read).length;
             const badge = document.getElementById('notificationBadge');
 
-            document.getElementById('unreadCount').textContent = unreadCount;
-            badge.textContent = unreadCount;
-            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+            try {
+                const response = await fetch(`${API_URL}/notifications/admin`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                const data = await response.json();
+                const notifications = data.notifications || [];
 
-            if (!notifications.length) {
-                notificationList.innerHTML = '<div class="notification-empty">No notifications yet.</div>';
-                return;
+                const unreadCount = notifications.filter(n => !readNotificationIds.has(n.id)).length;
+                document.getElementById('unreadCount').textContent = unreadCount;
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+
+                if (!notifications.length) {
+                    notificationList.innerHTML = '<div class="notification-empty">No notifications yet.</div>';
+                    return;
+                }
+
+                notificationList.innerHTML = notifications.map(n => {
+                    const isRead = readNotificationIds.has(n.id);
+                    const badgeClass = n.badge === 'FREELANCER' ? 'freelancer' : 'client';
+                    return `
+                        <div class="notification-item ${isRead ? '' : 'unread'}" onclick="markNotificationAsRead('${escapeHtml(n.id)}')">
+                            <div class="notification-topline">
+                                <div class="notification-title">${escapeHtml(n.title)}</div>
+                                <span class="notification-role ${badgeClass}">${escapeHtml(n.badge)}</span>
+                            </div>
+                            <div class="notification-message">${escapeHtml(n.message)}</div>
+                            <div class="notification-time">${formatTimeAgo(new Date(n.time))}</div>
+                        </div>`;
+                }).join('');
+
+            } catch (error) {
+                console.error('Notification load error:', error);
+                notificationList.innerHTML = '<div class="notification-empty">Could not load notifications.</div>';
+                badge.style.display = 'none';
             }
-
-            notificationList.innerHTML = notifications.map(notification => `
-                <div class="notification-item ${notification.read ? '' : 'unread'}" onclick="markNotificationAsRead('${notification.sourceKey}', '${notification.id || ''}')">
-                    <div class="notification-topline">
-                        <div class="notification-title">${escapeHtml(notification.title || 'Notification')}</div>
-                        <span class="notification-role">${escapeHtml(notification.sourceLabel)}</span>
-                    </div>
-                    <div class="notification-message">${escapeHtml(notification.message || 'No details available.')}</div>
-                    <div class="notification-time">${formatTimeAgo(new Date(notification.time))}</div>
-                </div>
-            `).join('');
         }
 
         function toggleNotifications() {
@@ -736,37 +740,18 @@
             }
         }
 
-        function markAllAsRead() {
-            NOTIFICATION_SOURCES.forEach(source => {
-                const notifications = JSON.parse(localStorage.getItem(source.key)) || [];
-                const updatedNotifications = notifications.map(notification => ({
-                    ...notification,
-                    read: true
-                }));
-                localStorage.setItem(source.key, JSON.stringify(updatedNotifications));
-            });
-
+        async function markAllAsRead() {
+            const response = await fetch(`${API_URL}/notifications/admin`).catch(() => null);
+            if (response && response.ok) {
+                const data = await response.json();
+                (data.notifications || []).forEach(n => readNotificationIds.add(n.id));
+            }
             loadNotifications();
         }
 
-        function markNotificationAsRead(sourceKey, notificationId) {
-            if (!sourceKey || !notificationId) {
-                return;
-            }
-
-            const notifications = JSON.parse(localStorage.getItem(sourceKey)) || [];
-            const updatedNotifications = notifications.map(notification => {
-                if (String(notification.id) === String(notificationId)) {
-                    return {
-                        ...notification,
-                        read: true
-                    };
-                }
-
-                return notification;
-            });
-
-            localStorage.setItem(sourceKey, JSON.stringify(updatedNotifications));
+        function markNotificationAsRead(notificationId) {
+            if (!notificationId) return;
+            readNotificationIds.add(notificationId);
             loadNotifications();
         }
 

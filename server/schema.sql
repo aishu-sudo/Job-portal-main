@@ -38,6 +38,7 @@ CREATE TABLE Applications (
   status VARCHAR2(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
   proposal VARCHAR2(500),
   bid_amount NUMBER(10, 2),
+  applicant_name VARCHAR2(100),
   created_at DATE DEFAULT SYSDATE,
   FOREIGN KEY (job_id) REFERENCES Jobs(job_id),
   FOREIGN KEY (freelancer_id) REFERENCES Users(user_id)
@@ -293,24 +294,26 @@ END update_payment_status_p;
 
 
 -- Trigger for automatic INSERT audit logging on Jobs
+-- NOTE: Body is intentionally empty — the backend inserts the audit record
+-- with the real application-level user name after calling insert_job_p.
+-- Keeping both would create duplicate Audit_Jobs rows per job creation.
 CREATE OR REPLACE TRIGGER trg_job_insert
 AFTER INSERT ON Jobs
 FOR EACH ROW
 BEGIN
-    INSERT INTO Audit_Jobs (audit_id, job_id, new_status, new_budget, operation_type, timestamp, changed_by)
-    VALUES (audit_job_seq.NEXTVAL, :NEW.job_id, :NEW.status, :NEW.budget, 'INSERT', SYSDATE, USER);
+    NULL;
 END;
 /
 
 -- Trigger for automatic UPDATE audit logging on Jobs
+-- NOTE: Body is intentionally empty — update_job_status_p and
+-- update_job_budget_p stored procedures insert the audit record with the
+-- real user name and change reason. Running both creates duplicates.
 CREATE OR REPLACE TRIGGER trg_job_update
 AFTER UPDATE ON Jobs
 FOR EACH ROW
 BEGIN
-    IF :OLD.status != :NEW.status OR :OLD.budget != :NEW.budget THEN
-        INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, old_budget, new_budget, operation_type, timestamp, changed_by)
-        VALUES (audit_job_seq.NEXTVAL, :NEW.job_id, :OLD.status, :NEW.status, :OLD.budget, :NEW.budget, 'UPDATE', SYSDATE, USER);
-    END IF;
+    NULL;
 END;
 /
 
@@ -325,36 +328,35 @@ END;
 /
 
 -- Trigger for automatic UPDATE audit logging on Applications
+-- NOTE: Body is intentionally empty — update_application_status_p stores the
+-- audit record with real user name + reason. Both would create duplicates.
 CREATE OR REPLACE TRIGGER trg_application_update
 AFTER UPDATE ON Applications
 FOR EACH ROW
 BEGIN
-    IF :OLD.status != :NEW.status OR :OLD.bid_amount != :NEW.bid_amount THEN
-        INSERT INTO Audit_Applications (audit_id, app_id, job_id, freelancer_id, old_status, new_status, old_bid_amount, new_bid_amount, operation_type, timestamp, changed_by)
-        VALUES (audit_app_seq.NEXTVAL, :NEW.app_id, :NEW.job_id, :NEW.freelancer_id, :OLD.status, :NEW.status, :OLD.bid_amount, :NEW.bid_amount, 'UPDATE', SYSDATE, USER);
-    END IF;
+    NULL;
 END;
 /
 
 -- Trigger for automatic INSERT audit logging on Payments
+-- NOTE: Body is intentionally empty — insert_payment_p stored procedure
+-- handles the audit insert. Both would create duplicates.
 CREATE OR REPLACE TRIGGER trg_payment_insert
 AFTER INSERT ON Payments
 FOR EACH ROW
 BEGIN
-    INSERT INTO Audit_Payments (audit_id, payment_id, job_id, new_amount, new_type, new_status, operation_type, timestamp, changed_by, source_table, affected_row_id)
-    VALUES (audit_payment_seq.NEXTVAL, :NEW.payment_id, :NEW.job_id, :NEW.amount, :NEW.type, :NEW.status, 'INSERT', SYSDATE, USER, 'Payments', :NEW.job_id);
+    NULL;
 END;
 /
 
 -- Trigger for automatic UPDATE audit logging on Payments
+-- NOTE: Body is intentionally empty — update_payment_status_p stored procedure
+-- handles the audit insert with real user name. Both would create duplicates.
 CREATE OR REPLACE TRIGGER trg_payment_update
 AFTER UPDATE ON Payments
 FOR EACH ROW
 BEGIN
-    IF :OLD.status != :NEW.status OR :OLD.type != :NEW.type OR :OLD.amount != :NEW.amount THEN
-        INSERT INTO Audit_Payments (audit_id, payment_id, job_id, old_status, new_status, old_type, new_type, old_amount, new_amount, operation_type, timestamp, changed_by, source_table, affected_row_id)
-        VALUES (audit_payment_seq.NEXTVAL, :NEW.payment_id, :NEW.job_id, :OLD.status, :NEW.status, :OLD.type, :NEW.type, :OLD.amount, :NEW.amount, 'UPDATE', SYSDATE, USER, 'Payments', :NEW.job_id);
-    END IF;
+    NULL;
 END;
 /
 

@@ -167,7 +167,7 @@ router.get('/browse', async(req, res) => {
 
 // 2️ Apply for a Job
 router.post('/:jobId/apply', async(req, res) => {
-    const { freelancerId } = req.body;
+    const { freelancerId, applicantName } = req.body;
     const { jobId } = req.params;
     let conn;
 
@@ -178,8 +178,10 @@ router.post('/:jobId/apply', async(req, res) => {
     try {
         conn = await getConnection();
         await conn.execute(
-            `INSERT INTO Applications (app_id, job_id, freelancer_id, status)
-             VALUES (app_seq.NEXTVAL, :jobId, :freelancerId, 'pending')`, { jobId: Number(jobId), freelancerId: Number(freelancerId) }, { autoCommit: true }
+            `INSERT INTO Applications (app_id, job_id, freelancer_id, status, applicant_name)
+             VALUES (app_seq.NEXTVAL, :jobId, :freelancerId, 'pending', :applicantName)`,
+            { jobId: Number(jobId), freelancerId: Number(freelancerId), applicantName: applicantName || null },
+            { autoCommit: true }
         );
 
         res.status(201).json({ message: 'Application submitted successfully' });
@@ -199,6 +201,7 @@ router.get('/applications/client/:clientId', async(req, res) => {
         conn = await getConnection();
         const result = await conn.execute(
             `SELECT a.app_id, a.job_id, a.freelancer_id, a.status, a.proposal, a.bid_amount, a.created_at,
+                    a.applicant_name,
                     j.title AS job_title, j.budget AS job_budget, j.status AS job_status,
                     u.name AS freelancer_name, u.email AS freelancer_email
              FROM Applications a
@@ -218,7 +221,8 @@ router.get('/applications/client/:clientId', async(req, res) => {
             jobTitle: r.JOB_TITLE,
             jobBudget: r.JOB_BUDGET,
             jobStatus: r.JOB_STATUS,
-            freelancerName: r.FREELANCER_NAME,
+            applicantName: r.APPLICANT_NAME || null,
+            freelancerName: r.APPLICANT_NAME || r.FREELANCER_NAME,
             freelancerEmail: r.FREELANCER_EMAIL
         })));
     } catch (error) {
@@ -631,7 +635,7 @@ router.get('/:jobId', async(req, res) => {
     try {
         conn = await getConnection();
         const result = await conn.execute(
-            `SELECT job_id, title, description, budget, client_id
+            `SELECT job_id, title, description, budget, category, status, client_id, created_at
              FROM Jobs
              WHERE job_id = :jobId`, { jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );

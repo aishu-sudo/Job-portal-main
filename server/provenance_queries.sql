@@ -1,18 +1,18 @@
--- ============================================================================
+
 -- PROVENANCE QUERIES - JOB PORTAL
 -- CSE464: Advanced Database Systems - Term Project
--- ============================================================================
+
 -- These queries demonstrate the three types of provenance:
 -- 1. WHY-PROVENANCE: Justification for data values (e.g., why job budget changed)
 -- 2. WHERE-PROVENANCE: Source and lineage of data (e.g., from which user made the change)
--- 3. HOW-PROVENANCE: Transformation history and evolution of data (e.g., job status transitions)
--- ============================================================================
+-- 3. HOW-PROVENANCE: Transformation history and evolution of data ( job status transitions)
 
--- ============================================================================
+
+
 -- QUERY 1: List all budget changes for a specific job over time
 -- Type: WHY-PROVENANCE (Justification)
 -- Description: Shows why job budget is what it is by tracking all changes
--- ============================================================================
+
 /*
 This query demonstrates why-provenance by showing all historical budget changes
 for a specific job, including when they occurred and who made the change.
@@ -39,11 +39,11 @@ ORDER BY aj.job_id, aj.timestamp DESC;
 -- SELECT * FROM JobBudgetHistory WHERE job_id = 1;
 
 
--- ============================================================================
+
 -- QUERY 2: Trace the status transitions of a specific job
 -- Type: HOW-PROVENANCE (Transformation History)
 -- Description: Shows how a job evolved through different states
--- ============================================================================
+
 /*
 This query demonstrates how-provenance by showing the complete transformation
 history of a job, including all status transitions, when they occurred, and
@@ -74,11 +74,11 @@ ORDER BY aj.job_id, aj.timestamp;
 -- SELECT * FROM JobStatusTransitions WHERE job_id = 1;
 
 
--- ============================================================================
+
 -- QUERY 3: Find all actions taken on a specific job by all users
 -- Type: WHERE-PROVENANCE (Source/Lineage)
 -- Description: Shows all changes made to a job and who made them
--- ============================================================================
+
 /*
 This query demonstrates where-provenance by tracking all actions performed
 on a specific job. It shows what was changed, when, and who made the changes.
@@ -109,11 +109,11 @@ ORDER BY aj.changed_by, aj.timestamp DESC;
 -- SELECT * FROM JobActionAudit WHERE job_id = 1;
 
 
--- ============================================================================
+
 -- QUERY 4: Trace application status changes for a specific job
 -- Type: HOW-PROVENANCE (Application Lifecycle)
 -- Description: Shows how applications for a job evolved
--- ============================================================================
+
 /*
 This query tracks the application lifecycle for a job, showing all status
 transitions from pending to accepted/rejected, with complete audit trail.
@@ -144,11 +144,11 @@ ORDER BY aa.app_id, aa.timestamp;
 -- SELECT * FROM ApplicationStatusTransitions WHERE job_id = 1;
 
 
--- ============================================================================
+
 -- QUERY 5: Track payment lifecycle and status changes
 -- Type: WHERE-PROVENANCE (Payment Source and Reason)
 -- Description: Shows all payment status transitions with business reasons
--- ============================================================================
+
 /*
 This query tracks the payment lifecycle by showing all status changes, including
 the source operation, the user responsible, and the business reason.
@@ -179,11 +179,10 @@ ORDER BY ap.payment_id, ap.timestamp DESC;
 -- SELECT * FROM PaymentStatusTransitions;
 
 
--- ============================================================================
 -- QUERY 6: Freelancer work history - track all applications and their outcomes
 -- Type: WHERE-PROVENANCE (Lineage/Source)
 -- Description: Shows all applications from a freelancer and their evolution
--- ============================================================================
+
 /*
 This query demonstrates where-provenance by showing the complete history of a
 freelancer's applications across jobs, including all status changes and bid amounts.
@@ -216,11 +215,10 @@ ORDER BY f.user_id, aa.timestamp DESC;
 -- SELECT * FROM FreelancerApplicationHistory WHERE freelancer_id = 3;
 
 
--- ============================================================================
 -- QUERY 7: Complete audit trail for a job from creation to completion
 -- Type: COMBINED PROVENANCE (Why + How + Where)
 -- Description: Shows complete evolution of job with all related changes
--- ============================================================================
+
 /*
 This comprehensive query demonstrates combined provenance by showing:
 1. The job's status evolution (how)
@@ -257,11 +255,10 @@ ORDER BY j.job_id, aj.timestamp DESC;
 -- SELECT * FROM CompleteJobAuditTrail WHERE job_id = 1;
 
 
--- ============================================================================
 -- QUERY 8: Payment dispute analysis - why a payment failed or was refunded
 -- Type: WHY-PROVENANCE (Complete Justification)
 -- Description: Shows complete payment history with all status changes and reasons
--- ============================================================================
+
 /*
 This query helps in dispute resolution by showing:
 - Complete payment history
@@ -292,9 +289,9 @@ ORDER BY ap.payment_id, ap.timestamp DESC;
 -- This query shows why a payment is in its current state by showing complete history
 
 
--- ============================================================================
+
 -- SUMMARY VIEW: Complete Compliance Audit Log for Job Portal
--- ============================================================================
+
 /*
 Unified view showing all provenance information across all entities for auditing
 and compliance purposes.

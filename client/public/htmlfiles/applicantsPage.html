@@ -325,24 +325,39 @@
         }
 
         function mergeApplicants(dbApplicants, notificationApplicants) {
-            const merged = [...dbApplicants];
-            const seen = new Set(
-                dbApplicants.map(app => `${String(app.freelancerName || '').toLowerCase()}|${String(app.freelancerEmail || '').toLowerCase()}|${String(app.jobTitle || '').toLowerCase()}`)
-            );
-
+            // Build a localStorage map: job title → most-recent entry (deduplicated)
+            const localByJob = new Map();
             notificationApplicants.forEach(app => {
-                const key = `${String(app.freelancerName || '').toLowerCase()}|${String(app.freelancerEmail || '').toLowerCase()}|${String(app.jobTitle || '').toLowerCase()}`;
-                if (!seen.has(key)) {
-                    merged.push(app);
-                    seen.add(key);
-                }
+                const job     = String(app.jobTitle || '').toLowerCase().trim();
+                const existing = localByJob.get(job);
+                const appTime  = new Date(app.createdAt || 0).getTime();
+                const exTime   = existing ? new Date(existing.createdAt || 0).getTime() : -1;
+                if (appTime >= exTime) localByJob.set(job, app);
             });
 
-            merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-            return merged;
+            const coveredJobs = new Set();
+            const result = dbApplicants.map(dbApp => {
+                const job   = String(dbApp.jobTitle || '').toLowerCase().trim();
+                const local = localByJob.get(job);
+                coveredJobs.add(job);
+
+                // New records: applicantName is set in DB — use it directly.
+                // Old records: applicantName is null — enrich from localStorage form data.
+                const formName = dbApp.applicantName || (local && local.freelancerName) || dbApp.freelancerName;
+                return { ...dbApp, freelancerName: formName };
+            });
+
+            // Append localStorage-only entries for jobs with no DB record at all
+            localByJob.forEach((app, job) => {
+                if (!coveredJobs.has(job)) result.push(app);
+            });
+
+            result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+            return result;
         }
 
         async function syncAcceptedLocalApplicants(clientId) {
+            const clientName = localStorage.getItem('userName') || 'CLIENT';
             const acceptedLocalApplicants = applicants.filter(app => app.isLocalOnly && app.status === 'accepted');
 
             for (const applicant of acceptedLocalApplicants) {
@@ -359,7 +374,7 @@
                             },
                             body: JSON.stringify({
                                 status: 'in-progress',
-                                changedBy: clientId,
+                                changedBy: clientName,
                                 reason: 'Synced accepted applicant from Applicants page'
                             })
                         });
@@ -369,43 +384,8 @@
                     }
                 }
 
-                // If job doesn't exist in DB, create it then update status
                 if (!statusUpdated) {
-                    try {
-                        const createRes = await fetch(`${API_BASE}/jobs`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                title: applicant.jobTitle || 'Untitled Job',
-                                description: applicant.proposal || '',
-                                budget: Number(applicant.jobBudget || applicant.bidAmount || 0),
-                                category: 'general',
-                                clientId: Number(clientId)
-                            })
-                        });
-
-                        if (createRes.ok) {
-                            const created = await createRes.json();
-                            jobId = created.jobId;
-                            console.log('Sync: Created job in DB with ID:', jobId);
-
-                            await fetch(`${API_BASE}/jobs/${jobId}/status`, {
-                                method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    status: 'in-progress',
-                                    changedBy: clientId,
-                                    reason: 'Synced accepted applicant from Applicants page'
-                                })
-                            });
-                        }
-                    } catch (createErr) {
-                        console.error('Sync: Failed to create job in DB:', createErr);
-                    }
+                    console.log('Sync: Could not update job status for', applicant.jobTitle, '— skipping to avoid duplicate job creation');
                 }
 
                 applicant.jobId = jobId;
@@ -546,6 +526,7 @@
         async function handleResponse(status) {
             if (!currentApp) return;
             const clientId = localStorage.getItem('userId') || 'CLIENT';
+            const clientName = localStorage.getItem('userName') || 'CLIENT';
             const actionBtns = document.getElementById('action-buttons');
             const actionStatus = document.getElementById('action-status');
 
@@ -585,7 +566,7 @@
                                 },
                                 body: JSON.stringify({
                                     status: 'in-progress',
-                                    changedBy: clientId,
+                                    changedBy: clientName,
                                     reason: 'Applicant accepted from Applicants page'
                                 })
                             });
@@ -635,7 +616,7 @@
                                         },
                                         body: JSON.stringify({
                                             status: 'in-progress',
-                                            changedBy: clientId,
+                                            changedBy: clientName,
                                             reason: 'Applicant accepted from Applicants page'
                                         })
                                     });
@@ -656,7 +637,7 @@
                         },
                         body: JSON.stringify({
                             status,
-                            changedBy: clientId
+                            changedBy: clientName
                         })
                     });
 
