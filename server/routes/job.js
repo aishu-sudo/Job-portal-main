@@ -27,7 +27,8 @@ router.post('/', async(req, res) => {
         conn = await getConnection();
 
         // Get client name for audit trail
-        let clientName = 'SYSTEM';
+        // Always fetch client name for audit
+        let clientName = null;
         try {
             const clientResult = await conn.execute(
                 `SELECT name FROM Users WHERE user_id = :clientId`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
@@ -38,32 +39,57 @@ router.post('/', async(req, res) => {
         } catch (e) {
             console.log('Could not fetch client name:', e.message);
         }
-
-        await conn.execute(
-            `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`, {
-                title,
-                description: description || '',
-                budget: Number(budget),
-                category: category || 'general',
-                clientId: Number(clientId)
-            }, { autoCommit: true }
-        );
-
-        // Create audit record for job creation
-        const jobResult = await conn.execute(
-            `SELECT job_id FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC FETCH FIRST 1 ROW ONLY`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
-        );
-
-        if (jobResult.rows && jobResult.rows.length > 0) {
-            const jobId = jobResult.rows[0].JOB_ID;
-            await conn.execute(
-                `INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, operation_type, timestamp, changed_by, change_reason)
-                 VALUES (audit_job_seq.NEXTVAL, :jobId, NULL, 'open', 'INSERT', SYSDATE, :changedBy, 'Job created by client')`, { jobId: jobId, changedBy: clientName }, { autoCommit: true }
-            );
+        if (!clientName) {
+            // fallback to clientId string if name not found
+            clientName = `Client-${clientId}`;
         }
+
+        // Check for duplicate job (same client, title, budget, category, status 'open')
+        const dupJobResult = await conn.execute(
+            `SELECT job_id FROM Jobs WHERE client_id = :clientId AND title = :title AND budget = :budget AND category = :category AND status = 'open'`, {
+                clientId: Number(clientId),
+                title,
+                budget: Number(budget),
+                category: category || 'general'
+            }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        let jobId;
+        if (dupJobResult.rows && dupJobResult.rows.length > 0) {
+            // Duplicate found, return existing jobId
+            jobId = dupJobResult.rows[0].JOB_ID;
+        } else {
+            // Insert new job
+            await conn.execute(
+                `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`, {
+                    title,
+                    description: description || '',
+                    budget: Number(budget),
+                    category: category || 'general',
+                    clientId: Number(clientId)
+                }, { autoCommit: true }
+            );
+            // Get the new job id
+            const jobResult = await conn.execute(
+                `SELECT job_id FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC FETCH FIRST 1 ROW ONLY`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            );
+            jobId = jobResult.rows[0].JOB_ID;
+        }
+        // Create audit record for job creation ONLY if not already exists for this job
+        if (jobId) {
+            const auditCheck = await conn.execute(
+                `SELECT COUNT(*) AS CNT FROM Audit_Jobs WHERE job_id = :jobId AND new_status = 'open' AND operation_type = 'INSERT'`, { jobId: jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            );
+            if (!auditCheck.rows[0].CNT) {
+                await conn.execute(
+                    `INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, operation_type, timestamp, changed_by, change_reason)
+                     VALUES (audit_job_seq.NEXTVAL, :jobId, NULL, 'open', 'INSERT', SYSDATE, :changedBy, 'Job created by client')`, { jobId: jobId, changedBy: clientName }, { autoCommit: true }
+                );
+            }
+        }
+        // Return the job
         const result = await conn.execute(
             `SELECT job_id, title, description, budget, category, status, client_id, created_at
-             FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+             FROM Jobs WHERE job_id = :jobId`, { jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
         res.status(201).json(mapJobRow(result.rows[0]));
     } catch (error) {
@@ -124,10 +150,16 @@ router.post('/projects', async(req, res) => {
 
         if (jobResult.rows && jobResult.rows.length > 0) {
             const jobId = jobResult.rows[0].JOB_ID;
-            await conn.execute(
-                `INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, operation_type, timestamp, changed_by, change_reason)
-                 VALUES (audit_job_seq.NEXTVAL, :jobId, NULL, 'open', 'INSERT', SYSDATE, :changedBy, 'Project posted by client')`, { jobId: jobId, changedBy: clientName }, { autoCommit: true }
+            // Check if an audit entry already exists for this job as 'open'
+            const auditCheck = await conn.execute(
+                `SELECT COUNT(*) AS CNT FROM Audit_Jobs WHERE job_id = :jobId AND new_status = 'open' AND operation_type = 'INSERT'`, { jobId: jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
             );
+            if (!auditCheck.rows[0].CNT) {
+                await conn.execute(
+                    `INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, operation_type, timestamp, changed_by, change_reason)
+                     VALUES (audit_job_seq.NEXTVAL, :jobId, NULL, 'open', 'INSERT', SYSDATE, :changedBy, 'Project posted by client')`, { jobId: jobId, changedBy: clientName }, { autoCommit: true }
+                );
+            }
         }
 
         const jobId = jobResult.rows && jobResult.rows.length > 0 ? jobResult.rows[0].JOB_ID : null;
@@ -179,9 +211,7 @@ router.post('/:jobId/apply', async(req, res) => {
         conn = await getConnection();
         await conn.execute(
             `INSERT INTO Applications (app_id, job_id, freelancer_id, status, applicant_name)
-             VALUES (app_seq.NEXTVAL, :jobId, :freelancerId, 'pending', :applicantName)`,
-            { jobId: Number(jobId), freelancerId: Number(freelancerId), applicantName: applicantName || null },
-            { autoCommit: true }
+             VALUES (app_seq.NEXTVAL, :jobId, :freelancerId, 'pending', :applicantName)`, { jobId: Number(jobId), freelancerId: Number(freelancerId), applicantName: applicantName || null }, { autoCommit: true }
         );
 
         res.status(201).json({ message: 'Application submitted successfully' });
@@ -388,14 +418,25 @@ router.put('/:jobId/status', async(req, res) => {
             auditChangedBy = changedBy;
         }
 
-        await conn.execute(
-            `BEGIN update_job_status_p(:jobId, :status, :changedBy, :reason); END;`, {
-                jobId: Number(jobId),
-                status,
-                changedBy: auditChangedBy,
-                reason: reason || 'Status updated'
-            }, { autoCommit: true }
+        // Check last status for this job
+        const lastStatusResult = await conn.execute(
+            `SELECT new_status, changed_by, change_reason FROM Audit_Jobs WHERE job_id = :jobId AND new_status IS NOT NULL ORDER BY timestamp DESC FETCH FIRST 1 ROW ONLY`, { jobId: Number(jobId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
+        const lastStatus = lastStatusResult.rows && lastStatusResult.rows.length > 0 ? lastStatusResult.rows[0].NEW_STATUS : null;
+        const lastChangedBy = lastStatusResult.rows && lastStatusResult.rows.length > 0 ? lastStatusResult.rows[0].CHANGED_BY : null;
+        const lastReason = lastStatusResult.rows && lastStatusResult.rows.length > 0 ? lastStatusResult.rows[0].CHANGE_REASON : null;
+
+        // Only update if status, user, or reason is different (prevent duplicate)
+        if (lastStatus !== status || lastChangedBy !== auditChangedBy || (reason && lastReason !== reason)) {
+            await conn.execute(
+                `BEGIN update_job_status_p(:jobId, :status, :changedBy, :reason); END;`, {
+                    jobId: Number(jobId),
+                    status,
+                    changedBy: auditChangedBy,
+                    reason: reason || 'Status updated'
+                }, { autoCommit: true }
+            );
+        }
 
         res.json({ message: 'Job status updated successfully', jobId, newStatus: status });
     } catch (error) {
@@ -425,14 +466,21 @@ router.put('/:jobId/budget', async(req, res) => {
             auditChangedBy = changedBy;
         }
 
-        await conn.execute(
-            `BEGIN update_job_budget_p(:jobId, :budget, :changedBy, :reason); END;`, {
-                jobId: Number(jobId),
-                budget: Number(budget),
-                changedBy: auditChangedBy,
-                reason: reason || 'Budget updated'
-            }, { autoCommit: true }
+        // Check last budget for this job
+        const lastBudgetResult = await conn.execute(
+            `SELECT new_budget FROM Audit_Jobs WHERE job_id = :jobId AND new_budget IS NOT NULL ORDER BY timestamp DESC FETCH FIRST 1 ROW ONLY`, { jobId: Number(jobId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
+        const lastBudget = lastBudgetResult.rows && lastBudgetResult.rows.length > 0 ? lastBudgetResult.rows[0].NEW_BUDGET : null;
+        if (Number(lastBudget) !== Number(budget)) {
+            await conn.execute(
+                `BEGIN update_job_budget_p(:jobId, :budget, :changedBy, :reason); END;`, {
+                    jobId: Number(jobId),
+                    budget: Number(budget),
+                    changedBy: auditChangedBy,
+                    reason: reason || 'Budget updated'
+                }, { autoCommit: true }
+            );
+        }
 
         res.json({ message: 'Job budget updated successfully', jobId, newBudget: budget });
     } catch (error) {
