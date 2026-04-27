@@ -1,50 +1,11 @@
 [
-  {
-    "name": "test user2",
-    "email": "test2@example.com",
-    "role": "freelancer",
-    "createdAt": "2026-04-16T16:37:49.017Z"
-  },
-  {
-    "name": "oishi jaman",
-    "email": "aishozaman@gmail.com",
-    "role": "freelancer",
-    "createdAt": "2026-04-16T17:06:03.670Z"
-  },
-  {
-    "name": "oishi jaman",
-    "email": "aishoozaman012@gmail.com",
-    "role": "freelancer",
-    "createdAt": "2026-04-16T19:11:30.072Z"
-  },
-  {
-    "name": "oishi jaman",
-    "email": "aishoozaman@gmail.com",
-    "role": "freelancer",
-    "createdAt": "2026-04-16T19:14:43.192Z"
-  },
-  {
-    "id": 1776368195843,
-    "name": "oishi jaman",
-    "email": "aishoozama@gmail.com",
-    "role": "freelancer",
-    "password": "$2b$10$w5GZJRWG1B88r3ygaq345.7O6Ur6otDLZ0gqRqsKtZAOnndBCKKQK",
-    "createdAt": "2026-04-16T19:36:35.843Z"
-  },
-  {
-    "id": 1776368270746,
-    "name": "oishi jaman",
-    "email": "aishozama@gmail.com",
-    "role": "freelancer",
-    "password": "$2b$10$TyjoKRJQHKPPGd0r/D9d1eZ/mnfGgxyhBMY19OMFMx6nPsx4TWDty",
-    "createdAt": "2026-04-16T19:37:50.746Z"
-  },
-  {
-    "id": 1776370495776,
-    "name": "oishi jaman",
-    "email": "aishozaman2@gmail.com",
-    "role": "freelancer",
-    "password": "$2b$10$2ZwwmRF1MTJw.xGfOX72RO8l3ki.3Tv5uLhmr98yDIDPm3ruDysAm",
-    "createdAt": "2026-04-16T20:14:55.776Z"
-  }
+
+    {
+        "id": 1777303100581,
+        "name": "azan ahmed",
+        "email": "azan@gmail.com",
+        "role": "freelancer",
+        "password": "$2b$10$zEnbIgfuuiaLs1RmlGLUMONUoYOslGHHZMJ5SE/zxpO5.YHAg7TbW",
+        "createdAt": "2026-04-27T15:18:20.581Z"
+    }
 ]

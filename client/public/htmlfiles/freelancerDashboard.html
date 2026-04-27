@@ -311,6 +311,17 @@
             if (freelancerId) {
                 notificationManager = initializeNotifications(freelancerId);
                 refreshDashboardNotifications();
+
+                // Auto-refresh new jobs every 30 seconds so new client postings appear without page reload
+                setInterval(async () => {
+                    if (!notificationManager) return;
+                    await notificationManager.fetchNewJobs();
+                    if (document.getElementById('new-jobs-section') &&
+                        document.getElementById('dashboardContent').style.display !== 'none') {
+                        notificationManager.displayNewJobsSection('new-jobs-section');
+                    }
+                    refreshDashboardNotifications();
+                }, 30000);
             } else {
                 updateNotificationBadgeCount(0);
             }

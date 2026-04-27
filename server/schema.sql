@@ -62,11 +62,7 @@ CREATE TABLE Payments (
   FOREIGN KEY (freelancer_id) REFERENCES Users(user_id)
 );
 
--- ============================================================================
--- AUDIT/PROVENANCE TABLES
--- ============================================================================
 
--- Audit table for Users (captures role changes and user modifications)
 CREATE TABLE Audit_Users (
   audit_id NUMBER PRIMARY KEY,
   user_id NUMBER NOT NULL,
@@ -78,7 +74,6 @@ CREATE TABLE Audit_Users (
   change_reason VARCHAR2(255)
 );
 
--- Audit table for Jobs (captures job status and budget changes)
 CREATE TABLE Audit_Jobs (
   audit_id NUMBER PRIMARY KEY,
   job_id NUMBER NOT NULL,
@@ -92,7 +87,6 @@ CREATE TABLE Audit_Jobs (
   change_reason VARCHAR2(255)
 );
 
--- Audit table for Applications (captures application status transitions)
 CREATE TABLE Audit_Applications (
   audit_id NUMBER PRIMARY KEY,
   app_id NUMBER NOT NULL,
@@ -108,7 +102,6 @@ CREATE TABLE Audit_Applications (
   change_reason VARCHAR2(255)
 );
 
--- Audit table for Payments (captures payment lifecycle and status changes)
 CREATE TABLE Audit_Payments (
   audit_id NUMBER PRIMARY KEY,
   payment_id NUMBER NOT NULL,
@@ -126,8 +119,6 @@ CREATE TABLE Audit_Payments (
   affected_row_id NUMBER
 );
 
--- ============================================================================
--- SEQUENCES FOR ID GENERATION
 -- ============================================================================
 
 CREATE SEQUENCE user_seq START WITH 1 INCREMENT BY 1;
@@ -360,47 +351,5 @@ BEGIN
 END;
 /
 
-
--- SAMPLE DATA INSERTION
-
-
--- Insert sample users
-INSERT INTO Users (user_id, name, email, role, password) VALUES (user_seq.NEXTVAL, 'Alice Johnson', 'alice@example.com', 'client', 'pass123');
-INSERT INTO Users (user_id, name, email, role, password) VALUES (user_seq.NEXTVAL, 'Bob Smith', 'bob@example.com', 'client', 'pass123');
-INSERT INTO Users (user_id, name, email, role, password) VALUES (user_seq.NEXTVAL, 'Charlie Brown', 'charlie@example.com', 'freelancer', 'pass123');
-INSERT INTO Users (user_id, name, email, role, password) VALUES (user_seq.NEXTVAL, 'Diana Prince', 'diana@example.com', 'freelancer', 'pass123');
-
--- Insert sample jobs
-INSERT INTO Jobs (job_id, title, description, budget, category, client_id) 
-VALUES (job_seq.NEXTVAL, 'Website Development', 'Build a modern e-commerce website', 5000.00, 'web-development', 1);
-
-INSERT INTO Jobs (job_id, title, description, budget, category, client_id) 
-VALUES (job_seq.NEXTVAL, 'Mobile App Design', 'Design mockups for iOS/Android app', 3000.00, 'design', 2);
-
-INSERT INTO Jobs (job_id, title, description, budget, category, client_id) 
-VALUES (job_seq.NEXTVAL, 'Content Writing', 'Write blog posts for tech website', 1500.00, 'writing', 1);
-
--- Insert sample applications
-INSERT INTO Applications (app_id, job_id, freelancer_id, status, proposal, bid_amount) 
-VALUES (app_seq.NEXTVAL, 1, 3, 'pending', 'I have 5 years of web dev experience', 4500.00);
-
-INSERT INTO Applications (app_id, job_id, freelancer_id, status, proposal, bid_amount) 
-VALUES (app_seq.NEXTVAL, 1, 4, 'pending', 'Specialized in React and Node.js', 5200.00);
-
-INSERT INTO Applications (app_id, job_id, freelancer_id, status, proposal, bid_amount) 
-VALUES (app_seq.NEXTVAL, 2, 3, 'accepted', 'Expert in UI/UX design with Figma', 3000.00);
-
-INSERT INTO Applications (app_id, job_id, freelancer_id, status, proposal, bid_amount) 
-VALUES (app_seq.NEXTVAL, 3, 4, 'pending', 'Professional content writer', 1400.00);
-
--- Insert sample payments
-INSERT INTO Payments (payment_id, job_id, amount, type, status, client_id, freelancer_id, transaction_id) 
-VALUES (payment_seq.NEXTVAL, 1, 4500.00, 'client_payment', 'pending', 1, 3, 'TXN001');
-
-INSERT INTO Payments (payment_id, job_id, amount, type, status, client_id, freelancer_id, transaction_id) 
-VALUES (payment_seq.NEXTVAL, 2, 3000.00, 'client_payment', 'pending', 2, 3, 'TXN002');
-
-INSERT INTO Payments (payment_id, job_id, amount, type, status, client_id, freelancer_id, transaction_id) 
-VALUES (payment_seq.NEXTVAL, 1, 4050.00, 'freelancer_payout', 'completed', 1, 3, 'PAYOUT001');
 
 COMMIT;

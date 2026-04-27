@@ -370,6 +370,150 @@
             overflow: hidden;
         }
         
+        /* ── Provenance Data Explorer ── */
+        .explorer-outer {
+            background: #f0f2f5;
+            min-height: 100%;
+            padding: 0;
+        }
+
+        .explorer-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 20px;
+        }
+
+        .explorer-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+            padding: 36px 36px 40px;
+        }
+
+        .explorer-select-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .explorer-select {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 320px;
+            padding: 11px 40px 11px 16px;
+            font-size: 15px;
+            color: #1a202c;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 14px center;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .explorer-select:focus {
+            border-color: #6366f1;
+        }
+
+        .explorer-table-section {
+            margin-top: 36px;
+            display: none;
+        }
+
+        .explorer-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .explorer-table-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .explorer-add-btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: 1.5px solid #d1d5db;
+            background: #f9fafb;
+            color: #9ca3af;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: not-allowed;
+        }
+
+        .explorer-table-wrap {
+            overflow-x: auto;
+        }
+
+        .explorer-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .explorer-data-table thead tr {
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .explorer-data-table th {
+            text-align: left;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .explorer-data-table th:last-child {
+            text-align: right;
+        }
+
+        .explorer-data-table td {
+            padding: 14px 18px;
+            color: #374151;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .explorer-data-table td:last-child {
+            text-align: right;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .explorer-data-table tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .explorer-data-table tbody tr:hover {
+            background: #f0f4ff;
+        }
+
+        .explorer-loading {
+            text-align: center;
+            padding: 40px 0;
+            color: #9ca3af;
+            font-size: 15px;
+        }
+
+        .explorer-empty {
+            text-align: center;
+            padding: 40px 0;
+            color: #9ca3af;
+            font-size: 15px;
+        }
+
+        .explorer-null {
+            color: #d1d5db;
+            font-style: italic;
+        }
+
         @media (max-width: 1100px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -407,6 +551,7 @@
         <button onclick="loadSection('postJob', event)" id="postJobBtn"><i class="fas fa-plus-circle"></i> Post Project</button>
         <button onclick="loadSection('updateJob', event)" id="updateJobBtn"><i class="fas fa-edit"></i> Update Job</button>
         <button onclick="loadSection('provenance', event)" id="provenanceBtn"><i class="fas fa-history"></i> Provenance</button>
+        <button onclick="loadSection('explorer', event)" id="explorerBtn"><i class="fas fa-table"></i> Data Explorer</button>
         <button onclick="loadSection('freelancerProfile', event)" id="freelancerProfileBtn"><i class="fas fa-user"></i> Freelancer Profile</button>
         <button onclick="downloadSystemReport()" id="systemReportBtn"><i class="fas fa-download"></i> System Report</button>
         <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -532,6 +677,33 @@
         </div>
 
         <iframe id="contentFrame" class="content-frame" title="Admin dashboard content"></iframe>
+
+        <!-- ── Provenance Data Explorer ── -->
+        <div id="explorerContent" class="explorer-outer" style="display:none;">
+            <div class="explorer-card">
+                <p class="explorer-title">Provenance Data Explorer</p>
+
+                <label class="explorer-select-label" for="explorerTableSelect">Select a Table</label>
+                <select id="explorerTableSelect" class="explorer-select" onchange="explorerLoadTable()">
+                    <option value="">-- Select --</option>
+                </select>
+
+                <div id="explorerTableSection" class="explorer-table-section">
+                    <div class="explorer-table-header">
+                        <span class="explorer-table-title" id="explorerTableTitle">Data for: —</span>
+                        <button class="explorer-add-btn" disabled>Add New Record</button>
+                    </div>
+                    <div class="explorer-table-wrap">
+                        <table class="explorer-data-table">
+                            <thead><tr id="explorerColHeaders"></tr></thead>
+                            <tbody id="explorerTableBody">
+                                <tr><td colspan="20" class="explorer-loading">Select a table to view its data.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -581,10 +753,9 @@
         }
 
         function openFramePage(page, buttonId) {
-            const dashboardContent = document.getElementById('dashboardContent');
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('explorerContent').style.display = 'none';
             const frame = document.getElementById('contentFrame');
-
-            dashboardContent.style.display = 'none';
             frame.style.display = 'block';
             frame.src = page;
             setActiveButton(buttonId);
@@ -601,6 +772,7 @@
             switch (section) {
                 case 'dashboard':
                     dashboardContent.style.display = 'block';
+                    document.getElementById('explorerContent').style.display = 'none';
                     frame.style.display = 'none';
                     frame.src = 'about:blank';
                     frame.style.height = '650px';
@@ -616,6 +788,9 @@
                     break;
                 case 'provenance':
                     openFramePage('viewProvenance.html', 'provenanceBtn');
+                    break;
+                case 'explorer':
+                    openExplorer();
                     break;
                 case 'freelancerProfile':
                     openFramePage('freelancerprofile.html', 'freelancerProfileBtn');
@@ -820,6 +995,84 @@ STORES TRACKED:
             anchor.click();
             globalThis.URL.revokeObjectURL(url);
         }
+
+        // ── Provenance Data Explorer ──────────────────────────────────────────
+
+        async function openExplorer() {
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('contentFrame').style.display = 'none';
+            document.getElementById('contentFrame').src = 'about:blank';
+            document.getElementById('explorerContent').style.display = 'block';
+            setActiveButton('explorerBtn');
+
+            // Populate dropdown if not already done
+            const sel = document.getElementById('explorerTableSelect');
+            if (sel.options.length <= 1) {
+                try {
+                    const res = await fetch(`${API_URL}/explorer/tables`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        data.tables.forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t;
+                            opt.textContent = t;
+                            sel.appendChild(opt);
+                        });
+                    }
+                } catch (e) {
+                    console.error('Explorer: failed to load table list', e.message);
+                }
+            }
+        }
+
+        async function explorerLoadTable() {
+            const tableName = document.getElementById('explorerTableSelect').value;
+            const section = document.getElementById('explorerTableSection');
+            const titleEl = document.getElementById('explorerTableTitle');
+            const thead = document.getElementById('explorerColHeaders');
+            const tbody = document.getElementById('explorerTableBody');
+
+            if (!tableName) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            titleEl.textContent = `Data for: ${tableName}`;
+            tbody.innerHTML = `<tr><td colspan="20" class="explorer-loading">Loading…</td></tr>`;
+            thead.innerHTML = '';
+
+            try {
+                const res = await fetch(`${API_URL}/explorer/${encodeURIComponent(tableName)}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                // Build header row
+                thead.innerHTML = data.columns.map(col =>
+                    `<th>${escapeHtml(col)}</th>`
+                ).join('') + '<th>Actions</th>';
+
+                if (data.rows.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="${data.columns.length + 1}" class="explorer-empty">No records found.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.rows.map(row =>
+                    `<tr>${data.columns.map(col => {
+                        const val = row[col];
+                        const isNull = val === 'null' || val === null || val === undefined;
+                        return `<td>${isNull ? '<span class="explorer-null">null</span>' : escapeHtml(String(val))}</td>`;
+                    }).join('')}<td>—</td></tr>`
+                ).join('');
+
+            } catch (e) {
+                thead.innerHTML = '';
+                tbody.innerHTML = `<tr><td colspan="20" class="explorer-empty">Error: ${escapeHtml(e.message)}</td></tr>`;
+                console.error('Explorer load error:', e);
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
 
         document.addEventListener('click', function(event) {
             const dropdown = document.getElementById('notificationDropdown');

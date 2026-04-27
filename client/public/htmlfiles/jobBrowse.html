@@ -1093,9 +1093,8 @@
                     const maxId = Math.max(...jobs.map(j => j.id), 0);
                     let addedCount = 0;
                     dbJobs.forEach((dj, i) => {
-                        // Skip if already in hardcoded list by title match
-                        if (jobs.some(j => j.title === dj.title)) {
-                            console.log('⏭️  Skipping duplicate job:', dj.title);
+                        // Skip if this DB job is already tracked (by dbJobId)
+                        if (jobs.some(j => j.dbJobId === dj.jobId)) {
                             return;
                         }
                         addedCount++;

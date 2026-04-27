@@ -8,6 +8,7 @@ const jobRoutes = require('./routes/job');
 const paymentRoutes = require('./routes/payment');
 const freelancerRoutes = require('./routes/freelancer');
 const notificationRoutes = require('./routes/notifications');
+const explorerRoutes = require('./routes/explorer');
 
 const app = express();
 const shouldTestDbOnStartup = process.env.DB_CHECK_ON_STARTUP === 'true';
@@ -32,6 +33,7 @@ app.use('/api/jobs', jobRoutes); // Includes /api/jobs/projects endpoint
 app.use('/api/payments', paymentRoutes);
 app.use('/api/freelancers', freelancerRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/explorer', explorerRoutes);
 
 // Serve client static files
 const clientPublicPath = path.resolve(__dirname, '..', 'client', 'public');

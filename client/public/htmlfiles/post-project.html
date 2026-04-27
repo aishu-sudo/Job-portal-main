@@ -382,27 +382,13 @@
                     console.warn('API unavailable, saving locally:', err.message);
                 }
 
-                // Always save to localStorage for offline/notification use
-                const freelancerNotifications = JSON.parse(localStorage.getItem('freelancerNotifications')) || [];
-                freelancerNotifications.unshift({
-                    id: Date.now().toString(),
-                    type: 'new_project',
-                    title: 'New Job Posted',
-                    message: `A new ${formData.jobType} job "${formData.title}" has been posted by ${formData.company}`,
-                    time: new Date().toISOString(),
-                    read: false,
-                    projectData: formData,
-                    priority: 'high'
-                });
-                localStorage.setItem('freelancerNotifications', JSON.stringify(freelancerNotifications));
-
-                const projects = JSON.parse(localStorage.getItem('projects')) || [];
-                projects.unshift(formData);
-                localStorage.setItem('projects', JSON.stringify(projects));
-                localStorage.setItem('freelancerNotificationCount', freelancerNotifications.filter(n => !n.read).length);
-
-                alert('Project posted successfully!');
-                window.parent.location.href = 'clientDashboard.html';
+                alert('Project posted successfully! Freelancers will see it in their dashboard.');
+                // Navigate back to client dashboard
+                if (window.parent && window.parent !== window) {
+                    window.parent.location.href = 'clientDashboard.html';
+                } else {
+                    window.location.href = 'clientDashboard.html';
+                }
             });
 
             // Make removeSkill available globally for the skill tags

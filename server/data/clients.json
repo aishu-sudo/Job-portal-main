@@ -1,22 +1,10 @@
 [
   {
-    "name": "oishi jaman",
-    "email": "aishoozaman@gmail.com",
+    "id": 1777303241665,
+    "name": "aishu zaman",
+    "email": "aishuzaman@gmail.com",
     "role": "client",
-    "createdAt": "2026-04-16T17:27:02.995Z"
-  },
-  {
-    "name": "oishi jaman",
-    "email": "aishoozaman012@gmail.com",
-    "role": "client",
-    "createdAt": "2026-04-16T19:11:33.865Z"
-  },
-  {
-    "id": 1776487312996,
-    "name": "Rahim khan",
-    "email": "rahim@test.com",
-    "role": "client",
-    "password": "$2b$10$yPZLplbBZogr4FvuSeAu9eKuFT4zKyoMi1yscTEVdv8BQyDQEeDu6",
-    "createdAt": "2026-04-18T04:41:52.996Z"
+    "password": "$2b$10$X/T37YvXnXT2KVErWjXPFukvBoKJRLMjkwnL3oO.GLLGmThl8qp0u",
+    "createdAt": "2026-04-27T15:20:41.665Z"
   }
 ]

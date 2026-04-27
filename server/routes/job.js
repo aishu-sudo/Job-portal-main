@@ -19,7 +19,7 @@ function mapJobRow(row) {
 // POST / - Create a new job
 router.post('/', async(req, res) => {
     const { title, description, budget, category, clientId } = req.body;
-    if (!title || !budget || !clientId) {
+    if (!title || budget == null || budget === '' || !clientId) {
         return res.status(400).json({ error: 'title, budget, and clientId are required' });
     }
     let conn;
@@ -182,6 +182,7 @@ router.get('/browse', async(req, res) => {
         const result = await conn.execute(
             `SELECT job_id, title, description, budget, category, status, client_id, created_at
              FROM Jobs
+             WHERE status = 'open'
              ORDER BY created_at DESC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
         console.log('📋 Browse: Returning', result.rows.length, 'jobs');
@@ -411,32 +412,36 @@ router.put('/:jobId/status', async(req, res) => {
     try {
         conn = await getConnection();
 
-        // Extract user name from changedBy (format: "UserName (ROLE)")
         let auditChangedBy = changedBy || 'SYSTEM';
         if (changedBy && changedBy.includes('(')) {
-            // Keep the full format "UserName (ROLE)" for better audit trail
             auditChangedBy = changedBy;
         }
 
-        // Check last status for this job
-        const lastStatusResult = await conn.execute(
-            `SELECT new_status, changed_by, change_reason FROM Audit_Jobs WHERE job_id = :jobId AND new_status IS NOT NULL ORDER BY timestamp DESC FETCH FIRST 1 ROW ONLY`, { jobId: Number(jobId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        // Guard: read the actual current status from Jobs table.
+        // If it already matches the requested status, no real change is happening —
+        // skip the stored proc so no duplicate audit row is written.
+        const currentJobResult = await conn.execute(
+            `SELECT status FROM Jobs WHERE job_id = :jobId`,
+            { jobId: Number(jobId) },
+            { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
-        const lastStatus = lastStatusResult.rows && lastStatusResult.rows.length > 0 ? lastStatusResult.rows[0].NEW_STATUS : null;
-        const lastChangedBy = lastStatusResult.rows && lastStatusResult.rows.length > 0 ? lastStatusResult.rows[0].CHANGED_BY : null;
-        const lastReason = lastStatusResult.rows && lastStatusResult.rows.length > 0 ? lastStatusResult.rows[0].CHANGE_REASON : null;
-
-        // Only update if status, user, or reason is different (prevent duplicate)
-        if (lastStatus !== status || lastChangedBy !== auditChangedBy || (reason && lastReason !== reason)) {
-            await conn.execute(
-                `BEGIN update_job_status_p(:jobId, :status, :changedBy, :reason); END;`, {
-                    jobId: Number(jobId),
-                    status,
-                    changedBy: auditChangedBy,
-                    reason: reason || 'Status updated'
-                }, { autoCommit: true }
-            );
+        if (!currentJobResult.rows || currentJobResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Job not found' });
         }
+        const currentStatus = currentJobResult.rows[0].STATUS;
+
+        if (currentStatus === status) {
+            return res.json({ message: 'Job status unchanged', jobId, newStatus: status });
+        }
+
+        await conn.execute(
+            `BEGIN update_job_status_p(:jobId, :status, :changedBy, :reason); END;`, {
+                jobId: Number(jobId),
+                status,
+                changedBy: auditChangedBy,
+                reason: reason || 'Status updated'
+            }, { autoCommit: true }
+        );
 
         res.json({ message: 'Job status updated successfully', jobId, newStatus: status });
     } catch (error) {
