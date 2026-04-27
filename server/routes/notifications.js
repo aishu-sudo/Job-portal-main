@@ -394,6 +394,9 @@ router.get('/freelancer/:freelancerId/new-jobs', async(req, res) => {
             icon: '🆕'
         }));
 
+        // Debug logging
+        console.log('DEBUG newJobs raw rows:', result.rows);
+        console.log('DEBUG mapped newJobs:', newJobs);
         console.log(`✅ Found ${newJobs.length} new jobs for freelancer ${freelancerId}`);
 
         res.json({
@@ -435,9 +438,7 @@ router.get('/admin', async(req, res) => {
              JOIN Users f ON a.freelancer_id = f.user_id
              JOIN Users c ON j.client_id   = c.user_id
              ORDER BY a.created_at DESC
-             FETCH FIRST 100 ROWS ONLY`,
-            [],
-            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+             FETCH FIRST 100 ROWS ONLY`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
 
         const notifications = [];

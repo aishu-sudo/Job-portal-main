@@ -354,40 +354,55 @@
                     status: 'active'
                 };
 
-                // Try to post to the real API
-                try {
-                    const clientId = localStorage.getItem('userId');
-                    const token = localStorage.getItem('token');
-                    if (clientId && token) {
-                        const res = await fetch(`${window.API_BASE || 'http://localhost:5000'}/api/jobs`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: JSON.stringify({
-                                title,
-                                description,
-                                budget: Number(salaryMax) || Number(salaryMin) || 0,
-                                category: jobType || 'general',
-                                clientId: Number(clientId)
-                            })
-                        });
-                        if (res.ok) {
-                            const job = await res.json();
-                            formData.projectId = String(job.jobId);
-                        }
-                    }
-                } catch (err) {
-                    console.warn('API unavailable, saving locally:', err.message);
+                // Post to API — must succeed before redirecting
+                const clientId = localStorage.getItem('userId');
+                const token = localStorage.getItem('token');
+
+                if (!clientId || !token) {
+                    alert('You are not logged in. Please log in as a client first.');
+                    return;
                 }
 
-                alert('Project posted successfully! Freelancers will see it in their dashboard.');
-                // Navigate back to client dashboard
-                if (window.parent && window.parent !== window) {
-                    window.parent.location.href = 'clientDashboard.html';
-                } else {
-                    window.location.href = 'clientDashboard.html';
+                let apiOk = false;
+                try {
+                    const res = await fetch(`${window.API_BASE || 'http://localhost:5000'}/api/jobs`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            title,
+                            description,
+                            budget: Number(salaryMax) || Number(salaryMin) || 0,
+                            category: jobType || 'general',
+                            clientId: Number(clientId)
+                        })
+                    });
+
+                    if (res.ok) {
+                        const job = await res.json();
+                        formData.projectId = String(job.jobId);
+                        apiOk = true;
+                    } else {
+                        const err = await res.json().catch(() => ({}));
+                        console.error('Job post failed:', err);
+                        alert('Failed to post project: ' + (err.error || err.details || `Server error ${res.status}`));
+                        return;
+                    }
+                } catch (err) {
+                    console.error('Network error posting job:', err.message);
+                    alert('Network error: could not reach the server. Make sure the server is running.');
+                    return;
+                }
+
+                if (apiOk) {
+                    alert('Project posted successfully! Freelancers will see it in their dashboard.');
+                    if (window.parent && window.parent !== window) {
+                        window.parent.location.href = 'clientDashboard.html';
+                    } else {
+                        window.location.href = 'clientDashboard.html';
+                    }
                 }
             });
 

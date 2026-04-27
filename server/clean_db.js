@@ -1,10 +1,12 @@
 /**
  * clean_db.js
- * Deletes ALL rows from every table and resets every sequence back to 1.
- * Keeps the schema (tables, procedures, triggers) completely intact.
+ * Deletes ALL rows from every table, resets every sequence back to 1,
+ * and clears the JSON data files so they stay in sync with the DB.
  * Run once: node clean_db.js
  */
 const oracledb = require('oracledb');
+const fs = require('fs').promises;
+const path = require('path');
 
 async function run() {
     let conn;
@@ -75,7 +77,21 @@ async function run() {
             console.log(`  ${t.padEnd(24)} ${count === 0 ? '✓ empty' : `!! ${count} rows remain`}`);
         }
 
-        console.log('\nDone. All tables are empty, all sequences start at 1.');
+        // ── STEP 3b: Clear JSON data files (keep in sync with DB) ───────────
+        console.log('\n=== CLEARING JSON DATA FILES ===');
+        const dataDir = path.join(__dirname, 'data');
+        const jsonFiles = ['clients.json', 'freelancers.json', 'admins.json'];
+        for (const file of jsonFiles) {
+            const filePath = path.join(dataDir, file);
+            try {
+                await fs.writeFile(filePath, '[]\n', 'utf8');
+                console.log(`  ${file.padEnd(22)} cleared`);
+            } catch (e) {
+                console.log(`  ${file.padEnd(22)} skipped (${e.message})`);
+            }
+        }
+
+        console.log('\nDone. All tables are empty, all sequences start at 1, JSON files cleared.');
         console.log('Restart the server, then register users and post jobs from the app.\n');
 
     } catch (e) {

@@ -1,11 +1,10 @@
 [
-
-    {
-        "id": 1777303100581,
-        "name": "azan ahmed",
-        "email": "azan@gmail.com",
-        "role": "freelancer",
-        "password": "$2b$10$zEnbIgfuuiaLs1RmlGLUMONUoYOslGHHZMJ5SE/zxpO5.YHAg7TbW",
-        "createdAt": "2026-04-27T15:18:20.581Z"
-    }
+  {
+    "id": 1777306913819,
+    "name": "azan zaman",
+    "email": "azanzaman@gmail.com",
+    "role": "freelancer",
+    "password": "$2b$10$ludx4BCE7FlzDGonMN1pc.FnCbtZq2aCJbXKTsmxAMlzNvkmycoFy",
+    "createdAt": "2026-04-27T16:21:53.819Z"
+  }
 ]

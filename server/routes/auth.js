@@ -122,9 +122,11 @@ router.post('/login', async(req, res) => {
 
     let conn;
     let dbUser = null;
+    let dbReachable = false;
 
     try {
         conn = await getConnection();
+        dbReachable = true;
         const result = await conn.execute(
             `SELECT user_id, name, email, role, password FROM Users WHERE email = :email`, { email }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
@@ -135,23 +137,26 @@ router.post('/login', async(req, res) => {
         if (conn) { try { await conn.close(); } catch (e) {} }
     }
 
-    if (dbUser) {
+    // DB is up — only trust the DB. If user not found there, reject immediately.
+    // (Never fall back to JSON files when DB is reachable — stale file IDs break FK constraints.)
+    if (dbReachable) {
+        if (!dbUser) return res.status(401).json({ error: 'Invalid email or password' });
         const match = await verifyPassword(password, dbUser.PASSWORD);
         if (!match) return res.status(401).json({ error: 'Invalid email or password' });
-        const token = jwt.sign({ userId: dbUser.USER_ID, name: dbUser.NAME, email: dbUser.EMAIL, role: dbUser.ROLE },
+        const token = jwt.sign(
+            { userId: dbUser.USER_ID, name: dbUser.NAME, email: dbUser.EMAIL, role: dbUser.ROLE },
             JWT_SECRET, { expiresIn: '7d' }
         );
         return res.json({ token, user: { id: dbUser.USER_ID, name: dbUser.NAME, email: dbUser.EMAIL, role: dbUser.ROLE } });
     }
 
-    // Fallback: check JSON files
+    // DB completely unreachable — fallback to JSON files only in this case
     const fileUser = await findUserInFiles(email);
     if (!fileUser) return res.status(401).json({ error: 'Invalid email or password' });
-
     const match = await verifyPassword(password, fileUser.password);
     if (!match) return res.status(401).json({ error: 'Invalid email or password' });
-
-    const token = jwt.sign({ userId: fileUser.id, name: fileUser.name, email: fileUser.email, role: fileUser.role },
+    const token = jwt.sign(
+        { userId: fileUser.id, name: fileUser.name, email: fileUser.email, role: fileUser.role },
         JWT_SECRET, { expiresIn: '7d' }
     );
     res.json({ token, user: { id: fileUser.id, name: fileUser.name, email: fileUser.email, role: fileUser.role } });
