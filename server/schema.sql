@@ -283,6 +283,24 @@ END update_payment_status_p;
 
 -- TRIGGERS FOR AUTOMATIC PROVENANCE LOGGING
 
+-- Trigger for automatic INSERT audit logging on Users
+CREATE OR REPLACE TRIGGER trg_user_insert
+AFTER INSERT ON Users
+FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Users (audit_id, user_id, old_role, new_role, operation_type, timestamp, changed_by, change_reason)
+    VALUES (audit_user_seq.NEXTVAL, :NEW.user_id, NULL, :NEW.role, 'INSERT', SYSDATE, :NEW.name, 'User registered');
+END;
+/
+
+-- Trigger for UPDATE on Users (body empty — route handles audit with changedBy name)
+CREATE OR REPLACE TRIGGER trg_user_update
+AFTER UPDATE ON Users
+FOR EACH ROW
+BEGIN
+    NULL;
+END;
+/
 
 -- Trigger for automatic INSERT audit logging on Jobs
 -- NOTE: Body is intentionally empty — the backend inserts the audit record
@@ -330,13 +348,16 @@ END;
 /
 
 -- Trigger for automatic INSERT audit logging on Payments
--- NOTE: Body is intentionally empty — insert_payment_p stored procedure
--- handles the audit insert. Both would create duplicates.
 CREATE OR REPLACE TRIGGER trg_payment_insert
 AFTER INSERT ON Payments
 FOR EACH ROW
 BEGIN
-    NULL;
+    INSERT INTO Audit_Payments (audit_id, payment_id, job_id, old_status, new_status,
+                                old_amount, new_amount, old_type, new_type,
+                                operation_type, timestamp, changed_by, source_table, affected_row_id)
+    VALUES (audit_payment_seq.NEXTVAL, :NEW.payment_id, :NEW.job_id,
+            NULL, :NEW.status, NULL, :NEW.amount, NULL, :NEW.type,
+            'INSERT', SYSDATE, 'SYSTEM', 'Payments', :NEW.payment_id);
 END;
 /
 

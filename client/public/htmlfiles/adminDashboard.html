@@ -514,6 +514,141 @@
             font-style: italic;
         }
 
+        /* ── Manage Users ── */
+        .users-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+            padding: 36px;
+        }
+        .users-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 24px;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .users-table thead tr {
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .users-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            white-space: nowrap;
+        }
+        .users-table td {
+            padding: 14px 16px;
+            color: #374151;
+            vertical-align: middle;
+        }
+        .users-table tbody tr:nth-child(even) { background: #f9fafb; }
+        .users-table tbody tr:hover { background: #f0f4ff; }
+        .role-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .role-badge.client     { background: #dbeafe; color: #1d4ed8; }
+        .role-badge.freelancer { background: #d1fae5; color: #065f46; }
+        .role-badge.admin      { background: #fde8d8; color: #9a3412; }
+        .role-select {
+            padding: 5px 10px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+        }
+        .role-save-btn {
+            margin-left: 8px;
+            padding: 5px 14px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .role-save-btn:hover { background: #1565c0; }
+        .users-msg {
+            text-align: center;
+            padding: 40px 0;
+            color: #9ca3af;
+            font-size: 15px;
+        }
+
+        /* ── Admin Profile ── */
+        .profile-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+            padding: 48px 36px;
+            max-width: 520px;
+        }
+        .profile-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0c2333, #1976d2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 4px;
+        }
+        .profile-role-badge {
+            display: inline-block;
+            background: #fde8d8;
+            color: #9a3412;
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 28px;
+        }
+        .profile-info-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 0;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+            font-size: 15px;
+        }
+        .profile-info-row:last-child { border-bottom: none; }
+        .profile-info-row i {
+            width: 20px;
+            color: #1976d2;
+            font-size: 16px;
+            text-align: center;
+        }
+        .profile-info-label {
+            font-weight: 600;
+            width: 80px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
         @media (max-width: 1100px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -552,7 +687,8 @@
         <button onclick="loadSection('updateJob', event)" id="updateJobBtn"><i class="fas fa-edit"></i> Update Job</button>
         <button onclick="loadSection('provenance', event)" id="provenanceBtn"><i class="fas fa-history"></i> Provenance</button>
         <button onclick="loadSection('explorer', event)" id="explorerBtn"><i class="fas fa-table"></i> Data Explorer</button>
-        <button onclick="loadSection('freelancerProfile', event)" id="freelancerProfileBtn"><i class="fas fa-user"></i> Freelancer Profile</button>
+        <button onclick="loadSection('manageUsers', event)" id="manageUsersBtn"><i class="fas fa-users-cog"></i> Manage Users</button>
+        <button onclick="loadSection('freelancerProfile', event)" id="freelancerProfileBtn"><i class="fas fa-user"></i> Admin Profile</button>
         <button onclick="downloadSystemReport()" id="systemReportBtn"><i class="fas fa-download"></i> System Report</button>
         <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
@@ -678,6 +814,60 @@
 
         <iframe id="contentFrame" class="content-frame" title="Admin dashboard content"></iframe>
 
+        <!-- ── Admin Profile ── -->
+        <div id="adminProfileContent" style="display:none;">
+            <div class="profile-card">
+                <div class="profile-avatar"><i class="fas fa-user-shield"></i></div>
+                <div class="profile-name" id="profileName">—</div>
+                <div class="profile-role-badge">Admin</div>
+
+                <div class="profile-info-row">
+                    <i class="fas fa-envelope"></i>
+                    <span class="profile-info-label">Email</span>
+                    <span id="profileEmail">—</span>
+                </div>
+                <div class="profile-info-row">
+                    <i class="fas fa-id-badge"></i>
+                    <span class="profile-info-label">User ID</span>
+                    <span id="profileId">—</span>
+                </div>
+                <div class="profile-info-row">
+                    <i class="fas fa-shield-halved"></i>
+                    <span class="profile-info-label">Role</span>
+                    <span style="font-weight:600;color:#9a3412;">Admin</span>
+                </div>
+                <div class="profile-info-row">
+                    <i class="fas fa-circle-check"></i>
+                    <span class="profile-info-label">Access</span>
+                    <span style="color:#065f46;font-weight:600;">Full system access</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Manage Users ── -->
+        <div id="manageUsersContent" style="display:none;">
+            <div class="users-card">
+                <p class="users-title"><i class="fas fa-users-cog" style="color:#1976d2;margin-right:10px;"></i>Manage Users</p>
+                <div style="overflow-x:auto;">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>user_id</th>
+                                <th>name</th>
+                                <th>email</th>
+                                <th>current role</th>
+                                <th>change role</th>
+                                <th>created_at</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="6" class="users-msg">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- ── Provenance Data Explorer ── -->
         <div id="explorerContent" class="explorer-outer" style="display:none;">
             <div class="explorer-card">
@@ -755,6 +945,8 @@
         function openFramePage(page, buttonId) {
             document.getElementById('dashboardContent').style.display = 'none';
             document.getElementById('explorerContent').style.display = 'none';
+            document.getElementById('manageUsersContent').style.display = 'none';
+            document.getElementById('adminProfileContent').style.display = 'none';
             const frame = document.getElementById('contentFrame');
             frame.style.display = 'block';
             frame.src = page;
@@ -773,6 +965,8 @@
                 case 'dashboard':
                     dashboardContent.style.display = 'block';
                     document.getElementById('explorerContent').style.display = 'none';
+                    document.getElementById('manageUsersContent').style.display = 'none';
+                    document.getElementById('adminProfileContent').style.display = 'none';
                     frame.style.display = 'none';
                     frame.src = 'about:blank';
                     frame.style.height = '650px';
@@ -791,6 +985,9 @@
                     break;
                 case 'explorer':
                     openExplorer();
+                    break;
+                case 'manageUsers':
+                    openManageUsers();
                     break;
                 case 'freelancerProfile':
                     openFramePage('freelancerprofile.html', 'freelancerProfileBtn');
@@ -996,12 +1193,113 @@ STORES TRACKED:
             globalThis.URL.revokeObjectURL(url);
         }
 
+        // ── Admin Profile ────────────────────────────────────────────────────
+
+        function openAdminProfile() {
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('contentFrame').style.display = 'none';
+            document.getElementById('contentFrame').src = 'about:blank';
+            document.getElementById('explorerContent').style.display = 'none';
+            document.getElementById('manageUsersContent').style.display = 'none';
+            document.getElementById('adminProfileContent').style.display = 'block';
+            setActiveButton('adminProfileBtn');
+
+            document.getElementById('profileName').textContent  = localStorage.getItem('userName')  || '—';
+            document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || '—';
+            document.getElementById('profileId').textContent    = localStorage.getItem('userId')    || '—';
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+
+        // ── Manage Users ─────────────────────────────────────────────────────
+
+        async function openManageUsers() {
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('contentFrame').style.display = 'none';
+            document.getElementById('contentFrame').src = 'about:blank';
+            document.getElementById('explorerContent').style.display = 'none';
+            document.getElementById('adminProfileContent').style.display = 'none';
+            document.getElementById('manageUsersContent').style.display = 'block';
+            setActiveButton('manageUsersBtn');
+            await loadUsersTable();
+        }
+
+        async function loadUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="users-msg">Loading…</td></tr>';
+            try {
+                const res = await fetch(`${API_URL}/users`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const users = await res.json();
+
+                if (!users.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="users-msg">No users found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = users.map(u => {
+                    const badgeClass = u.role === 'admin' ? 'admin' : u.role === 'client' ? 'client' : 'freelancer';
+                    const createdAt = u.createdAt ? new Date(u.createdAt).toLocaleString() : '—';
+                    return `<tr>
+                        <td>${u.userId}</td>
+                        <td><strong>${escapeHtml(u.name)}</strong></td>
+                        <td style="color:#6b7280;">${escapeHtml(u.email)}</td>
+                        <td><span class="role-badge ${badgeClass}">${u.role}</span></td>
+                        <td>
+                            <select class="role-select" id="role-select-${u.userId}">
+                                <option value="client"     ${u.role==='client'     ? 'selected':''}>client</option>
+                                <option value="freelancer" ${u.role==='freelancer' ? 'selected':''}>freelancer</option>
+                                <option value="admin"      ${u.role==='admin'      ? 'selected':''}>admin</option>
+                            </select>
+                            <button class="role-save-btn" onclick="saveUserRole(${u.userId}, '${escapeHtml(u.name)}')">Save</button>
+                        </td>
+                        <td style="color:#9ca3af;font-size:13px;">${createdAt}</td>
+                    </tr>`;
+                }).join('');
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" class="users-msg">Error: ${escapeHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        async function saveUserRole(userId, userName) {
+            const sel = document.getElementById(`role-select-${userId}`);
+            if (!sel) return;
+            const newRole = sel.value;
+            const adminName = localStorage.getItem('userName') || 'Admin';
+
+            try {
+                const res = await fetch(`${API_URL}/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newRole, changedBy: adminName })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert('Error: ' + (data.error || data.details || 'Failed'));
+                    return;
+                }
+                if (data.message === 'Role unchanged') {
+                    alert(`${userName} already has role "${newRole}".`);
+                    return;
+                }
+                alert(`✓ ${userName}: ${data.oldRole} → ${data.newRole}\nAudit_Users updated.`);
+                await loadUsersTable(); // refresh the table
+            } catch (e) {
+                alert('Network error: ' + e.message);
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+
         // ── Provenance Data Explorer ──────────────────────────────────────────
 
         async function openExplorer() {
             document.getElementById('dashboardContent').style.display = 'none';
             document.getElementById('contentFrame').style.display = 'none';
             document.getElementById('contentFrame').src = 'about:blank';
+            document.getElementById('manageUsersContent').style.display = 'none';
+            document.getElementById('adminProfileContent').style.display = 'none';
             document.getElementById('explorerContent').style.display = 'block';
             setActiveButton('explorerBtn');
 

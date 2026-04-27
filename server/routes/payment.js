@@ -88,7 +88,7 @@ router.get('/client/:clientId', async(req, res) => {
     }
 });
 
-// Get all payouts for a freelancer
+// Get all payments for a freelancer (both client_payment and freelancer_payout)
 router.get('/freelancer/:freelancerId', async(req, res) => {
     const { freelancerId } = req.params;
     let conn;
@@ -96,13 +96,30 @@ router.get('/freelancer/:freelancerId', async(req, res) => {
     try {
         conn = await getConnection();
         const result = await conn.execute(
-            `SELECT payment_id, job_id, amount, payment_date, type, status, client_id, freelancer_id, transaction_id, error_message
-             FROM Payments
-             WHERE freelancer_id = :freelancerId AND type = 'freelancer_payout'
-             ORDER BY payment_date DESC`, { freelancerId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            `SELECT p.payment_id, p.job_id, p.amount, p.payment_date, p.type, p.status,
+                    p.client_id, p.freelancer_id, p.transaction_id, p.error_message, p.created_at,
+                    j.title AS job_title
+             FROM Payments p
+             LEFT JOIN Jobs j ON p.job_id = j.job_id
+             WHERE p.freelancer_id = :freelancerId
+             ORDER BY p.created_at DESC`,
+            { freelancerId: Number(freelancerId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
 
-        res.json(result.rows.map(mapPaymentRow));
+        res.json(result.rows.map(row => ({
+            paymentId:    row.PAYMENT_ID,
+            jobId:        row.JOB_ID,
+            jobTitle:     row.JOB_TITLE || `Job #${row.JOB_ID}`,
+            amount:       row.AMOUNT,
+            paymentDate:  row.PAYMENT_DATE,
+            type:         row.TYPE,
+            status:       row.STATUS,
+            clientId:     row.CLIENT_ID,
+            freelancerId: row.FREELANCER_ID,
+            transactionId: row.TRANSACTION_ID,
+            errorMessage: row.ERROR_MESSAGE,
+            createdAt:    row.CREATED_AT
+        })));
     } catch (error) {
         res.status(500).json({ message: error.message });
     } finally {
@@ -110,10 +127,10 @@ router.get('/freelancer/:freelancerId', async(req, res) => {
     }
 });
 
-// Update payment status
+// Update payment status — uses stored procedure so Audit_Payments is written
 router.patch('/:paymentId/status', async(req, res) => {
     const { paymentId } = req.params;
-    const { status, errorMessage } = req.body;
+    const { status, changedBy, reason } = req.body;
     let conn;
 
     if (!status) {
@@ -123,12 +140,16 @@ router.patch('/:paymentId/status', async(req, res) => {
     try {
         conn = await getConnection();
         await conn.execute(
-            `UPDATE Payments
-             SET status = :status, error_message = :errorMessage
-             WHERE payment_id = :paymentId`, { status, errorMessage, paymentId }, { autoCommit: true }
+            `BEGIN update_payment_status_p(:paymentId, :status, :changedBy, :reason); END;`,
+            {
+                paymentId: Number(paymentId),
+                status,
+                changedBy: changedBy || 'FREELANCER',
+                reason:    reason    || 'Payment status updated'
+            },
+            { autoCommit: true }
         );
-
-        res.json({ message: 'Payment status updated' });
+        res.json({ message: 'Payment status updated', paymentId, newStatus: status });
     } catch (error) {
         res.status(500).json({ message: error.message });
     } finally {

@@ -208,6 +208,7 @@
         <button onclick="loadSection('dashboard')" id="dashboardBtn" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
         <button onclick="loadSection('jobBrowsing')" id="jobBrowsingBtn"><i class="fas fa-briefcase"></i> Browse Jobs</button>
 
+        <button onclick="loadSection('payments')" id="paymentsBtn"><i class="fas fa-wallet"></i> My Payments</button>
         <button onclick="loadSection('profile')" id="profileBtn"><i class="fas fa-user"></i> My Profile</button>
         <button onclick="logout()" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
@@ -279,6 +280,33 @@
         </div>
 
         <iframe id="contentFrame" class="content-frame" style="display: none;"></iframe>
+
+        <!-- My Payments Section -->
+        <div id="paymentsContent" style="display:none; padding: 0;">
+            <div style="background:white; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); padding:28px;">
+                <h2 style="color:#0c2333; margin-bottom:20px; font-size:20px;">
+                    <i class="fas fa-wallet" style="color:#1976d2; margin-right:8px;"></i> My Payments
+                </h2>
+                <div style="overflow-x:auto;">
+                    <table id="paymentsTable" style="width:100%; border-collapse:collapse; font-size:14px;">
+                        <thead>
+                            <tr style="border-bottom:2px solid #e5e7eb;">
+                                <th style="text-align:left; padding:10px 14px; color:#374151; font-size:13px;">payment_id</th>
+                                <th style="text-align:left; padding:10px 14px; color:#374151; font-size:13px;">job</th>
+                                <th style="text-align:left; padding:10px 14px; color:#374151; font-size:13px;">amount</th>
+                                <th style="text-align:left; padding:10px 14px; color:#374151; font-size:13px;">type</th>
+                                <th style="text-align:left; padding:10px 14px; color:#374151; font-size:13px;">status</th>
+                                <th style="text-align:left; padding:10px 14px; color:#374151; font-size:13px;">date</th>
+                                <th style="text-align:left; padding:10px 14px; color:#374151; font-size:13px;">action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody">
+                            <tr><td colspan="7" style="text-align:center; padding:30px; color:#9ca3af;">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="../scripts/config.js"></script>
@@ -373,9 +401,17 @@
             switch (section) {
                 case 'dashboard':
                     document.getElementById('dashboardContent').style.display = 'block';
+                    document.getElementById('paymentsContent').style.display = 'none';
                     frame.style.display = 'none';
                     break;
+                case 'payments':
+                    document.getElementById('dashboardContent').style.display = 'none';
+                    frame.style.display = 'none';
+                    document.getElementById('paymentsContent').style.display = 'block';
+                    loadMyPayments();
+                    break;
                 case 'jobBrowsing':
+                    document.getElementById('paymentsContent').style.display = 'none';
                     frame.src = 'jobBrowse.html';
                     break;
                 case 'applyJob':
@@ -422,6 +458,68 @@
                 dropdown.classList.remove('show');
             }
         });
+
+        async function loadMyPayments() {
+            const tbody = document.getElementById('paymentsTableBody');
+            const freelancerId = localStorage.getItem('userId');
+            if (!freelancerId) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#ef4444;">Not logged in.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#9ca3af;">Loading…</td></tr>';
+            try {
+                const res = await fetch(`${window.API_BASE || 'http://localhost:5000'}/api/payments/freelancer/${freelancerId}`);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const payments = await res.json();
+                if (!payments.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#9ca3af;">No payments found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = payments.map(p => {
+                    const statusColor = p.status === 'completed' ? '#065f46' : p.status === 'failed' ? '#991b1b' : '#92400e';
+                    const statusBg    = p.status === 'completed' ? '#d1fae5'  : p.status === 'failed' ? '#fee2e2'  : '#fef3c7';
+                    const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—';
+                    const actionBtn = p.status === 'pending'
+                        ? `<button onclick="markPaymentReceived(${p.paymentId})"
+                              style="background:#1976d2;color:white;border:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">
+                              Mark Received
+                           </button>`
+                        : '—';
+                    return `<tr style="${payments.indexOf(p) % 2 === 1 ? 'background:#f9fafb;' : ''}">
+                        <td style="padding:12px 14px;">${p.paymentId}</td>
+                        <td style="padding:12px 14px;font-weight:600;">${p.jobTitle}</td>
+                        <td style="padding:12px 14px;color:#1976d2;font-weight:700;">$${p.amount}</td>
+                        <td style="padding:12px 14px;color:#6b7280;">${p.type}</td>
+                        <td style="padding:12px 14px;">
+                            <span style="background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;">${p.status}</span>
+                        </td>
+                        <td style="padding:12px 14px;color:#9ca3af;font-size:13px;">${date}</td>
+                        <td style="padding:12px 14px;">${actionBtn}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#ef4444;">Error: ${e.message}</td></tr>`;
+            }
+        }
+
+        async function markPaymentReceived(paymentId) {
+            const freelancerName = localStorage.getItem('userName') || 'Freelancer';
+            try {
+                const res = await fetch(`${window.API_BASE || 'http://localhost:5000'}/api/payments/${paymentId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'completed',
+                        changedBy: freelancerName,
+                        reason: 'Payment received by freelancer'
+                    })
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                await loadMyPayments(); // refresh table
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
 
         function logout() {
             ['token', 'userId', 'userName', 'userEmail', 'userRole'].forEach(k => localStorage.removeItem(k));
