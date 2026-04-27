@@ -3,6 +3,23 @@ const oracledb = require('oracledb');
 const router = express.Router();
 const getConnection = require('../models/db');
 
+// DELETE /api/payments/:paymentId — permanently delete a payment
+router.delete('/:paymentId', async(req, res) => {
+    const { paymentId } = req.params;
+    let conn;
+    try {
+        conn = await getConnection();
+        await conn.execute(
+            'DELETE FROM Payments WHERE payment_id = :paymentId', { paymentId: Number(paymentId) }, { autoCommit: true }
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to delete payment', details: e.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
 function mapPaymentRow(row) {
     return {
         paymentId: row.PAYMENT_ID,
@@ -41,6 +58,9 @@ router.post('/client', async(req, res) => {
         if (conn) await conn.close();
     }
 });
+// ...existing code...
+
+module.exports = router;
 
 // Create a new freelancer payout
 router.post('/payout', async(req, res) => {
@@ -102,23 +122,22 @@ router.get('/freelancer/:freelancerId', async(req, res) => {
              FROM Payments p
              LEFT JOIN Jobs j ON p.job_id = j.job_id
              WHERE p.freelancer_id = :freelancerId
-             ORDER BY p.created_at DESC`,
-            { freelancerId: Number(freelancerId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+             ORDER BY p.created_at DESC`, { freelancerId: Number(freelancerId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
 
         res.json(result.rows.map(row => ({
-            paymentId:    row.PAYMENT_ID,
-            jobId:        row.JOB_ID,
-            jobTitle:     row.JOB_TITLE || `Job #${row.JOB_ID}`,
-            amount:       row.AMOUNT,
-            paymentDate:  row.PAYMENT_DATE,
-            type:         row.TYPE,
-            status:       row.STATUS,
-            clientId:     row.CLIENT_ID,
+            paymentId: row.PAYMENT_ID,
+            jobId: row.JOB_ID,
+            jobTitle: row.JOB_TITLE || `Job #${row.JOB_ID}`,
+            amount: row.AMOUNT,
+            paymentDate: row.PAYMENT_DATE,
+            type: row.TYPE,
+            status: row.STATUS,
+            clientId: row.CLIENT_ID,
             freelancerId: row.FREELANCER_ID,
             transactionId: row.TRANSACTION_ID,
             errorMessage: row.ERROR_MESSAGE,
-            createdAt:    row.CREATED_AT
+            createdAt: row.CREATED_AT
         })));
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -140,14 +159,12 @@ router.patch('/:paymentId/status', async(req, res) => {
     try {
         conn = await getConnection();
         await conn.execute(
-            `BEGIN update_payment_status_p(:paymentId, :status, :changedBy, :reason); END;`,
-            {
+            `BEGIN update_payment_status_p(:paymentId, :status, :changedBy, :reason); END;`, {
                 paymentId: Number(paymentId),
                 status,
                 changedBy: changedBy || 'FREELANCER',
-                reason:    reason    || 'Payment status updated'
-            },
-            { autoCommit: true }
+                reason: reason || 'Payment status updated'
+            }, { autoCommit: true }
         );
         res.json({ message: 'Payment status updated', paymentId, newStatus: status });
     } catch (error) {

@@ -3,6 +3,23 @@ const oracledb = require('oracledb');
 const router = express.Router();
 const getConnection = require('../models/db');
 
+// DELETE /api/jobs/:jobId — permanently delete a job
+router.delete('/:jobId', async(req, res) => {
+    const { jobId } = req.params;
+    let conn;
+    try {
+        conn = await getConnection();
+        await conn.execute(
+            'DELETE FROM Jobs WHERE job_id = :jobId', { jobId: Number(jobId) }, { autoCommit: true }
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to delete job', details: e.message });
+    } finally {
+        if (conn) await conn.close();
+    }
+});
+
 function mapJobRow(row) {
     return {
         jobId: row.JOB_ID,
@@ -18,85 +35,91 @@ function mapJobRow(row) {
 
 // POST / - Create a new job
 router.post('/', async(req, res) => {
-    const { title, description, budget, category, clientId } = req.body;
-    if (!title || budget == null || budget === '' || !clientId) {
-        return res.status(400).json({ error: 'title, budget, and clientId are required' });
-    }
-    let conn;
+    // ...existing code...
+});
+
+// ...other route definitions...
+
+module.exports = router;
+const { title, description, budget, category, clientId } = req.body;
+if (!title || budget == null || budget === '' || !clientId) {
+    return res.status(400).json({ error: 'title, budget, and clientId are required' });
+}
+let conn;
+try {
+    conn = await getConnection();
+
+    // Get client name for audit trail
+    // Always fetch client name for audit
+    let clientName = null;
     try {
-        conn = await getConnection();
-
-        // Get client name for audit trail
-        // Always fetch client name for audit
-        let clientName = null;
-        try {
-            const clientResult = await conn.execute(
-                `SELECT name FROM Users WHERE user_id = :clientId`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
-            );
-            if (clientResult.rows && clientResult.rows.length > 0) {
-                clientName = clientResult.rows[0].NAME;
-            }
-        } catch (e) {
-            console.log('Could not fetch client name:', e.message);
-        }
-        if (!clientName) {
-            // fallback to clientId string if name not found
-            clientName = `Client-${clientId}`;
-        }
-
-        // Check for duplicate job (same client, title, budget, category, status 'open')
-        const dupJobResult = await conn.execute(
-            `SELECT job_id FROM Jobs WHERE client_id = :clientId AND title = :title AND budget = :budget AND category = :category AND status = 'open'`, {
-                clientId: Number(clientId),
-                title,
-                budget: Number(budget),
-                category: category || 'general'
-            }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        const clientResult = await conn.execute(
+            `SELECT name FROM Users WHERE user_id = :clientId`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
-        let jobId;
-        if (dupJobResult.rows && dupJobResult.rows.length > 0) {
-            // Duplicate found, return existing jobId
-            jobId = dupJobResult.rows[0].JOB_ID;
-        } else {
-            // Insert new job
-            await conn.execute(
-                `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`, {
-                    title,
-                    description: description || '',
-                    budget: Number(budget),
-                    category: category || 'general',
-                    clientId: Number(clientId)
-                }, { autoCommit: true }
-            );
-            // Get the new job id
-            const jobResult = await conn.execute(
-                `SELECT job_id FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC FETCH FIRST 1 ROW ONLY`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
-            );
-            jobId = jobResult.rows[0].JOB_ID;
+        if (clientResult.rows && clientResult.rows.length > 0) {
+            clientName = clientResult.rows[0].NAME;
         }
-        // Create audit record for job creation ONLY if not already exists for this job
-        if (jobId) {
-            const auditCheck = await conn.execute(
-                `SELECT COUNT(*) AS CNT FROM Audit_Jobs WHERE job_id = :jobId AND new_status = 'open' AND operation_type = 'INSERT'`, { jobId: jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
-            );
-            if (!auditCheck.rows[0].CNT) {
-                await conn.execute(
-                    `INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, operation_type, timestamp, changed_by, change_reason)
-                     VALUES (audit_job_seq.NEXTVAL, :jobId, NULL, 'open', 'INSERT', SYSDATE, :changedBy, 'Job created by client')`, { jobId: jobId, changedBy: clientName }, { autoCommit: true }
-                );
-            }
-        }
-        // Return the job
-        const result = await conn.execute(
-            `SELECT job_id, title, description, budget, category, status, client_id, created_at
-             FROM Jobs WHERE job_id = :jobId`, { jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
-        );
-        res.status(201).json(mapJobRow(result.rows[0]));
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to create job', details: error.message });
-    } finally {
-        if (conn) await conn.close();
+    } catch (e) {
+        console.log('Could not fetch client name:', e.message);
     }
+    if (!clientName) {
+        // fallback to clientId string if name not found
+        clientName = `Client-${clientId}`;
+    }
+
+    // Check for duplicate job (same client, title, budget, category, status 'open')
+    const dupJobResult = await conn.execute(
+        `SELECT job_id FROM Jobs WHERE client_id = :clientId AND title = :title AND budget = :budget AND category = :category AND status = 'open'`, {
+            clientId: Number(clientId),
+            title,
+            budget: Number(budget),
+            category: category || 'general'
+        }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    let jobId;
+    if (dupJobResult.rows && dupJobResult.rows.length > 0) {
+        // Duplicate found, return existing jobId
+        jobId = dupJobResult.rows[0].JOB_ID;
+    } else {
+        // Insert new job
+        await conn.execute(
+            `BEGIN insert_job_p(:title, :description, :budget, :category, :clientId); END;`, {
+                title,
+                description: description || '',
+                budget: Number(budget),
+                category: category || 'general',
+                clientId: Number(clientId)
+            }, { autoCommit: true }
+        );
+        // Get the new job id
+        const jobResult = await conn.execute(
+            `SELECT job_id FROM Jobs WHERE client_id = :clientId ORDER BY job_id DESC FETCH FIRST 1 ROW ONLY`, { clientId: Number(clientId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        jobId = jobResult.rows[0].JOB_ID;
+    }
+    // Create audit record for job creation ONLY if not already exists for this job
+    if (jobId) {
+        const auditCheck = await conn.execute(
+            `SELECT COUNT(*) AS CNT FROM Audit_Jobs WHERE job_id = :jobId AND new_status = 'open' AND operation_type = 'INSERT'`, { jobId: jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        if (!auditCheck.rows[0].CNT) {
+            await conn.execute(
+                `INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status, operation_type, timestamp, changed_by, change_reason)
+                     VALUES (audit_job_seq.NEXTVAL, :jobId, NULL, 'open', 'INSERT', SYSDATE, :changedBy, 'Job created by client')`, { jobId: jobId, changedBy: clientName }, { autoCommit: true }
+            );
+        }
+    }
+    // Return the job
+    const result = await conn.execute(
+        `SELECT job_id, title, description, budget, category, status, client_id, created_at
+             FROM Jobs WHERE job_id = :jobId`, { jobId }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    res.status(201).json(mapJobRow(result.rows[0]));
+} catch (error) {
+    res.status(500).json({ error: 'Failed to create job', details: error.message });
+} finally {
+    if (conn) await conn.close();
+}
 });
 
 // POST /projects - Create job from client project posting
@@ -421,9 +444,7 @@ router.put('/:jobId/status', async(req, res) => {
         // If it already matches the requested status, no real change is happening —
         // skip the stored proc so no duplicate audit row is written.
         const currentJobResult = await conn.execute(
-            `SELECT status FROM Jobs WHERE job_id = :jobId`,
-            { jobId: Number(jobId) },
-            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            `SELECT status FROM Jobs WHERE job_id = :jobId`, { jobId: Number(jobId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
         if (!currentJobResult.rows || currentJobResult.rows.length === 0) {
             return res.status(404).json({ error: 'Job not found' });

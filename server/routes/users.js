@@ -3,31 +3,53 @@ const oracledb = require('oracledb');
 const router = express.Router();
 const getConnection = require('../models/db');
 
-// GET /api/users — list all users
-router.get('/', async (req, res) => {
+// DELETE /api/users/:userId — permanently delete a user
+router.delete('/:userId', async(req, res) => {
+    const { userId } = req.params;
     let conn;
     try {
         conn = await getConnection();
-        const result = await conn.execute(
-            `SELECT user_id, name, email, role, created_at FROM Users ORDER BY user_id ASC`,
-            [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        await conn.execute(
+            'DELETE FROM Users WHERE user_id = :userId', { userId: Number(userId) }, { autoCommit: true }
         );
-        res.json(result.rows.map(u => ({
-            userId:    u.USER_ID,
-            name:      u.NAME,
-            email:     u.EMAIL,
-            role:      u.ROLE,
-            createdAt: u.CREATED_AT
-        })));
+        res.json({ success: true });
     } catch (e) {
-        res.status(500).json({ error: 'Failed to fetch users', details: e.message });
+        res.status(500).json({ error: 'Failed to delete user', details: e.message });
     } finally {
         if (conn) await conn.close();
     }
 });
 
+// GET /api/users — list all users
+router.get('/', async(req, res) => {
+    // ...existing code...
+});
+
+// ...other route definitions...
+
+module.exports = router;
+let conn;
+try {
+    conn = await getConnection();
+    const result = await conn.execute(
+        `SELECT user_id, name, email, role, created_at FROM Users ORDER BY user_id ASC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    res.json(result.rows.map(u => ({
+        userId: u.USER_ID,
+        name: u.NAME,
+        email: u.EMAIL,
+        role: u.ROLE,
+        createdAt: u.CREATED_AT
+    })));
+} catch (e) {
+    res.status(500).json({ error: 'Failed to fetch users', details: e.message });
+} finally {
+    if (conn) await conn.close();
+}
+});
+
 // PUT /api/users/:userId/role — change role + write to Audit_Users
-router.put('/:userId/role', async (req, res) => {
+router.put('/:userId/role', async(req, res) => {
     const { userId } = req.params;
     const { newRole, changedBy } = req.body;
 
@@ -41,8 +63,7 @@ router.put('/:userId/role', async (req, res) => {
 
         // Get current role
         const current = await conn.execute(
-            `SELECT role, name FROM Users WHERE user_id = :id`,
-            { id: Number(userId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
+            `SELECT role, name FROM Users WHERE user_id = :id`, { id: Number(userId) }, { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
         if (!current.rows.length) {
             return res.status(404).json({ error: 'User not found' });
@@ -56,16 +77,14 @@ router.put('/:userId/role', async (req, res) => {
 
         // Update role in Users table
         await conn.execute(
-            `UPDATE Users SET role = :newRole WHERE user_id = :id`,
-            { newRole, id: Number(userId) }, { autoCommit: false }
+            `UPDATE Users SET role = :newRole WHERE user_id = :id`, { newRole, id: Number(userId) }, { autoCommit: false }
         );
 
         // Write to Audit_Users
         await conn.execute(
             `INSERT INTO Audit_Users (audit_id, user_id, old_role, new_role, operation_type, timestamp, changed_by, change_reason)
-             VALUES (audit_user_seq.NEXTVAL, :userId, :oldRole, :newRole, 'UPDATE', SYSDATE, :changedBy, 'Role changed by admin')`,
-            {
-                userId:    Number(userId),
+             VALUES (audit_user_seq.NEXTVAL, :userId, :oldRole, :newRole, 'UPDATE', SYSDATE, :changedBy, 'Role changed by admin')`, {
+                userId: Number(userId),
                 oldRole,
                 newRole,
                 changedBy: changedBy || 'ADMIN'
