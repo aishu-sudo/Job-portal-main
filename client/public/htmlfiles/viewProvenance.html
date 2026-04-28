@@ -573,43 +573,66 @@
 
         // Load available jobs for dropdown (all jobs for admin, client's jobs otherwise)
         async function loadAvailableJobs() {
+            const dropdown = document.getElementById('jobsDropdown');
             try {
                 const role = localStorage.getItem('userRole');
                 const clientId = localStorage.getItem('clientId') || localStorage.getItem('userId');
 
                 let jobs = [];
-                if (role === 'admin') {
-                    const response = await fetch(`${API_URL}/browse`);
-                    jobs = await response.json();
-                } else {
-                    if (!clientId) {
-                        const dropdown = document.getElementById('jobsDropdown');
-                        dropdown.innerHTML = '<option value="">Please login first</option>';
-                        return;
+
+                // Always try to load all jobs from audit log first (works for all roles)
+                try {
+                    const auditResponse = await fetch(`${API_URL}/audit/all-jobs`);
+                    const auditData = await auditResponse.json();
+                    if (auditData.auditLogs && auditData.auditLogs.length > 0) {
+                        // Extract unique jobs from audit log
+                        const seen = new Set();
+                        auditData.auditLogs.forEach(log => {
+                            if (!seen.has(log.JOB_ID)) {
+                                seen.add(log.JOB_ID);
+                                jobs.push({ jobId: log.JOB_ID, title: log.JOB_TITLE, budget: null, status: null });
+                            }
+                        });
                     }
-                    const response = await fetch(`${API_URL}/client/${clientId}/jobs`);
-                    jobs = await response.json();
+                } catch (e) {}
+
+                // Fallback: if audit log empty, try browse (open jobs)
+                if (!jobs.length) {
+                    try {
+                        const browseResponse = await fetch(`${API_URL}/browse`);
+                        const browseJobs = await browseResponse.json();
+                        if (Array.isArray(browseJobs)) jobs = browseJobs;
+                    } catch (e) {}
                 }
 
-                const dropdown = document.getElementById('jobsDropdown');
+                // Fallback: try client-specific jobs
+                if (!jobs.length && clientId) {
+                    try {
+                        const clientResponse = await fetch(`${API_URL}/client/${clientId}/jobs`);
+                        const clientJobs = await clientResponse.json();
+                        if (Array.isArray(clientJobs)) jobs = clientJobs;
+                    } catch (e) {}
+                }
+
                 dropdown.innerHTML = '<option value="">-- Select a Job --</option>';
 
                 if (!jobs.length) {
-                    dropdown.innerHTML = '<option value="">No jobs found</option>';
+                    dropdown.innerHTML = '<option value="">No jobs found — enter ID manually below</option>';
                     return;
                 }
 
                 jobs.forEach(job => {
                     const option = document.createElement('option');
-                    option.value = job.jobId;
-                    const budget = job.budget != null ? Number(job.budget).toFixed(2) : 'N/A';
-                    option.textContent = `ID: ${job.jobId} | ${job.title} | Budget: $${budget} | Status: ${job.status}`;
+                    option.value = job.jobId || job.JOB_ID;
+                    const budget = job.budget != null ? `$${Number(job.budget).toFixed(2)}` : '';
+                    const status = job.status ? ` | ${job.status}` : '';
+                    const budgetStr = budget ? ` | ${budget}` : '';
+                    option.textContent = `ID: ${option.value} | ${job.title || job.TITLE}${budgetStr}${status}`;
                     dropdown.appendChild(option);
                 });
             } catch (error) {
                 console.error('Error loading jobs:', error);
-                const dropdown = document.getElementById('jobsDropdown');
-                dropdown.innerHTML = '<option value="">Error loading jobs</option>';
+                dropdown.innerHTML = '<option value="">Error loading — enter ID manually below</option>';
             }
         }
 

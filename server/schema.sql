@@ -303,7 +303,6 @@ END;
 /
 
 -- Trigger for automatic INSERT audit logging on Jobs
--- NOTE: Body is intentionally empty — the backend inserts the audit record
 -- with the real application-level user name after calling insert_job_p.
 -- Keeping both would create duplicate Audit_Jobs rows per job creation.
 CREATE OR REPLACE TRIGGER trg_job_insert
@@ -315,7 +314,6 @@ END;
 /
 
 -- Trigger for automatic UPDATE audit logging on Jobs
--- NOTE: Body is intentionally empty — update_job_status_p and
 -- update_job_budget_p stored procedures insert the audit record with the
 -- real user name and change reason. Running both creates duplicates.
 CREATE OR REPLACE TRIGGER trg_job_update
@@ -337,7 +335,6 @@ END;
 /
 
 -- Trigger for automatic UPDATE audit logging on Applications
--- NOTE: Body is intentionally empty — update_application_status_p stores the
 -- audit record with real user name + reason. Both would create duplicates.
 CREATE OR REPLACE TRIGGER trg_application_update
 AFTER UPDATE ON Applications
@@ -362,7 +359,6 @@ END;
 /
 
 -- Trigger for automatic UPDATE audit logging on Payments
--- NOTE: Body is intentionally empty — update_payment_status_p stored procedure
 -- handles the audit insert with real user name. Both would create duplicates.
 CREATE OR REPLACE TRIGGER trg_payment_update
 AFTER UPDATE ON Payments

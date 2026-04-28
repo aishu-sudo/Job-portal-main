@@ -35,12 +35,6 @@ function mapJobRow(row) {
 
 // POST / - Create a new job
 router.post('/', async(req, res) => {
-    // ...existing code...
-});
-
-// ...other route definitions...
-
-module.exports = router;
 const { title, description, budget, category, clientId } = req.body;
 if (!title || budget == null || budget === '' || !clientId) {
     return res.status(400).json({ error: 'title, budget, and clientId are required' });

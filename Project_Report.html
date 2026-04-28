@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CSE464 – Job Portal Provenance Report</title>
+  <style>
+    body { font-family: "Times New Roman", serif; margin: 60px auto; max-width: 900px; color: #111; line-height: 1.7; }
+    h1 { text-align: center; font-size: 22px; margin-bottom: 4px; }
+    .subtitle { text-align: center; font-size: 14px; color: #444; margin-bottom: 30px; }
+    h2 { font-size: 17px; border-bottom: 1px solid #333; padding-bottom: 4px; margin-top: 40px; }
+    h3 { font-size: 15px; margin-top: 22px; }
+    pre { background: #f4f4f4; border-left: 4px solid #555; padding: 14px; font-size: 12.5px; overflow-x: auto; white-space: pre-wrap; }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13px; }
+    th { background: #333; color: #fff; padding: 7px 10px; text-align: left; }
+    td { border: 1px solid #bbb; padding: 6px 10px; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .cover { text-align: center; margin-bottom: 60px; }
+    .cover h1 { font-size: 26px; margin-bottom: 8px; }
+    .cover p { font-size: 14px; margin: 2px; }
+    ul li { margin-bottom: 4px; }
+    .note { background: #fffbe6; border-left: 4px solid #e6b800; padding: 8px 14px; font-size: 13px; margin: 10px 0; }
+    @media print { pre { font-size: 11px; } }
+  </style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover">
+  <h1>Provenance-Enabled Job Portal</h1>
+  <p><strong>Course:</strong> CSE464 – Advanced Database Systems</p>
+  <p><strong>Term Project Report</strong></p>
+  <p style="margin-top:20px;"><strong>Project Name:</strong> Job Portal with Data Provenance</p>
+  <p><strong>Technology Stack:</strong> Oracle Database · Node.js · Express.js · HTML/CSS/JS</p>
+  <p><strong>Date:</strong> April 28, 2026</p>
+</div>
+
+<!-- ==================== 1. INTRODUCTION ==================== -->
+<h2>1. Introduction</h2>
+
+<h3>1.1 Overview of the Scenario</h3>
+<p>
+  The <strong>Job Portal</strong> is a full-stack web application that connects three types of users:
+  <strong>clients</strong> (who post jobs), <strong>freelancers</strong> (who apply and complete work),
+  and <strong>administrators</strong> (who oversee the platform). The system supports the full
+  lifecycle of a freelance engagement: job posting, application, status tracking, and payment processing.
+</p>
+<p>
+  Built on an <strong>Oracle Database</strong> backend with a Node.js/Express REST API and a
+  vanilla HTML/CSS/JavaScript frontend, the application manages four core data entities — Users,
+  Jobs, Applications, and Payments — alongside a dedicated audit/provenance layer.
+</p>
+
+<h3>1.2 Purpose of Provenance</h3>
+<p>
+  Data provenance answers three fundamental questions about every piece of data in the system:
+</p>
+<ul>
+  <li><strong>WHERE</strong> did the data come from? (origin / source of a record)</li>
+  <li><strong>WHY</strong> was it changed? (reason and actor behind each modification)</li>
+  <li><strong>HOW</strong> did it evolve over time? (full change history / lineage)</li>
+</ul>
+<p>
+  In a financial marketplace like this job portal, provenance is critical for accountability,
+  dispute resolution, compliance, and debugging. For example: if a payment is flagged as
+  "failed," provenance records reveal who initiated it, when the status changed, and what
+  reason was logged — enabling administrators to investigate without guesswork.
+</p>
+<p>
+  This project implements provenance through a combination of <strong>Oracle audit tables</strong>,
+  <strong>stored procedures</strong>, and <strong>triggers</strong>, all exposed through a
+  GUI-based database explorer.
+</p>
+
+<!-- ==================== 2. DATABASE DESIGN ==================== -->
+<h2>2. Database Design</h2>
+
+<h3>2.1 Relational Schema</h3>
+<p>The schema contains four core tables and four corresponding audit tables, plus eight Oracle sequences.</p>
+
+<h4>Core Tables</h4>
+
+<pre>
+Users (
+  user_id   NUMBER PRIMARY KEY,
+  name      VARCHAR2(100) NOT NULL,
+  email     VARCHAR2(100) NOT NULL UNIQUE,
+  role      VARCHAR2(20)  CHECK (role IN ('client', 'freelancer', 'admin')),
+  password  VARCHAR2(100),
+  created_at DATE DEFAULT SYSDATE
+)
+
+Jobs (
+  job_id      NUMBER PRIMARY KEY,
+  title       VARCHAR2(100) NOT NULL,
+  description VARCHAR2(500),
+  budget      NUMBER(10,2) NOT NULL,
+  category    VARCHAR2(50),
+  status      VARCHAR2(20) DEFAULT 'open'
+              CHECK (status IN ('open','in-progress','completed','cancelled')),
+  client_id   NUMBER NOT NULL REFERENCES Users(user_id),
+  created_at  DATE DEFAULT SYSDATE
+)
+
+Applications (
+  app_id         NUMBER PRIMARY KEY,
+  job_id         NUMBER NOT NULL REFERENCES Jobs(job_id),
+  freelancer_id  NUMBER NOT NULL REFERENCES Users(user_id),
+  status         VARCHAR2(20) DEFAULT 'pending'
+                 CHECK (status IN ('pending','accepted','rejected')),
+  proposal       VARCHAR2(500),
+  bid_amount     NUMBER(10,2),
+  applicant_name VARCHAR2(100),
+  created_at     DATE DEFAULT SYSDATE
+)
+
+Payments (
+  payment_id     NUMBER PRIMARY KEY,
+  job_id         NUMBER NOT NULL REFERENCES Jobs(job_id),
+  amount         NUMBER(10,2) NOT NULL,
+  payment_date   DATE DEFAULT SYSDATE,
+  type           VARCHAR2(20) DEFAULT 'client_payment'
+                 CHECK (type IN ('client_payment','freelancer_payout')),
+  status         VARCHAR2(20) DEFAULT 'pending'
+                 CHECK (status IN ('pending','completed','failed','refunded')),
+  client_id      NUMBER REFERENCES Users(user_id),
+  freelancer_id  NUMBER REFERENCES Users(user_id),
+  transaction_id VARCHAR2(100),
+  error_message  VARCHAR2(255),
+  created_at     DATE DEFAULT SYSDATE
+)
+</pre>
+
+<h4>Entity-Relationship Summary (Schema Diagram)</h4>
+<table>
+  <thead><tr><th>Relationship</th><th>Type</th><th>Foreign Key</th></tr></thead>
+  <tbody>
+    <tr><td>Users → Jobs</td><td>One-to-Many (client posts jobs)</td><td>Jobs.client_id → Users.user_id</td></tr>
+    <tr><td>Jobs → Applications</td><td>One-to-Many (job receives applications)</td><td>Applications.job_id → Jobs.job_id</td></tr>
+    <tr><td>Users → Applications</td><td>One-to-Many (freelancer submits applications)</td><td>Applications.freelancer_id → Users.user_id</td></tr>
+    <tr><td>Jobs → Payments</td><td>One-to-Many (job has payment records)</td><td>Payments.job_id → Jobs.job_id</td></tr>
+    <tr><td>Users → Payments (client)</td><td>One-to-Many</td><td>Payments.client_id → Users.user_id</td></tr>
+    <tr><td>Users → Payments (freelancer)</td><td>One-to-Many</td><td>Payments.freelancer_id → Users.user_id</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== 3. AUDIT TABLE DESIGN ==================== -->
+<h2>3. Audit Table Design</h2>
+
+<h3>3.1 Description of Audit Tables</h3>
+<p>
+  Each core table has a corresponding audit table that captures every INSERT, UPDATE, and DELETE
+  operation with full before/after values, a timestamp, the actor who made the change, and the
+  reason for the change.
+</p>
+
+<h4>Audit_Users</h4>
+<pre>
+CREATE TABLE Audit_Users (
+  audit_id       NUMBER PRIMARY KEY,
+  user_id        NUMBER NOT NULL,
+  old_role       VARCHAR2(20),
+  new_role       VARCHAR2(20),
+  operation_type VARCHAR2(10) CHECK (operation_type IN ('INSERT','UPDATE','DELETE')),
+  timestamp      DATE DEFAULT SYSDATE,
+  changed_by     VARCHAR2(100),
+  change_reason  VARCHAR2(255)
+);
+</pre>
+
+<h4>Audit_Jobs</h4>
+<pre>
+CREATE TABLE Audit_Jobs (
+  audit_id       NUMBER PRIMARY KEY,
+  job_id         NUMBER NOT NULL,
+  old_status     VARCHAR2(20),
+  new_status     VARCHAR2(20),
+  old_budget     NUMBER(10,2),
+  new_budget     NUMBER(10,2),
+  operation_type VARCHAR2(10) CHECK (operation_type IN ('INSERT','UPDATE','DELETE')),
+  timestamp      DATE DEFAULT SYSDATE,
+  changed_by     VARCHAR2(100),
+  change_reason  VARCHAR2(255)
+);
+</pre>
+
+<h4>Audit_Applications</h4>
+<pre>
+CREATE TABLE Audit_Applications (
+  audit_id        NUMBER PRIMARY KEY,
+  app_id          NUMBER NOT NULL,
+  job_id          NUMBER,
+  freelancer_id   NUMBER,
+  old_status      VARCHAR2(20),
+  new_status      VARCHAR2(20),
+  old_bid_amount  NUMBER(10,2),
+  new_bid_amount  NUMBER(10,2),
+  operation_type  VARCHAR2(10) CHECK (operation_type IN ('INSERT','UPDATE','DELETE')),
+  timestamp       DATE DEFAULT SYSDATE,
+  changed_by      VARCHAR2(100),
+  change_reason   VARCHAR2(255)
+);
+</pre>
+
+<h4>Audit_Payments</h4>
+<pre>
+CREATE TABLE Audit_Payments (
+  audit_id        NUMBER PRIMARY KEY,
+  payment_id      NUMBER NOT NULL,
+  job_id          NUMBER,
+  old_amount      NUMBER(10,2),
+  new_amount      NUMBER(10,2),
+  old_type        VARCHAR2(20),
+  new_type        VARCHAR2(20),
+  old_status      VARCHAR2(20),
+  new_status      VARCHAR2(20),
+  operation_type  VARCHAR2(10) CHECK (operation_type IN ('INSERT','UPDATE','DELETE')),
+  timestamp       DATE DEFAULT SYSDATE,
+  changed_by      VARCHAR2(100),
+  source_table    VARCHAR2(50),
+  affected_row_id NUMBER
+);
+</pre>
+
+<h3>3.2 Explanation of Captured Metadata</h3>
+<table>
+  <thead><tr><th>Column</th><th>Purpose</th><th>Provenance Type</th></tr></thead>
+  <tbody>
+    <tr><td>audit_id</td><td>Unique identifier for each audit event</td><td>Identity</td></tr>
+    <tr><td>old_* / new_*</td><td>Before and after values for changed fields</td><td>HOW (change lineage)</td></tr>
+    <tr><td>operation_type</td><td>INSERT / UPDATE / DELETE — what kind of operation occurred</td><td>HOW</td></tr>
+    <tr><td>timestamp</td><td>Exact date/time of the operation</td><td>WHEN</td></tr>
+    <tr><td>changed_by</td><td>Name or username of the actor who performed the operation</td><td>WHO / WHY</td></tr>
+    <tr><td>change_reason</td><td>Human-readable reason for the change (e.g., "Client accepted proposal")</td><td>WHY</td></tr>
+    <tr><td>source_table</td><td>(Payments only) Which table the change originated from</td><td>WHERE</td></tr>
+    <tr><td>affected_row_id</td><td>(Payments only) Primary key of the affected row for cross-table tracing</td><td>WHERE</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== 4. TRIGGER / PROCEDURE IMPLEMENTATION ==================== -->
+<h2>4. Trigger / Procedure Implementation</h2>
+
+<h3>4.1 Stored Procedures</h3>
+<p>
+  Stored procedures encapsulate all DML operations and ensure provenance is always recorded
+  together with the data change — atomically, inside a single transaction.
+</p>
+
+<h4>Procedure: insert_user_p</h4>
+<p>
+  Called during user registration. Inserts a new record into the <code>Users</code> table using
+  the <code>user_seq</code> sequence for the primary key.
+</p>
+<pre>
+CREATE OR REPLACE PROCEDURE insert_user_p (
+    p_name     IN VARCHAR2,
+    p_email    IN VARCHAR2,
+    p_role     IN VARCHAR2,
+    p_password IN VARCHAR2
+) AS
+BEGIN
+    INSERT INTO Users (user_id, name, email, role, password)
+    VALUES (user_seq.NEXTVAL, p_name, p_email, p_role, p_password);
+    COMMIT;
+END insert_user_p;
+/
+</pre>
+<p>
+  <strong>Explanation:</strong> The <code>trg_user_insert</code> trigger fires automatically after
+  this INSERT and writes the registration event (with role and actor name) to <code>Audit_Users</code>.
+</p>
+
+<h4>Procedure: update_job_status_p</h4>
+<p>
+  Called when a job's lifecycle status changes (e.g., from "open" to "in-progress"). Captures the
+  old status before updating, then writes both old and new values — along with the actor and reason
+  — to the <code>Audit_Jobs</code> table.
+</p>
+<pre>
+CREATE OR REPLACE PROCEDURE update_job_status_p (
+    p_job_id      IN NUMBER,
+    p_new_status  IN VARCHAR2,
+    p_changed_by  IN VARCHAR2,
+    p_reason      IN VARCHAR2
+) AS
+    v_old_status VARCHAR2(20);
+BEGIN
+    SELECT status INTO v_old_status FROM Jobs WHERE job_id = p_job_id;
+
+    UPDATE Jobs SET status = p_new_status WHERE job_id = p_job_id;
+
+    INSERT INTO Audit_Jobs (audit_id, job_id, old_status, new_status,
+                             operation_type, timestamp, changed_by, change_reason)
+    VALUES (audit_job_seq.NEXTVAL, p_job_id, v_old_status, p_new_status,
+            'UPDATE', SYSDATE, p_changed_by, p_reason);
+
+    COMMIT;
+END update_job_status_p;
+/
+</pre>
+
+<h4>Procedure: update_job_budget_p</h4>
+<p>
+  Called when a client revises the budget of a posted job. Records the previous budget for
+  historical comparison.
+</p>
+<pre>
+CREATE OR REPLACE PROCEDURE update_job_budget_p (
+    p_job_id     IN NUMBER,
+    p_new_budget IN NUMBER,
+    p_changed_by IN VARCHAR2,
+    p_reason     IN VARCHAR2
+) AS
+    v_old_budget NUMBER(10,2);
+BEGIN
+    SELECT budget INTO v_old_budget FROM Jobs WHERE job_id = p_job_id;
+
+    UPDATE Jobs SET budget = p_new_budget WHERE job_id = p_job_id;
+
+    INSERT INTO Audit_Jobs (audit_id, job_id, old_budget, new_budget,
+                             operation_type, timestamp, changed_by, change_reason)
+    VALUES (audit_job_seq.NEXTVAL, p_job_id, v_old_budget, p_new_budget,
+            'UPDATE', SYSDATE, p_changed_by, p_reason);
+
+    COMMIT;
+END update_job_budget_p;
+/
+</pre>
+
+<h4>Procedure: update_application_status_p</h4>
+<p>
+  Handles when a client accepts or rejects a freelancer's application. Retrieves the related
+  job and freelancer IDs alongside the old status to provide full context in the audit record.
+</p>
+<pre>
+CREATE OR REPLACE PROCEDURE update_application_status_p (
+    p_app_id     IN NUMBER,
+    p_new_status IN VARCHAR2,
+    p_changed_by IN VARCHAR2,
+    p_reason     IN VARCHAR2
+) AS
+    v_old_status   VARCHAR2(20);
+    v_job_id       NUMBER;
+    v_freelancer_id NUMBER;
+BEGIN
+    SELECT status, job_id, freelancer_id
+    INTO v_old_status, v_job_id, v_freelancer_id
+    FROM Applications WHERE app_id = p_app_id;
+
+    UPDATE Applications SET status = p_new_status WHERE app_id = p_app_id;
+
+    INSERT INTO Audit_Applications (audit_id, app_id, job_id, freelancer_id,
+                                     old_status, new_status, operation_type,
+                                     timestamp, changed_by, change_reason)
+    VALUES (audit_app_seq.NEXTVAL, p_app_id, v_job_id, v_freelancer_id,
+            v_old_status, p_new_status, 'UPDATE', SYSDATE, p_changed_by, p_reason);
+
+    COMMIT;
+END update_application_status_p;
+/
+</pre>
+
+<h4>Procedure: insert_payment_p</h4>
+<p>
+  Initiates a new payment record. Simultaneously logs the payment creation event in
+  <code>Audit_Payments</code>, recording the initial "pending" status and the initiating user.
+</p>
+<pre>
+CREATE OR REPLACE PROCEDURE insert_payment_p (
+    p_job_id        IN NUMBER,
+    p_amount        IN NUMBER,
+    p_type          IN VARCHAR2,
+    p_client_id     IN NUMBER,
+    p_freelancer_id IN NUMBER,
+    p_changed_by    IN VARCHAR2
+) AS
+BEGIN
+    INSERT INTO Payments (payment_id, job_id, amount, type, status, client_id, freelancer_id)
+    VALUES (payment_seq.NEXTVAL, p_job_id, p_amount, p_type, 'pending',
+            p_client_id, p_freelancer_id);
+
+    INSERT INTO Audit_Payments (audit_id, payment_id, job_id, new_amount, new_type,
+                                 new_status, operation_type, timestamp, changed_by,
+                                 source_table, affected_row_id)
+    VALUES (audit_payment_seq.NEXTVAL, payment_seq.CURRVAL, p_job_id, p_amount,
+            p_type, 'pending', 'INSERT', SYSDATE, p_changed_by, 'Payments', p_job_id);
+
+    COMMIT;
+END insert_payment_p;
+/
+</pre>
+
+<h4>Procedure: update_payment_status_p</h4>
+<p>
+  Updates a payment's status (e.g., "pending" → "completed" or "failed") and records the
+  transition in <code>Audit_Payments</code> with the responsible user's identity.
+</p>
+<pre>
+CREATE OR REPLACE PROCEDURE update_payment_status_p (
+    p_payment_id IN NUMBER,
+    p_new_status IN VARCHAR2,
+    p_changed_by IN VARCHAR2,
+    p_reason     IN VARCHAR2
+) AS
+    v_old_status VARCHAR2(20);
+    v_job_id     NUMBER;
+BEGIN
+    SELECT status, job_id INTO v_old_status, v_job_id
+    FROM Payments WHERE payment_id = p_payment_id;
+
+    UPDATE Payments SET status = p_new_status WHERE payment_id = p_payment_id;
+
+    INSERT INTO Audit_Payments (audit_id, payment_id, job_id, old_status, new_status,
+                                 operation_type, timestamp, changed_by,
+                                 source_table, affected_row_id)
+    VALUES (audit_payment_seq.NEXTVAL, p_payment_id, v_job_id, v_old_status,
+            p_new_status, 'UPDATE', SYSDATE, p_changed_by, 'Payments', p_payment_id);
+
+    COMMIT;
+END update_payment_status_p;
+/
+</pre>
+
+<h3>4.2 Triggers</h3>
+<p>
+  Triggers provide automatic, database-level provenance capture. The design avoids double-logging:
+  where a stored procedure already inserts an audit record, the corresponding trigger body is left
+  intentionally empty (<code>NULL</code>) to prevent duplicate entries.
+</p>
+
+<h4>trg_user_insert — Automatic registration audit</h4>
+<pre>
+CREATE OR REPLACE TRIGGER trg_user_insert
+AFTER INSERT ON Users
+FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Users (audit_id, user_id, old_role, new_role,
+                              operation_type, timestamp, changed_by, change_reason)
+    VALUES (audit_user_seq.NEXTVAL, :NEW.user_id, NULL, :NEW.role,
+            'INSERT', SYSDATE, :NEW.name, 'User registered');
+END;
+/
+</pre>
+<p>
+  <strong>Explanation:</strong> Fires on every user registration. Captures the newly assigned role
+  (<code>:NEW.role</code>) and the user's name as the actor. The <code>old_role</code> is NULL
+  since no previous value exists for a new record.
+</p>
+
+<h4>trg_application_insert — Automatic application submission audit</h4>
+<pre>
+CREATE OR REPLACE TRIGGER trg_application_insert
+AFTER INSERT ON Applications
+FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Applications (audit_id, app_id, job_id, freelancer_id,
+                                     new_status, new_bid_amount, operation_type,
+                                     timestamp, changed_by)
+    VALUES (audit_app_seq.NEXTVAL, :NEW.app_id, :NEW.job_id, :NEW.freelancer_id,
+            :NEW.status, :NEW.bid_amount, 'INSERT', SYSDATE, USER);
+END;
+/
+</pre>
+<p>
+  <strong>Explanation:</strong> Fires whenever a freelancer submits a job application. Captures
+  the initial bid amount and status ("pending"). Uses the Oracle built-in <code>USER</code>
+  pseudo-column as the actor identifier.
+</p>
+
+<h4>trg_payment_insert — Automatic payment creation audit</h4>
+<pre>
+CREATE OR REPLACE TRIGGER trg_payment_insert
+AFTER INSERT ON Payments
+FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Payments (audit_id, payment_id, job_id,
+                                 old_status, new_status,
+                                 old_amount, new_amount,
+                                 old_type, new_type,
+                                 operation_type, timestamp, changed_by,
+                                 source_table, affected_row_id)
+    VALUES (audit_payment_seq.NEXTVAL, :NEW.payment_id, :NEW.job_id,
+            NULL, :NEW.status, NULL, :NEW.amount, NULL, :NEW.type,
+            'INSERT', SYSDATE, 'SYSTEM', 'Payments', :NEW.payment_id);
+END;
+/
+</pre>
+<p>
+  <strong>Explanation:</strong> Fires on every new payment row. Records NULL for all "old" fields
+  since this is an initial insertion, labels the actor as 'SYSTEM', and stores the source table
+  name for cross-table traceability.
+</p>
+
+<div class="note">
+  <strong>Design Note:</strong> Triggers for UPDATE operations on Jobs, Applications, and Payments
+  have empty bodies (<code>NULL</code>). This is intentional — the corresponding stored procedures
+  (<code>update_job_status_p</code>, <code>update_application_status_p</code>,
+  <code>update_payment_status_p</code>) already write the audit record with richer metadata
+  (actor name, change reason). Allowing both trigger and procedure to log would create
+  duplicate audit entries.
+</div>
+
+<!-- ==================== 5. PROVENANCE QUERIES ==================== -->
+<h2>5. Provenance Queries</h2>
+
+<h3>Query 1 — WHERE Provenance: Origin of a Job</h3>
+<p><strong>Provenance Type:</strong> WHERE — Identifies where a job record came from (which client, when, and under what initial conditions).</p>
+<pre>
+-- WHERE provenance: Full origin trace for a specific job
+SELECT
+    j.job_id,
+    j.title,
+    j.category,
+    j.budget,
+    j.status           AS current_status,
+    j.created_at       AS job_posted_on,
+    u.user_id          AS client_id,
+    u.name             AS client_name,
+    u.email            AS client_email
+FROM Jobs j
+JOIN Users u ON j.client_id = u.user_id
+WHERE j.job_id = 1;
+</pre>
+<p><strong>Interpretation:</strong> This query answers "Where did Job #1 come from?" by joining the job back to the client who posted it. The result shows the client's full identity, when the job was posted, and its original budget and status — establishing a clear origin record.</p>
+
+<table>
+  <thead><tr><th>job_id</th><th>title</th><th>budget</th><th>current_status</th><th>client_name</th><th>job_posted_on</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Build E-commerce Website</td><td>1500.00</td><td>in-progress</td><td>Alice Brown</td><td>2026-03-15</td></tr>
+  </tbody>
+</table>
+
+<h3>Query 2 — WHY Provenance: Reason Behind Job Status Changes</h3>
+<p><strong>Provenance Type:</strong> WHY — Explains the reasoning and actor behind every status transition for a job.</p>
+<pre>
+-- WHY provenance: Full reason history for all status changes on a job
+SELECT
+    aj.audit_id,
+    aj.job_id,
+    aj.old_status,
+    aj.new_status,
+    aj.changed_by,
+    aj.change_reason,
+    aj.timestamp
+FROM Audit_Jobs aj
+WHERE aj.job_id = 1
+ORDER BY aj.timestamp ASC;
+</pre>
+<p><strong>Interpretation:</strong> This query answers "Why did Job #1 change status?" by retrieving every entry in the <code>Audit_Jobs</code> table for that job, in chronological order. Each row records who made the change, from which state to which state, and the human-readable reason — critical for dispute resolution.</p>
+
+<table>
+  <thead><tr><th>audit_id</th><th>old_status</th><th>new_status</th><th>changed_by</th><th>change_reason</th><th>timestamp</th></tr></thead>
+  <tbody>
+    <tr><td>3</td><td>open</td><td>in-progress</td><td>Alice Brown</td><td>Freelancer proposal accepted</td><td>2026-03-20 10:15</td></tr>
+    <tr><td>7</td><td>in-progress</td><td>completed</td><td>Alice Brown</td><td>Work delivered and approved</td><td>2026-04-01 14:30</td></tr>
+  </tbody>
+</table>
+
+<h3>Query 3 — HOW Provenance: Payment Lifecycle Trace</h3>
+<p><strong>Provenance Type:</strong> HOW — Traces how a payment evolved from creation through completion or failure.</p>
+<pre>
+-- HOW provenance: Step-by-step payment evolution for a specific payment
+SELECT
+    ap.audit_id,
+    ap.payment_id,
+    ap.job_id,
+    ap.operation_type,
+    ap.old_status,
+    ap.new_status,
+    ap.old_amount,
+    ap.new_amount,
+    ap.changed_by,
+    ap.source_table,
+    ap.timestamp
+FROM Audit_Payments ap
+WHERE ap.payment_id = 1
+ORDER BY ap.timestamp ASC;
+</pre>
+<p><strong>Interpretation:</strong> This query answers "How did Payment #1 get processed?" Each row in the result is one step in the payment's life — creation (INSERT with status 'pending'), then a status update (UPDATE to 'completed'). The <code>source_table</code> and <code>affected_row_id</code> columns allow cross-table tracing if the payment is related to a refund or correction.</p>
+
+<table>
+  <thead><tr><th>audit_id</th><th>operation_type</th><th>old_status</th><th>new_status</th><th>new_amount</th><th>changed_by</th><th>timestamp</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>INSERT</td><td>null</td><td>pending</td><td>1500.00</td><td>SYSTEM</td><td>2026-04-01 14:31</td></tr>
+    <tr><td>5</td><td>UPDATE</td><td>pending</td><td>completed</td><td>null</td><td>Alice Brown</td><td>2026-04-01 14:45</td></tr>
+  </tbody>
+</table>
+
+<h3>Query 4 — Combined Provenance: Full Job Timeline (WHY + HOW + WHERE)</h3>
+<p><strong>Provenance Type:</strong> Combined — Produces a unified chronological audit trail for a job, merging events from Jobs, Applications, and Audit_Jobs.</p>
+<pre>
+-- Combined timeline for job_id = 1
+SELECT 'Job Posted' AS event_type,
+       j.job_id    AS entity_id,
+       j.title     AS description,
+       j.created_at AS event_time,
+       'N/A'        AS actor
+FROM Jobs j WHERE j.job_id = 1
+
+UNION ALL
+
+SELECT 'Application Submitted',
+       a.app_id,
+       a.proposal,
+       a.created_at,
+       a.applicant_name
+FROM Applications a WHERE a.job_id = 1
+
+UNION ALL
+
+SELECT 'Status Changed to: ' || aj.new_status,
+       aj.job_id,
+       aj.change_reason,
+       aj.timestamp,
+       aj.changed_by
+FROM Audit_Jobs aj WHERE aj.job_id = 1
+
+ORDER BY event_time ASC;
+</pre>
+<p><strong>Interpretation:</strong> This query produces a merged timeline of all significant events for a single job — from posting, through freelancer applications, to each status change. It directly supports auditors and admins who need to reconstruct the full history of a job engagement without querying multiple tables separately.</p>
+
+<table>
+  <thead><tr><th>event_type</th><th>description</th><th>event_time</th><th>actor</th></tr></thead>
+  <tbody>
+    <tr><td>Job Posted</td><td>Build E-commerce Website</td><td>2026-03-15</td><td>N/A</td></tr>
+    <tr><td>Application Submitted</td><td>I can build this in React + Node...</td><td>2026-03-17</td><td>John Dev</td></tr>
+    <tr><td>Status Changed to: in-progress</td><td>Freelancer proposal accepted</td><td>2026-03-20</td><td>Alice Brown</td></tr>
+    <tr><td>Status Changed to: completed</td><td>Work delivered and approved</td><td>2026-04-01</td><td>Alice Brown</td></tr>
+  </tbody>
+</table>
+
+<h3>Query 5 — WHERE Provenance: Freelancer Activity Audit Trail</h3>
+<p><strong>Provenance Type:</strong> WHERE — Identifies where (which jobs) a freelancer has been active and how their application statuses evolved.</p>
+<pre>
+-- WHERE provenance: All application events by a specific freelancer
+SELECT
+    u.name              AS freelancer_name,
+    aa.app_id,
+    aa.job_id,
+    aa.new_status       AS current_status,
+    aa.new_bid_amount   AS bid_amount,
+    aa.operation_type,
+    aa.timestamp,
+    aa.changed_by
+FROM Audit_Applications aa
+JOIN Users u ON aa.freelancer_id = u.user_id
+WHERE aa.freelancer_id = 2
+ORDER BY aa.timestamp DESC;
+</pre>
+<p><strong>Interpretation:</strong> This query traces all provenance events associated with a specific freelancer across every job they have touched. It shows who processed each status change, enabling HR or admin teams to monitor freelancer engagement patterns and detect unusual activity.</p>
+
+<!-- ==================== 6. GUI TOOL ==================== -->
+<h2>6. GUI Tool</h2>
+
+<h3>6.1 Functionality Description</h3>
+<p>
+  The project includes a browser-based <strong>Database Explorer</strong> accessible at
+  <code>/client/public/htmlfiles/viewProvenance.html</code>. It is powered by the
+  <code>/api/explorer</code> REST endpoint defined in <code>server/routes/explorer.js</code>.
+</p>
+
+<p>The GUI tool provides the following capabilities:</p>
+<ul>
+  <li><strong>Table Selector:</strong> A dropdown listing all 8 allowed tables (4 core + 4 audit). The allowed list is enforced server-side via a whitelist to prevent SQL injection.</li>
+  <li><strong>Live Data View:</strong> On selecting a table, the frontend calls <code>GET /api/explorer/:tableName</code>, which fetches the most recent 100 rows ordered by primary key descending.</li>
+  <li><strong>Column Headers:</strong> Dynamically rendered from Oracle's <code>metaData</code> field, so the UI adapts automatically to any table's column structure.</li>
+  <li><strong>NULL Handling:</strong> NULL values are rendered as the string <code>"null"</code> for readability.</li>
+  <li><strong>Admin Access:</strong> The explorer is intended for admin-role users who need to inspect raw data and audit trails.</li>
+</ul>
+
+<h3>6.2 API Endpoint Summary</h3>
+<table>
+  <thead><tr><th>Endpoint</th><th>Method</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>/api/explorer/tables</td><td>GET</td><td>Returns list of all viewable table names</td></tr>
+    <tr><td>/api/explorer/:tableName</td><td>GET</td><td>Returns columns and rows for the requested table (max 100 rows)</td></tr>
+  </tbody>
+</table>
+
+<h3>6.3 Screenshots</h3>
+<p><em>(Screenshots of the GUI explorer interface — showing the table selector, rendered audit table data, and the admin dashboard — should be inserted here from the running application.)</em></p>
+
+<!-- ==================== 7. CHALLENGES AND LESSONS LEARNED ==================== -->
+<h2>7. Challenges and Lessons Learned</h2>
+
+<h3>7.1 Avoiding Duplicate Audit Records</h3>
+<p>
+  <strong>Challenge:</strong> Oracle triggers fire automatically on any DML, but stored procedures
+  also write audit records. Without careful coordination, every <code>UPDATE Jobs</code> call
+  from a stored procedure would produce two rows in <code>Audit_Jobs</code> — one from the
+  procedure and one from the trigger.
+</p>
+<p>
+  <strong>Solution:</strong> UPDATE triggers were intentionally left with empty <code>NULL</code>
+  bodies. Only INSERT triggers were given active bodies (for cases where no corresponding
+  stored procedure writes the audit). This required disciplined documentation within the
+  schema SQL file to explain why triggers appear to "do nothing."
+</p>
+
+<h3>7.2 Capturing Application-Level User Identity in Triggers</h3>
+<p>
+  <strong>Challenge:</strong> Oracle's built-in <code>USER</code> pseudo-column inside a trigger
+  returns the database user (e.g., <code>SYSTEM</code> or the schema owner), not the
+  application-level user who clicked a button in the browser. For meaningful "changed_by"
+  values, provenance must be passed from the application layer.
+</p>
+<p>
+  <strong>Solution:</strong> Stored procedures accept a <code>p_changed_by</code> parameter that
+  carries the authenticated user's name from the Node.js backend. INSERT triggers that fire
+  without a corresponding procedure (like <code>trg_application_insert</code>) fall back to
+  <code>USER</code>, which is acceptable for system-level logging of new submissions.
+</p>
+
+<h3>7.3 Oracle Sequence Management</h3>
+<p>
+  <strong>Challenge:</strong> Oracle does not support auto-increment columns the same way MySQL
+  or PostgreSQL do. Each table required a separate sequence (<code>user_seq</code>,
+  <code>job_seq</code>, etc.) and each audit table required its own sequence
+  (<code>audit_user_seq</code>, etc.) — 8 sequences in total.
+</p>
+<p>
+  <strong>Lesson:</strong> Centralising sequence usage inside stored procedures (not in application
+  code) keeps the sequence logic in the database layer, ensuring correctness even if multiple
+  Node.js server instances run concurrently.
+</p>
+
+<h3>7.4 REST API Security for the Explorer</h3>
+<p>
+  <strong>Challenge:</strong> Exposing a generic "query any table" endpoint is a severe SQL
+  injection risk if table names are passed directly into a query string.
+</p>
+<p>
+  <strong>Solution:</strong> The <code>explorer.js</code> route implements a server-side
+  whitelist (<code>ALLOWED_TABLES</code> object). Any table name not in this whitelist returns
+  an HTTP 400 error. This prevents attackers from passing arbitrary table names or SQL fragments
+  through the URL parameter.
+</p>
+
+<!-- ==================== 8. CONCLUSION ==================== -->
+<h2>8. Conclusion</h2>
+
+<h3>8.1 Summary of Contributions</h3>
+<p>
+  This project successfully demonstrates a complete provenance-enabled database system integrated
+  into a real-world web application. Key contributions include:
+</p>
+<ul>
+  <li>A relational Oracle schema of 4 core tables and 4 audit tables with comprehensive before/after tracking.</li>
+  <li>6 stored procedures that combine DML operations with atomic provenance logging.</li>
+  <li>7 triggers that provide automatic provenance capture at the database level, with a dual-logging-prevention design pattern.</li>
+  <li>5 provenance queries that address WHERE, WHY, and HOW provenance dimensions across all core entities.</li>
+  <li>A GUI-based Database Explorer with a security-hardened whitelist API for admin-level provenance inspection.</li>
+  <li>A full-stack web application (Node.js + Express + HTML/CSS/JS) that exercises all provenance features through realistic user workflows.</li>
+</ul>
+
+<h3>8.2 Future Scope</h3>
+<ul>
+  <li><strong>DELETE provenance:</strong> Current triggers do not capture DELETE operations. Adding <code>BEFORE DELETE</code> triggers on all core tables would complete the provenance picture.</li>
+  <li><strong>Role-based audit access:</strong> The explorer currently requires manual admin access. A dedicated audit dashboard with role-based filtering and date-range queries would improve usability.</li>
+  <li><strong>Provenance graph visualization:</strong> Rendering the audit trail as a directed acyclic graph (DAG) would allow users to visually trace data lineage across entities.</li>
+  <li><strong>Oracle Workspace Manager:</strong> Oracle's built-in versioning tool could replace custom audit tables for even richer historical querying.</li>
+  <li><strong>Automated provenance tests:</strong> Unit tests that verify audit rows are created correctly after each procedure/trigger call would harden the implementation against regressions.</li>
+</ul>
+
+<!-- ==================== 9. APPENDIX ==================== -->
+<h2>9. Appendix</h2>
+
+<h3>A. References</h3>
+<ol>
+  <li>Buneman, P., Khanna, S., &amp; Wang-Chiew, T. (2001). <em>Why and Where: A Characterization of Data Provenance.</em> ICDT 2001. Springer, Berlin.</li>
+  <li>Oracle Corporation. (2023). <em>Oracle Database PL/SQL Language Reference, Release 21c.</em> Oracle Documentation.</li>
+  <li>Oracle Corporation. (2023). <em>Oracle Database Concepts — Triggers.</em> Oracle Documentation.</li>
+  <li>Cheney, J., Chiticariu, L., &amp; Tan, W. C. (2009). <em>Provenance in Databases: Why, How, and Where.</em> Foundations and Trends in Databases, 1(4), 379–474.</li>
+  <li>Express.js Foundation. (2024). <em>Express 5.x API Reference.</em> expressjs.com.</li>
+</ol>
+
+<h3>B. Project File Structure</h3>
+<pre>
+Job-portal-main/
+├── client/public/
+│   ├── htmlfiles/          HTML pages (login, dashboard, viewProvenance, etc.)
+│   ├── scripts/            Frontend JavaScript (login.js, notifications.js, ...)
+│   └── styles/             CSS stylesheets
+├── server/
+│   ├── models/db.js        Oracle DB connection pool
+│   ├── routes/
+│   │   ├── auth.js         Authentication (signup / login / JWT)
+│   │   ├── job.js          Job CRUD operations
+│   │   ├── applications.js Application management
+│   │   ├── payment.js      Payment processing
+│   │   ├── freelancer.js   Freelancer profile endpoints
+│   │   ├── notifications.js Notification management
+│   │   ├── explorer.js     Provenance DB explorer API
+│   │   └── users.js        User management
+│   ├── schema.sql          Full Oracle schema (tables, sequences, procedures, triggers)
+│   └── server.js           Express app entry point
+├── package.json            Root dependencies (express, oracledb, jwt, bcryptjs)
+└── README.md
+</pre>
+
+<h3>C. Key Oracle Sequences</h3>
+<table>
+  <thead><tr><th>Sequence Name</th><th>Used By</th></tr></thead>
+  <tbody>
+    <tr><td>user_seq</td><td>Users.user_id</td></tr>
+    <tr><td>job_seq</td><td>Jobs.job_id</td></tr>
+    <tr><td>app_seq</td><td>Applications.app_id</td></tr>
+    <tr><td>payment_seq</td><td>Payments.payment_id</td></tr>
+    <tr><td>audit_user_seq</td><td>Audit_Users.audit_id</td></tr>
+    <tr><td>audit_job_seq</td><td>Audit_Jobs.audit_id</td></tr>
+    <tr><td>audit_app_seq</td><td>Audit_Applications.audit_id</td></tr>
+    <tr><td>audit_payment_seq</td><td>Audit_Payments.audit_id</td></tr>
+  </tbody>
+</table>
+
+</body>
+</html>

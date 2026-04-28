@@ -20,33 +20,32 @@ router.delete('/:userId', async(req, res) => {
     }
 });
 
+
 // GET /api/users — list all users
 router.get('/', async(req, res) => {
-    // ...existing code...
+    let conn;
+    try {
+        conn = await getConnection();
+        const result = await conn.execute(
+            `SELECT user_id, name, email, role, created_at FROM Users ORDER BY user_id ASC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        res.json(result.rows.map(u => ({
+            userId: u.USER_ID,
+            name: u.NAME,
+            email: u.EMAIL,
+            role: u.ROLE,
+            createdAt: u.CREATED_AT
+        })));
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch users', details: e.message });
+    } finally {
+        if (conn) await conn.close();
+    }
 });
 
 // ...other route definitions...
 
 module.exports = router;
-let conn;
-try {
-    conn = await getConnection();
-    const result = await conn.execute(
-        `SELECT user_id, name, email, role, created_at FROM Users ORDER BY user_id ASC`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT }
-    );
-    res.json(result.rows.map(u => ({
-        userId: u.USER_ID,
-        name: u.NAME,
-        email: u.EMAIL,
-        role: u.ROLE,
-        createdAt: u.CREATED_AT
-    })));
-} catch (e) {
-    res.status(500).json({ error: 'Failed to fetch users', details: e.message });
-} finally {
-    if (conn) await conn.close();
-}
-});
 
 // PUT /api/users/:userId/role — change role + write to Audit_Users
 router.put('/:userId/role', async(req, res) => {

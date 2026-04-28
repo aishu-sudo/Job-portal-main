@@ -9,7 +9,7 @@ const paymentRoutes = require('./routes/payment');
 const freelancerRoutes = require('./routes/freelancer');
 const notificationRoutes = require('./routes/notifications');
 const explorerRoutes = require('./routes/explorer');
-const usersRoutes    = require('./routes/users');
+const usersRoutes = require('./routes/users');
 
 const app = express();
 const shouldTestDbOnStartup = process.env.DB_CHECK_ON_STARTUP === 'true';
@@ -35,7 +35,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/freelancers', freelancerRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/explorer', explorerRoutes);
-app.use('/api/users',    usersRoutes);
+app.use('/api/users', usersRoutes);
 
 // Serve client static files
 const clientPublicPath = path.resolve(__dirname, '..', 'client', 'public');
@@ -74,8 +74,11 @@ async function testDB() {
     }
 }
 
+
 // Always run DB init on startup to drop duplicate triggers
-testDB();
+(async() => {
+    await testDB();
+})();
 
 app.listen(5000, () => {
     console.log('Server running on http://localhost:5000');
