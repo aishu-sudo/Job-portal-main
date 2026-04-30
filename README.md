@@ -305,9 +305,6 @@ npm start
 | GET | `/api/explorer/:tableName` | Browse any table's data |
 
 ---
-
-**Submitted To:** Antu Chowdhury, Lecturer — Department of CSE, East West University
-
 ---
 
 ## License
