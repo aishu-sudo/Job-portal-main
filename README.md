@@ -305,7 +305,6 @@ npm start
 | GET | `/api/explorer/:tableName` | Browse any table's data |
 
 ---
----
 
 ## License
 
