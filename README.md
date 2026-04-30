@@ -306,16 +306,6 @@ npm start
 
 ---
 
-## Team
-
-**Group 4 — East West University**
-
-| Name | Student ID |
-|---|---|
-| Mahin Ahmed Meghla | 2022-3-60-152 |
-| Jannatul Ferdaus Oishi | 2022-3-60-216 |
-| Arham Jawad Akib | 2022-3-60-004 |
-
 **Submitted To:** Antu Chowdhury, Lecturer — Department of CSE, East West University
 
 ---
